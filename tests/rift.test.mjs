@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { readFile, mkdtemp, writeFile, rm } from "node:fs/promises";
+import { readFile, mkdtemp, writeFile, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { SourceTextModule, SyntheticModule, createContext } from "node:vm";
@@ -88,6 +88,27 @@ test("subscription script registers only relevant events and preserves other int
     }
     const callback = fileURLToPath(new URL("../lib/scripts/refresh-rift.sh", import.meta.url));
     assert.equal(args.filter((arg) => arg === callback).length, 4);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("source and Übersicht symlink register identical subscription callbacks", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "rift-bar-symlink-subscribe-"));
+  try {
+    const log = join(directory, "args.log");
+    const mock = join(directory, "mock rift-cli");
+    await writeFile(mock, `#!/bin/sh\nprintf '%s\\n' "$@" >> '${log}'\n`, { mode: 0o700 });
+    const script = fileURLToPath(new URL("../lib/scripts/subscribe-rift.sh", import.meta.url));
+    const direct = spawnSync("sh", [script, mock], { encoding: "utf8" });
+    assert.equal(direct.status, 0, direct.stderr);
+    const sourceArgs = await readFile(log, "utf8");
+    await writeFile(log, "");
+    const link = join(directory, "linked scripts");
+    await symlink(dirname(script), link);
+    const linked = spawnSync("sh", [join(link, "subscribe-rift.sh"), mock], { encoding: "utf8" });
+    assert.equal(linked.status, 0, linked.stderr);
+    assert.equal(await readFile(log, "utf8"), sourceArgs);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
