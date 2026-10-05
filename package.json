@@ -1,10 +1,13 @@
 {
-  "name": "simple-bar",
-  "licence": "MIT",
+  "name": "rift-bar",
+  "license": "MIT",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
-  "description": "A yabai status bar widget for Übersicht.",
+  "description": "A Rift status bar for Übersicht, derived from simple-bar.",
   "scripts": {
+    "test": "node --experimental-vm-modules --test tests/*.test.mjs",
+    "test:latency": "node tests/rift-latency.mjs",
     "lint": "eslint . --ext .js,.jsx"
   },
   "devDependencies": {

@@ -1,73 +1,58 @@
-# <img src="./images/logo-simple-bar.png" width="200" alt="simple-bar" />
+# rift-bar
 
-A [yabai](https://github.com/koekeishiya/yabai) or [AeroSpace](https://github.com/nikitabobko/AeroSpace) status bar widget for [Übersicht](https://github.com/felixhageloh/uebersicht) inspired by [nibar](https://github.com/kkga/nibar), [yabar](https://github.com/AlexNaga/yabar) and [this reddit post](https://www.reddit.com/r/unixporn/comments/chwk89/yabai_yabai_and_gruvbox_with_custom_ubersicht_bar/).
-
-[Website](https://www.jeantinland.com/toolbox/simple-bar) • [Documentation](https://www.jeantinland.com/toolbox/simple-bar/documentation)
-
-[`simple-bar-server`](https://github.com/Jean-Tinland/simple-bar-server) is available to trigger refresh and toggle widgets more efficiently with `curl` commands.
-
-A more "lite" & basic version is available [here](https://github.com/Jean-Tinland/simple-bar-lite).
-
-**Notice: As I am working simultaneously on a lot of projects, things here may seem to move slowly but they are still in progress. I'm always monitoring my notifications and messages, so if you have any questions or want to chat about anything, feel free [to reach out](https://www.jeantinland.com/contact/)!**
-
-## Features
-
-Among the principal features of `simple-bar`, you'll find:
-
-- **Show all opened apps** in every space
-- **Show all opened windows** on the current space and its current layout mode (bsp, stack, float)
-- Interactions: **focus window** on click, launch scripts, toggle states
-- **Multi-monitor support**: enable individual widget on specific displays
-- Add your own custom widgets in settings (it displays scripts outputs)
-- **Refresh and toggle parts of simple-bar on the fly** with `curl` commands by installing [simple-bar-server](https://www.jeantinland.com/toolbox/simple-bar-server/documentation/introduction/) and enabling the server in settings. See [widgets](https://www.jeantinland.com/toolbox/simple-bar-server/documentation/widgets/), [yabai](https://www.jeantinland.com/toolbox/simple-bar-server/documentation/yabai/) or [AeroSpace](https://www.jeantinland.com/toolbox/simple-bar-server/documentation/aerospace/) options in its documentation
-- **Extensible** themes system with 3 theme behaviors: **dark**, **light**, or **system**
-- Numerous customization options, try them out in settings!
-- A handfull selection of widgets
-- Other features available only with SIP disabled and yabai scripting addition installed (**navigate to workspace**, **create new workspace on "+" click**, **move or destroy workspace on space hover**)
-
-[See all features in documentation](https://www.jeantinland.com/toolbox/simple-bar/documentation/features/).
-
-## Preview
-
-![image](./images/preview.png)
-
-<video src="https://github.com/Jean-Tinland/simple-bar/assets/43068795/0f988d1b-e21b-4b82-a1dc-4a1c76f580f3" type="video/mp4" muted autoplay loop></video>
+A Rift status bar for Übersicht, derived from [Jean Tinland's simple-bar](https://github.com/Jean-Tinland/simple-bar) at revision `fb5cada`. This is an independently maintained local project, not an upstream Rift-support patch. The original MIT license and attribution are retained in `LICENSE`.
 
 ## Installation
 
-Simply clone this repo in your Übersicht widgets directory with the following command.
+The source lives at `~/projects/rift-bar`. Übersicht loads it through a symlink named `simple-bar` in its widgets directory:
 
-```bash
-git clone --depth 1 https://github.com/Jean-Tinland/simple-bar $HOME/Library/Application\ Support/Übersicht/widgets/simple-bar
+```sh
+ln -s "$HOME/projects/rift-bar" "$HOME/Library/Application Support/Übersicht/widgets/simple-bar"
 ```
 
-You'll find the full installation guide in the [documentation](https://www.jeantinland.com/toolbox/simple-bar/documentation/installation/).
+The `simple-bar` installation name is intentional. Widget command paths, CSS classes, browser storage, and the refresh message's widget ID retain that name for compatibility. Übersicht loads and watches source files through the symlink.
 
-> [!WARNING]\
-> If you encounter this error: "simple-bar-index.jsx: Something went wrong…", it may be simply due to the fact that the default value for yabai or AeroSpace path is wrong in simple-bar. You can set this path in the settings module.\
-> The default paths are `$(which yabai)` and `$(which aerospace)`.
+Requirements:
 
-> [!NOTE]\
-> `simple-bar` is trying to use yabai by default. If you want to switch to AeroSpace, you'll need to open the settings module (simply click on `simple-bar` then press `cmd` + `,`). You'll find the window manager choice in the "Global" tab.
+- Rift with `rift-cli`, tested with Rift 0.6.2.
+- `jq`, available through Homebrew.
+- Übersicht at `/Applications/Übersicht.app`, with its local message bus on port `41416`.
 
-> [!TIP]\
-> If you experience some freezing issues with Übersicht or if you simply want to improve `simple-bar` responsiveness & energy consumption, please try to switch to `simple-bar-server` in order to trigger refresh with `curl` commands. You'll find more information about it in the repo [here](https://github.com/Jean-Tinland/simple-bar-server).
+Bar preferences remain in `~/.simplebarrc`. Click the bar and press `cmd + ,` to open its settings. The Rift CLI path defaults to `/opt/homebrew/bin/rift-cli`.
 
-## Roadmap
+Add this hook to `~/.config/rift/config.toml` to restore subscriptions after Rift restarts:
 
-Here are the features I'm planning to add in the future:
+```toml
+[settings]
+run_on_start = ["/bin/sh \"$HOME/projects/rift-bar/lib/scripts/subscribe-rift.sh\" '/opt/homebrew/bin/rift-cli' --refresh"]
+```
 
-- A timer widget ([#474](https://github.com/Jean-Tinland/simple-bar/issues/474))
-- Bars configurator (spawn multiple bars, place widgets anywhere…) [#380](https://github.com/Jean-Tinland/simple-bar/issues/380)
-- More accessibility settings like reading direction (LTR or RTL)
-- More default themes
+Window gaps are configured separately in Rift. Relocating the bar does not change them.
 
-Feel free to open an issue if you have any feature request or if you want me to prioritize one of these features.
+## Refresh and workspace behavior
 
-## Special thanks
+`lib/scripts/init-rift.sh` queries each display's current native Space, including all its virtual workspaces and windows. Rift screen IDs match Übersicht screen IDs. Clicking a workspace focuses its display before switching the zero-based workspace index. Window clicks use the full Rift window ID.
 
-I started this project with a simple idea and inspired by similar projects but over the year it has become a real community project. I want to thank everyone who contributed to this project, whether it's by opening issues, suggesting features, or even making pull requests. Furthermore, I also want to thank everyone who is using this project, I'm glad to see that it can be useful to others.
+`lib/scripts/subscribe-rift.sh` registers `workspace_changed`, `windows_changed`, `focused_window_changed`, and `window_title_changed` once per widget instance. Identical subscriptions are deduplicated by Rift; the script does not remove other integrations' subscriptions. Events send `WIDGET_WANTS_REFRESH` through Übersicht's bundled Node runtime and WebSocket library. Workspace snapshots do not poll while idle.
 
-So thank you, [@Amar1729](https://github.com/Amar1729), [@yorhodes](https://github.com/yorhodes), [@ZhongXiLu](https://github.com/ZhongXiLu), [@jamieweavis](https://github.com/jamieweavis), [@kvndrsslr](https://github.com/kvndrsslr), [@rosenpin](https://github.com/rosenpin), [@MikoMagni](https://github.com/MikoMagni), [@anujc4](https://github.com/anujc4), [@SijanC147](https://github.com/SijanC147), [@donaldguy](https://github.com/donaldguy), [@d-miketa](https://github.com/d-miketa), [@izifortune](https://github.com/izifortune), [@theshortcut](https://github.com/theshortcut), [@jming422](https://github.com/jming422), [@s00500](https://github.com/s00500), [@spwx](https://github.com/spwx), [@basbebe](https://github.com/basbebe), [@is0n](https://github.com/is0n), [@Joroovb](https://github.com/Joroovb), [@Sylenss](https://github.com/Sylenss), [@mrzone64](https://github.com/mrzone64), [@devinbhatt](https://github.com/devinbhatt), [@mdwitr0](https://github.com/mdwitr0), [@wr1159](https://github.com/wr1159), [@ardnep](https://github.com/ardnep), [@kntng](https://github.com/kntng) and every other that are helping me improve this little project by adding icons, fixing what they can, and more…
+Native macOS Space creation/deletion is not implemented. Only each display's current native Space is queried.
 
-I tried to keep track of everyone who contributed to this project in every page of the documentation. If you think I forgot you, please let me know. :)
+## Development
+
+```sh
+npm ci
+npm test
+npm run lint
+```
+
+Unit tests mock Rift responses and commands. They do not change the running window manager.
+
+The optional live latency regression switches workspaces briefly, restores the original workspace and focused window, and checks that updates stay below 250ms with no idle snapshot polling. It requires `agent-browser` and should run while the desktop is otherwise idle:
+
+```sh
+npm run test:latency
+```
+
+## Local relocation
+
+The original patched checkout, including its upstream Git history, is preserved at `~/Library/Application Support/Übersicht/simple-bar.before-rift-bar`. The new repository has its own history and no upstream remote. Its first commit preserves the working patched baseline before cleanup.
