@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, mkdtemp, rm, writeFile, readdir, mkdir, symlink, readlink } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 
-async function loadSettings(config = {}) {
+async function loadSettings(config = {}, run) {
   const storage = new Map([["simple-bar-settings", JSON.stringify(config)]]);
   const commands = [];
   const context = createContext({
@@ -21,7 +24,7 @@ async function loadSettings(config = {}) {
     { context },
   );
   const mocks = new Map([
-    ["uebersicht", { run: async (command) => { commands.push(command); return ""; } }],
+    ["uebersicht", { run: async (command) => { commands.push(command); return run ? run(command) : ""; } }],
     ["./styles/themes", { collection: {} }],
     ["./components/settings/user-widgets-creator.jsx", { default: () => {} }],
     ["./components/settings/settings.jsx", { Component: () => {}, Wrapper: () => {}, styles: "" }],
@@ -82,7 +85,7 @@ test("saved settings use the local Rift schema and omit obsolete options", async
   assert.ok(!("enableServer" in saved.global));
   assert.ok(!("windowManager" in saved.global));
   assert.ok(!("$schema" in settings.get()));
-  assert.ok(commands.some(command => command.includes("~/.simplebarrc")));
+  assert.ok(commands.some(command => command.includes("save-settings.sh")));
 });
 
 test("Rift window filtering preserves app and title exclusions", async () => {
@@ -100,9 +103,137 @@ test("retained workspace and global defaults have settings controls and schema e
   const { settings } = await loadSettings();
   const schema = JSON.parse(await readFile(new URL("../lib/schemas/config.json", import.meta.url), "utf8"));
   for (const section of ["global", "process", "spacesDisplay"]) {
-    for (const key of Object.keys(settings.defaultSettings[section])) {
+    const defaults = settings.defaultSettings[section];
+    const properties = schema.properties[section].properties;
+    assert.deepEqual(Object.keys(defaults).sort(), Object.keys(properties).sort());
+    for (const [key, value] of Object.entries(defaults)) {
       assert.ok(settings.data[key], `Missing settings control: ${section}.${key}`);
-      assert.ok(schema.properties[section].properties[key], `Missing schema setting: ${section}.${key}`);
+      assert.equal(properties[key].type, typeof value, `${section}.${key}`);
+      if (properties[key].enum) assert.ok(properties[key].enum.includes(value), `${section}.${key}`);
     }
   }
+});
+
+test("failed persistence rejects without changing browser storage", async () => {
+  const { settings, storage } = await loadSettings(legacy, async () => { throw new Error("Disk is full"); });
+  const before = storage.get("simple-bar-settings");
+  await assert.rejects(settings.set({ global: { fontSize: "33px" } }), /Disk is full/);
+  assert.equal(storage.get("simple-bar-settings"), before);
+});
+
+test("migration removes only explicitly retired options and preserves deferred fields", async () => {
+  const config = {
+    global: { shell: "bash", futureOption: "keep" },
+    process: { futureOption: 42 },
+    spacesDisplay: { futureOption: true },
+    batteryWidgetOptions: { disableCaffeinateInvertedBackground: true, futureOption: "keep" },
+    futureSection: { nested: "keep" },
+    customStyles: { styles: "/* untouched */" },
+  };
+  const { settings } = await loadSettings(config);
+  const current = settings.get();
+  assert.ok(!("shell" in current.global));
+  assert.ok(!settings.data.shell);
+  assert.equal(current.global.futureOption, "keep");
+  assert.equal(current.process.futureOption, 42);
+  assert.equal(current.spacesDisplay.futureOption, true);
+  assert.equal(current.batteryWidgetOptions.futureOption, "keep");
+  assert.equal(current.batteryWidgetOptions.disableCaffeinateInvertedBackground, true);
+  assert.equal(current.futureSection.nested, "keep");
+  assert.equal(current.customStyles.styles, "/* untouched */");
+});
+
+async function withHome(callback) {
+  const home = await mkdtemp(join(tmpdir(), "rift-bar-settings-"));
+  try {
+    const run = async (command) => {
+      const result = spawnSync("/bin/sh", ["-c", command], {
+        encoding: "utf8", env: { ...process.env, HOME: home },
+      });
+      if (result.status !== 0) throw new Error(result.stderr || `Command exited ${result.status}`);
+      return result.stdout;
+    };
+    await callback(home, run);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+}
+
+test("atomic saves round-trip JSON and unchanged startup does not rewrite the file", async () => {
+  await withHome(async (home, run) => {
+    // The widget symlink is the only installation dependency in these commands.
+    const originalRun = run;
+    run = (command) => originalRun(command.replace("simple-bar/lib/scripts/", "lib/scripts/"));
+    const { settings } = await loadSettings({}, run);
+    const title = "日本語 'quoted'\nnext line \\n \\\\ trailing\\";
+    await settings.set({ userWidgets: { userWidgetsList: { 0: { output: title } } } });
+    const saved = JSON.parse(await readFile(join(home, ".simplebarrc"), "utf8"));
+    assert.equal(saved.userWidgets.userWidgetsList[0].output, title);
+    assert.deepEqual(await readdir(home), [".simplebarrc"]);
+    await writeFile(join(home, ".simplebarrc"), JSON.stringify(Object.fromEntries(Object.entries(saved).reverse())));
+    const writes = [];
+    const fresh = await loadSettings({}, async (command) => {
+      if (command.includes("save-settings.sh")) writes.push(command);
+      return run(command);
+    });
+    const [first, second] = await Promise.all([fresh.settings.init(), fresh.settings.init()]);
+    assert.equal(first.global.fontSize, "11px");
+    assert.equal(second.global.fontSize, "11px");
+    assert.equal(writes.length, 0);
+    assert.equal(fresh.settings.get().userWidgets.userWidgetsList[0].output, title);
+  });
+});
+
+test("missing preferences use defaults without writing a new file", async () => {
+  await withHome(async (home, run) => {
+    const { settings } = await loadSettings({}, run);
+    const current = await settings.init();
+    assert.equal(current.global.fontSize, "11px");
+    assert.deepEqual(await readdir(home), []);
+  });
+});
+
+test("malformed preferences fail without overwriting disk or browser storage", async () => {
+  for (const text of ["not JSON", "null", "[]", '{"global":null}', '{"global":{"fontSize":24}}', '{"global":{"theme":"invalid"}}']) {
+    await withHome(async (home, run) => {
+      const target = join(home, ".simplebarrc");
+      await writeFile(target, text);
+      const { settings, storage } = await loadSettings(legacy, run);
+      const before = storage.get("simple-bar-settings");
+      await assert.rejects(settings.init());
+      assert.equal(await readFile(target, "utf8"), text);
+      assert.equal(storage.get("simple-bar-settings"), before);
+    });
+  }
+});
+
+test("atomic writer preserves symlinks and cleans up after a failed replacement", async () => {
+  await withHome(async (home, run) => {
+    run = ((original) => (command) => original(command.replace("simple-bar/lib/scripts/", "lib/scripts/")))(run);
+    await writeFile(join(home, "dotfile"), "{}");
+    await symlink("dotfile", join(home, ".simplebarrc"));
+    const { settings } = await loadSettings({}, run);
+    await settings.set({ global: { fontSize: "19px" } });
+    assert.equal(await readlink(join(home, ".simplebarrc")), "dotfile");
+    assert.equal(JSON.parse(await readFile(join(home, "dotfile"), "utf8")).global.fontSize, "19px");
+    await rm(join(home, ".simplebarrc"));
+    await mkdir(join(home, ".simplebarrc"));
+    await assert.rejects(settings.set({}));
+    assert.deepEqual((await readdir(home)).sort(), [".simplebarrc", "dotfile"]);
+  });
+});
+
+test("a failed atomic replacement leaves the old file and no temporary files", async () => {
+  await withHome(async (home, run) => {
+    const bin = join(home, "bin");
+    await mkdir(bin);
+    await writeFile(join(bin, "mv"), "#!/bin/sh\nexit 1\n", { mode: 0o700 });
+    await writeFile(join(home, ".simplebarrc"), "original");
+    const originalRun = run;
+    run = (command) => originalRun(`export PATH='${bin}':"$PATH"; ${command.replace("simple-bar/lib/scripts/", "lib/scripts/")}`);
+    const { settings } = await loadSettings({}, run);
+    await assert.rejects(settings.set({}));
+    assert.equal(await readFile(join(home, ".simplebarrc"), "utf8"), "original");
+    assert.deepEqual((await readdir(home)).sort(), [".simplebarrc", "bin"]);
+  });
 });

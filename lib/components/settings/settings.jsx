@@ -32,7 +32,7 @@ export function Wrapper() {
   // > Open settings with cmd/ctrl + ,
   // > Toggle dark theme with cmd/ctrl + t
   const handleKeydown = React.useCallback(
-    (e) => {
+    async (e) => {
       const { ctrlKey, key, metaKey } = e;
       if ((ctrlKey || metaKey) && key === "r") {
         e.preventDefault();
@@ -66,8 +66,12 @@ export function Wrapper() {
             global: { ...settings.global, theme: newValue },
           };
           // Settings are updated and simple-bar is hard refreshed
-          Settings.set(updatedSettings);
-          Utils.hardRefresh();
+          try {
+            await Settings.set(updatedSettings);
+            await Utils.hardRefresh();
+          } catch {
+            Utils.notification("Cannot save preferences. Check file permissions and free disk space.", pushMissive);
+          }
         }
       }
     },

@@ -81,15 +81,6 @@
           "type": "string",
           "description": "Path to the rift-cli binary"
         },
-        "shell": {
-          "type": "string",
-          "enum": [
-            "sh",
-            "bash",
-            "dash"
-          ],
-          "description": "Depending on your preference you can choose between these 3 shell for all simple-bar scripts execution: sh, bash, dash"
-        },
         "terminal": {
           "type": "string",
           "enum": [

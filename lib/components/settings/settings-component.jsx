@@ -46,9 +46,13 @@ export default function Component({ closeSettings }) {
    */
   const refreshSimpleBar = async (e) => {
     Utils.clickEffect(e);
-    setPendingChanges(0);
-    await Settings.set(newSettings);
-    Utils.hardRefresh();
+    try {
+      await Settings.set(newSettings);
+      setPendingChanges(0);
+      await Utils.hardRefresh();
+    } catch {
+      Utils.notification("Cannot save preferences. Check file permissions and free disk space.");
+    }
   };
 
   // Effect to calculate the number of pending changes
