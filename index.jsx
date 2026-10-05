@@ -58,55 +58,68 @@ const WorkspaceProcess = React.lazy(
 // Window-manager events trigger refreshes. No periodic workspace polling.
 const refreshFrequency = false;
 
-// Init settings from file if existing
-Settings.init();
+let initialization;
+let initializedSettings;
 
-const settings = Settings.get();
-const command = Rift.getSnapshot;
+function initialize() {
+  if (!initialization) {
+    initialization = Settings.init().then((settings) => {
+      // No preference reads or style generation during module evaluation.
+      Utils.injectStyles("simple-bar-index-styles", [
+        Variables.buildStyles(settings),
+        Base.styles,
+        Spaces.styles,
+        Process.styles,
+        Settings.styles,
+        DataWidget.styles,
+        DateDisplay.styles,
+        Zoom.styles,
+        Time.styles,
+        GitHub.styles,
+        Weather.styles,
+        Netstats.styles,
+        Cpu.styles,
+        Gpu.styles,
+        Memory.styles,
+        Crypto.styles,
+        Stock.styles,
+        Battery.styles,
+        Wifi.styles,
+        ViscosityVPN.styles,
+        Keyboard.styles,
+        Mic.styles,
+        Sound.styles,
+        Spotify.styles,
+        YouTubeMusic.styles,
+        Music.styles,
+        Mpd.styles,
+        BrowserTrack.styles,
+        Notifications.styles,
+        NextMeeting.styles,
+        Specter.styles,
+        Graph.styles,
+        DataWidgetLoader.styles,
+        settings.customStyles.styles,
+        SideIcon.styles,
+        Missives.styles,
+      ]);
+      initializedSettings = settings;
+    }).catch((error) => {
+      initialization = undefined;
+      throw error;
+    });
+  }
+  return initialization;
+}
 
-// Inject global styles into the document
-// I prefer using native CSS instead of Emotion bundled by default in Übersicht
-Utils.injectStyles("simple-bar-index-styles", [
-  Variables.styles,
-  Base.styles,
-  Spaces.styles,
-  Process.styles,
-  Settings.styles,
-  DataWidget.styles,
-  DateDisplay.styles,
-  Zoom.styles,
-  Time.styles,
-  GitHub.styles,
-  Weather.styles,
-  Netstats.styles,
-  Cpu.styles,
-  Gpu.styles,
-  Memory.styles,
-  Crypto.styles,
-  Stock.styles,
-  Battery.styles,
-  Wifi.styles,
-  ViscosityVPN.styles,
-  Keyboard.styles,
-  Mic.styles,
-  Sound.styles,
-  Spotify.styles,
-  YouTubeMusic.styles,
-  Music.styles,
-  Mpd.styles,
-  BrowserTrack.styles,
-  Notifications.styles,
-  NextMeeting.styles,
-  Specter.styles,
-  Graph.styles,
-  DataWidgetLoader.styles,
-  settings.customStyles.styles,
-  SideIcon.styles,
-  Missives.styles,
-]);
+async function command() {
+  await initialize();
+  return Rift.getSnapshot();
+}
 
 // Render function to display the bar
 function render({ output, error }) {
+  const settings = initializedSettings ?? Settings.defaultSettings;
   // Define base classes for the bar based on settings
   const baseClasses = Utils.classNames("simple-bar", {
     "simple-bar--floating": settings.global.floatingBar,
@@ -127,7 +140,9 @@ function render({ output, error }) {
     console.error("Error in index.jsx", error);
     return <Error.Component type="error" classes={baseClasses} />;
   }
-  if (!output) {
+  // Übersicht may retain output across a source reload. Do not mount providers
+  // with defaults before the new instance has loaded its preferences.
+  if (!initializedSettings || !output) {
     return <Error.Component type="noOutput" classes={baseClasses} />;
   }
 
