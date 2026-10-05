@@ -224,10 +224,6 @@
           "type": "string",
           "description": "Same as previous settings but with the window title name"
         },
-        "spacesExclusions": {
-          "type": "string",
-          "description": "Whole space(s) can be excluded for the spaces display by their name here separated by a comma"
-        },
         "exclusionsAsRegex": {
           "type": "boolean",
           "description": "Instead of using comma in the exclusions fields, you can use the regex syntax"

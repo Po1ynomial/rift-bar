@@ -40,7 +40,7 @@ async function loadSettings(config = {}) {
     return modules.get(specifier);
   });
   await settings.evaluate();
-  return { settings: settings.namespace, storage, commands };
+  return { settings: settings.namespace, utils: utils.namespace, storage, commands };
 }
 
 const legacy = {
@@ -83,6 +83,17 @@ test("saved settings use the local Rift schema and omit obsolete options", async
   assert.ok(!("windowManager" in saved.global));
   assert.ok(!("$schema" in settings.get()));
   assert.ok(commands.some(command => command.includes("~/.simplebarrc")));
+});
+
+test("Rift window filtering preserves app and title exclusions", async () => {
+  const { utils } = await loadSettings();
+  const window = { "app-name": "kitty", "window-title": "Preferences" };
+  assert.equal(utils.filterApps(window, [], [], false), true);
+  assert.equal(utils.filterApps(window, ["kitty"], [], false), false);
+  assert.equal(utils.filterApps(window, [], ["Preferences"], false), false);
+  assert.equal(utils.filterApps(window, "^kit", "", true), false);
+  assert.equal(utils.filterApps(window, "", "^Pref", true), false);
+  assert.equal(utils.filterApps({ ...window, "window-title": "" }, [], ["Preferences"], false), true);
 });
 
 test("retained workspace and global defaults have settings controls and schema entries", async () => {
