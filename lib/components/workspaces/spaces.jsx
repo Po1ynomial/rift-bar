@@ -4,7 +4,7 @@ import { useWorkspaceContext } from "../workspace-context.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils.js";
 
-export { spacesStyles as styles } from "../../styles/components/spaces/spaces.js";
+export { styles } from "../../styles/components/spaces/spaces.js";
 
 const { React } = Uebersicht;
 

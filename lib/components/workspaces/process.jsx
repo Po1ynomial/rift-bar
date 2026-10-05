@@ -4,7 +4,7 @@ import * as Utils from "../../utils";
 import { useWorkspaceContext } from "../workspace-context.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 
-export { processStyles as styles } from "../../styles/components/process";
+export { styles } from "../../styles/components/process";
 
 const { React } = Uebersicht;
 
