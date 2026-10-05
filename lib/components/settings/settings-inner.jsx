@@ -96,13 +96,13 @@ export default function SettingsInner({
         <div className="settings__documentation">
           <Icons.OpenBook className="settings__documentation-icon" />
           <span className="settings__documentation-title">
-            You{"'"}ll find all the information about these settings{" "}
+            These shared options are described in the{" "}
             <a
               href={`https://www.jeantinland.com/toolbox/simple-bar/documentation${documentation}`}
             >
-              here on the documentation
-            </a>{" "}
-            hosted on jeantinland.com.
+              original simple-bar documentation
+            </a>
+            . Rift-specific behavior is documented in rift-bar's README.
           </span>
         </div>
       )}

@@ -140,7 +140,7 @@ export default function Component({ closeSettings }) {
             onClick={refreshSimpleBar}
             disabled={!pendingChanges}
           >
-            Confirm changes and refresh simple-bar
+            Confirm changes and refresh rift-bar
           </button>
         </div>
       </div>
