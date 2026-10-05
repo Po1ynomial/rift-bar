@@ -6,6 +6,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { SourceTextModule, SyntheticModule, createContext } from "node:vm";
+import { parseSnapshot } from "../lib/snapshot.js";
 
 async function loadBackend(run) {
   const calls = [];
@@ -17,6 +18,7 @@ async function loadBackend(run) {
       return run ? run(command, calls.length) : "{}";
     } }],
     ["./settings", { get: () => settings }],
+    ["./snapshot.js", { parseSnapshot }],
   ]);
   const module = new SourceTextModule(
     await readFile(new URL("../lib/rift.js", import.meta.url), "utf8"),
@@ -124,13 +126,13 @@ test("snapshot preserves per-display workspace identity, names, and titles", asy
     ];
     const workspaces = [{
       index: 0, name: "Code's workspace", is_active: true,
-      windows: [{ app_name: "kitty", title: "日本語 \"quoted\"\nnext line", id: { pid: 123, idx: 456 }, is_focused: true }],
+      windows: [{ app_name: "kitty", title: "日本語 \"quoted\"\nnext line C:\\temp\\file ,]", id: { pid: 123, idx: 456 }, is_focused: true }],
     }, { index: 1, name: "Empty", is_active: false, windows: [] }];
     await writeFile(mock, `#!/bin/sh\ncase "$*" in\n  'query displays') printf '%s' '${JSON.stringify(displays)}' ;;\n  'query workspaces --space-id 3'|'query workspaces --space-id 9') printf '%s' '${JSON.stringify(workspaces).replace(/'/g, `'"'"'`)}' ;;\n  *) exit 1 ;;\nesac\n`, { mode: 0o700 });
     const script = fileURLToPath(new URL("../lib/scripts/init-rift.sh", import.meta.url));
     const result = spawnSync("sh", [script, mock], { encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr);
-    const snapshot = JSON.parse(result.stdout);
+    const snapshot = parseSnapshot(result.stdout);
     assert.deepEqual(Object.keys(snapshot).sort(), ["displays", "spaces"]);
     assert.deepEqual(snapshot.displays.map(({ id, index }) => [id, index]), [[7, 1], [1, 2]]);
     assert.equal(snapshot.spaces.length, 4);

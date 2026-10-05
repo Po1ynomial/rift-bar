@@ -132,7 +132,7 @@ function render({ output, error }) {
   }
 
   // Cleanup the output data
-  const cleanedUpOutput = Utils.cleanupOutput(output);
+  const cleanedUpOutput = output.trim();
 
   // Handle window-manager query failures
   if (cleanedUpOutput === "riftError") {
@@ -140,8 +140,12 @@ function render({ output, error }) {
   }
 
   // Parse the output data
-  const data = Utils.parseJson(cleanedUpOutput);
-  if (!data) return <Error.Component type="noData" classes={baseClasses} />;
+  let data;
+  try {
+    data = Rift.parseSnapshot(cleanedUpOutput);
+  } catch {
+    return <Error.Component type="noData" classes={baseClasses} />;
+  }
 
   const { displays, spaces } = data;
 
