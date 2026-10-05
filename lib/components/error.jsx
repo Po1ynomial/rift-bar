@@ -1,5 +1,8 @@
+import * as Uebersicht from "uebersicht";
 import * as Settings from "./settings/settings.jsx";
 import * as Utils from "../utils";
+
+const { React } = Uebersicht;
 
 // Error messages for different types of errors
 const message = {
@@ -22,15 +25,28 @@ export function Component({ type, classes }) {
     "simple-bar--loading": type === "noOutput",
   });
 
-  // Refresh the component after 2 seconds for general errors and JSON errors
-  if (type === "error" || type === "noData") {
-    setTimeout(Utils.softRefresh, 2000);
-  }
-
-  // Retry a stopped window manager without polling during normal operation.
-  if (type === "riftError") {
-    setTimeout(Utils.softRefresh, 15000);
-  }
+  // Retry failures without polling during normal operation. An effect owns the
+  // timer so repeated renders cannot accumulate retries after recovery.
+  React.useEffect(() => {
+    const delay = type === "riftError" ? 15000
+      : type === "error" || type === "noData" ? 2000 : undefined;
+    if (delay === undefined) return;
+    let active = true;
+    let timer;
+    const retry = async () => {
+      try {
+        await Utils.softRefresh();
+      } catch {
+        // Übersicht may also be restarting. Keep the error-only retry alive.
+      }
+      if (active) timer = setTimeout(retry, delay);
+    };
+    timer = setTimeout(retry, delay);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [type]);
 
   return (
     <div className={errorClasses}>

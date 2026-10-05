@@ -73,6 +73,25 @@ test("failed subscription setup is retried instead of caching rejection", async 
   assert.ok(calls[1].includes("subscribe-rift.sh"));
 });
 
+test("a stopped Rift snapshot invalidates setup so the next retry resubscribes", async () => {
+  const { rift, calls } = await loadBackend(async (_command, count) => count === 2 ? "riftError\n" : "{}");
+  assert.equal((await rift.getSnapshot()).trim(), "riftError");
+  await rift.getSnapshot();
+  assert.equal(calls.length, 4);
+  assert.ok(calls[2].includes("subscribe-rift.sh"));
+});
+
+test("a rejected snapshot also invalidates subscription setup", async () => {
+  const { rift, calls } = await loadBackend(async (_command, count) => {
+    if (count === 2) throw new Error("Connection lost");
+    return "{}";
+  });
+  await assert.rejects(rift.getSnapshot(), /Connection lost/);
+  await rift.getSnapshot();
+  assert.equal(calls.length, 4);
+  assert.ok(calls[2].includes("subscribe-rift.sh"));
+});
+
 test("subscription script registers only relevant events and preserves other integrations", async () => {
   const directory = await mkdtemp(join(tmpdir(), "simple-bar-rift-subscribe-"));
   try {
@@ -111,6 +130,28 @@ test("source and Übersicht symlink register identical subscription callbacks", 
     const linked = spawnSync("sh", [join(link, "subscribe-rift.sh"), mock], { encoding: "utf8" });
     assert.equal(linked.status, 0, linked.stderr);
     assert.equal(await readFile(log, "utf8"), sourceArgs);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("restart hook rebuilds subscriptions before requesting a refresh", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "rift-bar-restart-"));
+  try {
+    const log = join(directory, "restart.log");
+    const mock = join(directory, "rift-cli");
+    await writeFile(mock, `#!/bin/sh\nprintf '%s\\n' "$@" >> '${log}'\n`, { mode: 0o700 });
+    const script = join(directory, "subscribe-rift.sh");
+    await writeFile(script, await readFile(new URL("../lib/scripts/subscribe-rift.sh", import.meta.url)));
+    await writeFile(join(directory, "refresh-rift.sh"), `#!/bin/sh\nprintf '%s\\n' refreshed >> '${log}'\n`);
+    for (let restart = 0; restart < 2; restart++) {
+      await writeFile(log, "");
+      const result = spawnSync("sh", [script, mock, "--refresh"], { encoding: "utf8" });
+      assert.equal(result.status, 0, result.stderr);
+      const lines = (await readFile(log, "utf8")).trim().split("\n");
+      assert.equal(lines.filter((line) => line === "subscribe").length, 4);
+      assert.equal(lines.at(-1), "refreshed");
+    }
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
