@@ -1,4 +1,4 @@
-// eslint.config.js
+// Lint the widget, bundled-runtime scripts, and regression tests.
 import js from "@eslint/js";
 import globals from "globals";
 import reactPlugin from "eslint-plugin-react";
@@ -6,9 +6,9 @@ import reactHooks from "eslint-plugin-react-hooks";
 
 export default [
   {
-    files: ["**/*.{js,jsx}"],
+    files: ["**/*.{js,jsx,mjs}"],
     languageOptions: {
-      ecmaVersion: 12,
+      ecmaVersion: 2022,
       sourceType: "module",
       globals: {
         ...globals.browser,
@@ -47,6 +47,15 @@ export default [
       react: {
         version: "18.0",
       },
+    },
+  },
+  {
+    files: ["tests/**/*.mjs", "lib/scripts/**/*.mjs", "eslint.config.mjs"],
+    languageOptions: {
+      globals: globals.node,
+    },
+    rules: {
+      "no-console": "off",
     },
   },
 ];
