@@ -1,32 +1,46 @@
-// Live regression test: briefly switches between two workspaces, then restores
-// the initial workspace and focused window. Run explicitly, not in unit tests.
+// Opt-in live regression. Host-side cleanup restores all original workspaces
+// and the focused window even if browser evaluation fails or the browser exits.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { readFileSync, existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { planLatency, restoreDesktop } from "./helpers/latency-plan.mjs";
 
+const configPath = join(homedir(), ".simplebarrc");
+const settings = existsSync(configPath) ? JSON.parse(readFileSync(configPath, "utf8")) : {};
+const cli = process.env.RIFT_CLI || settings.global?.riftPath || "/opt/homebrew/bin/rift-cli";
 const session = "rift-latency-test";
+
+function execute(args) {
+  const result = spawnSync(cli, args, { encoding: "utf8", timeout: 10000 });
+  assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
+  return result.stdout;
+}
+function query(args) { return JSON.parse(execute(args)); }
+
 function browser(...args) {
   const result = spawnSync("agent-browser", ["--session", session, "--json", ...args], {
     encoding: "utf8", timeout: 30000,
   });
-  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
   const response = JSON.parse(result.stdout);
   assert.ok(response.success, JSON.stringify(response.error));
   return response.data;
 }
 
-async function measure() {
+// This function is serialized and executed inside Übersicht's browser page.
+async function measure(options) {
   const U = require("uebersicht");
-  const cli = "/opt/homebrew/bin/rift-cli";
-  const before = JSON.parse(await U.run(`${cli} query workspaces`));
-  const original = before.find((w) => w.is_active);
-  const focus = original.windows.find((w) => w.is_focused)?.id;
-  const alternate = before.find((w) => w.index !== original.index);
+  const quote = (value) => `'${String(value).replace(/'/g, `'"'"'`)}'`;
+  const executable = quote(options.cli);
   const proto = XMLHttpRequest.prototype;
   const savedSend = proto.send;
   let nextSnapshot;
   let lastSnapshot;
-  const samples = [];
   let snapshotCount = 0;
+  const samples = [];
+  const cleanups = new Set();
   proto.send = function (body) {
     if (typeof body === "string" && body.includes("init-rift.sh")) {
       snapshotCount++;
@@ -34,66 +48,124 @@ async function measure() {
       this.addEventListener("loadend", () => {
         row.end = performance.now();
         lastSnapshot = row;
-        if (nextSnapshot) { nextSnapshot(row); nextSnapshot = undefined; }
+        nextSnapshot?.(row);
       }, { once: true });
     }
     return savedSend.apply(this, arguments);
   };
+
+  function waitForSnapshot() {
+    return new Promise((resolve, reject) => {
+      const receive = (row) => { cleanup(); resolve(row); };
+      const timer = setTimeout(() => { cleanup(); reject(new Error("Refresh did not run")); }, 4000);
+      const cleanup = () => {
+        clearTimeout(timer);
+        if (nextSnapshot === receive) nextSnapshot = undefined;
+        cleanups.delete(cleanup);
+      };
+      nextSnapshot = receive;
+      cleanups.add(cleanup);
+    });
+  }
+
+  function button(index) {
+    const identity = CSS.escape(`${options.displayUuid}:${index}`);
+    return document.querySelector(`.space__inner[data-workspace="${identity}"]`);
+  }
+
+  function waitForVisible(index) {
+    return new Promise((resolve, reject) => {
+      const observer = new MutationObserver(check);
+      const timer = setTimeout(() => { cleanup(); reject(new Error("Workspace display did not update")); }, 4000);
+      const cleanup = () => {
+        clearTimeout(timer);
+        observer.disconnect();
+        cleanups.delete(cleanup);
+      };
+      function check() {
+        if (button(index)?.closest(".space")?.classList.contains("space--focused")) {
+          cleanup();
+          resolve(performance.now());
+        }
+      }
+      cleanups.add(cleanup);
+      observer.observe(document.body, { attributes: true, subtree: true, childList: true, characterData: true });
+      check();
+    });
+  }
+
   try {
     for (let i = 0; i < 6; i++) {
-      // Refresh first so the old polling implementation is tested just after a
-      // completed poll, when its one-second wait is reliably reproducible.
-      const snapshot = new Promise((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error("Refresh did not run")), 4000);
-        nextSnapshot = (row) => { clearTimeout(timer); resolve(row); };
-      });
+      const snapshot = waitForSnapshot();
       await U.run("/bin/sh simple-bar/lib/scripts/refresh-rift.sh");
       await snapshot;
       await new Promise((resolve) => setTimeout(resolve, 25));
-      const target = i % 2 === 0 ? alternate : original;
+      const target = i % 2 === 0 ? options.alternate : options.original;
+      const element = button(target);
+      if (!element) throw new Error(`Workspace button missing: ${options.displayUuid}:${target}`);
       const start = performance.now();
-      const visible = new Promise((resolve, reject) => {
-        const observer = new MutationObserver(() => {
-          if (document.querySelector(".space--focused .space__inner")?.textContent.trim() === target.name) {
-            clearTimeout(timer); observer.disconnect(); resolve(performance.now());
-          }
-        });
-        const timer = setTimeout(() => { observer.disconnect(); reject(new Error("Workspace display did not update")); }, 4000);
-        observer.observe(document.querySelector(".spaces"), { attributes: true, subtree: true, childList: true });
-      });
-      await U.run(`${cli} execute workspace switch ${target.index} >/dev/null && ${cli} query workspaces`);
-      const ack = performance.now();
+      const visible = waitForVisible(target);
+      // Exercise the actual click handler, including target-display focus.
+      element.click();
       const displayed = await visible;
+      const row = lastSnapshot?.start >= start ? lastSnapshot : undefined;
       samples.push({
-        riftRoundtripMs: Math.round(ack - start),
-        waitForSnapshotMs: Math.round(lastSnapshot.start - start),
-        snapshotMs: Math.round(lastSnapshot.end - lastSnapshot.start),
-        renderingMs: Math.round(displayed - lastSnapshot.end),
+        displayUuid: options.displayUuid,
+        workspaceIndex: target,
+        waitForSnapshotMs: row ? Math.round(row.start - start) : null,
+        snapshotMs: row ? Math.round(row.end - row.start) : null,
+        renderingMs: row ? Math.round(displayed - row.end) : null,
         totalMs: Math.round(displayed - start),
       });
+    }
+    const displays = JSON.parse(await U.run(`${executable} query displays`));
+    if (!displays.some((display) => display.uuid === options.displayUuid && display.is_active_context)) {
+      throw new Error("Workspace click did not focus the target display");
     }
     await new Promise((resolve) => setTimeout(resolve, 700));
     const beforeIdle = snapshotCount;
     await new Promise((resolve) => setTimeout(resolve, 2200));
     return { samples, idleSnapshotQueries: snapshotCount - beforeIdle };
   } finally {
+    for (const cleanup of [...cleanups]) cleanup();
     proto.send = savedSend;
-    await U.run(`${cli} execute workspace switch ${original.index}`);
-    if (focus) await U.run(`${cli} execute window focus --window-id '${JSON.stringify(focus)}'`);
   }
 }
 
-try {
-  const displays = JSON.parse(spawnSync("rift-cli", ["query", "displays"], { encoding: "utf8" }).stdout);
-  const display = displays.find((d) => d.is_active_context) || displays[0];
-  browser("open", `http://127.0.0.1:41416/${display.screen_id}`);
-  browser("wait", ".space--focused");
-  const data = browser("eval", `(${measure.toString()})()`);
-  const { samples, idleSnapshotQueries } = data.result;
-  console.log(JSON.stringify({ samples, idleSnapshotQueries }, null, 2));
-  assert.ok(Array.isArray(samples), "Missing timing samples");
-  assert.ok(samples.every((s) => s.totalMs < 250), "Workspace bar update exceeded 250ms");
-  assert.equal(idleSnapshotQueries, 0, "Workspace snapshots still poll while idle");
-} finally {
-  browser("close");
+const displays = query(["query", "displays"]);
+const workspaces = new Map(displays.filter((display) => display.space != null).map((display) => [
+  display.uuid, query(["query", "workspaces", "--display", display.uuid]),
+]));
+const plan = planLatency(displays, workspaces, settings);
+if (!plan.cases.length) {
+  console.log("Skipped: no visible display has two usable workspaces.");
+} else {
+  let browserStarted = false;
+  let desktopTouched = false;
+  const failures = [];
+  try {
+    for (const item of plan.cases) {
+      browserStarted = true;
+      browser("open", `http://127.0.0.1:41416/${item.screenId}`);
+      browser("wait", ".space__inner[data-workspace]");
+      const options = { cli, displayUuid: item.displayUuid, original: item.original.index, alternate: item.alternate.index };
+      desktopTouched = true;
+      const data = browser("eval", `(${measure.toString()})(${JSON.stringify(options)})`);
+      const { samples, idleSnapshotQueries } = data.result;
+      console.log(JSON.stringify({ samples, idleSnapshotQueries }, null, 2));
+      assert.equal(samples?.length, 6, "Missing timing samples");
+      assert.ok(samples.every((sample) => sample.totalMs < 250), "Workspace bar update exceeded 250ms");
+      assert.equal(idleSnapshotQueries, 0, "Workspace snapshots still poll while idle");
+    }
+  } catch (error) { failures.push(error); }
+  finally {
+    // Stop browser-side clicks before restoring, including after an eval timeout.
+    if (browserStarted) {
+      try { browser("close"); } catch (error) { failures.push(error); }
+    }
+    if (desktopTouched) {
+      try { restoreDesktop(plan, query, execute); } catch (error) { failures.push(error); }
+    }
+  }
+  if (failures.length) throw new AggregateError(failures, "Live latency regression failed");
 }

@@ -77,7 +77,7 @@ export default function Space({ space, lastOfSpace }) {
         <div className="spaces__separator" />
       )}
       <div className={classes}>
-        <button className="space__inner" onClick={onClick}>
+        <button className="space__inner" data-workspace={workspace} onClick={onClick}>
           {space.name ?? workspace}
           <OpenedApps apps={displayedWindows} />
         </button>
