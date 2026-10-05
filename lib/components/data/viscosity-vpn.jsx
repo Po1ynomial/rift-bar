@@ -3,7 +3,6 @@ import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
@@ -45,15 +44,6 @@ export const Widget = React.memo(() => {
   const [isViscosityActive, setIsViscosityActive] = React.useState(false);
 
   /**
-   * Reset the widget state.
-   */
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-    setIsViscosityActive(false);
-  };
-
-  /**
    * Fetch the current VPN status.
    */
   const getVPN = React.useCallback(async () => {
@@ -77,8 +67,6 @@ export const Widget = React.memo(() => {
     setLoading(false);
   }, [visible, vpnConnectionName, refresh]);
 
-  // Use server socket to listen for VPN status updates
-  useServerSocket("viscosity-vpn", visible, getVPN, resetWidget, setLoading);
   // Refresh the widget at the specified interval
   useWidgetRefresh(visible, getVPN, refresh);
 

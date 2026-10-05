@@ -3,7 +3,6 @@ import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh.js";
-import useServerSocket from "../../hooks/use-server-socket.js";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils.js";
 
@@ -47,14 +46,6 @@ export const Widget = React.memo(() => {
   const [loading, setLoading] = React.useState(visible);
 
   /**
-   * Reset the widget state
-   */
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-  };
-
-  /**
    * Fetch GPU data and update the widget state
    */
   const getGitHub = React.useCallback(async () => {
@@ -78,8 +69,6 @@ export const Widget = React.memo(() => {
     isDisabled.current = !visible;
   }, [visible]);
 
-  // Use server socket to fetch GPU data
-  useServerSocket("github", visible, getGitHub, resetWidget, setLoading);
   // Use widget refresh hook to periodically refresh the widget
   useWidgetRefresh(visible, getGitHub, refresh);
 

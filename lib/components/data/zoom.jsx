@@ -4,7 +4,6 @@ import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import { SuspenseIcon } from "../icons/icon.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
@@ -40,14 +39,6 @@ export const Widget = React.memo(() => {
   const [loading, setLoading] = React.useState(visible);
 
   /**
-   * Reset the widget state.
-   */
-  const resetWidget = React.useCallback(() => {
-    setState(undefined);
-    setLoading(false);
-  }, []);
-
-  /**
    * Fetch the Zoom status for mic and video.
    */
   const getZoom = React.useCallback(async () => {
@@ -75,8 +66,6 @@ export const Widget = React.memo(() => {
     }
   }, [visible, refresh]);
 
-  // Use server socket to listen for Zoom events
-  useServerSocket("zoom", visible, getZoom, resetWidget, setLoading);
   // Refresh the widget at the specified interval
   useWidgetRefresh(visible, getZoom, refresh);
 

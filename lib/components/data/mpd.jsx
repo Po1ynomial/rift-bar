@@ -3,7 +3,6 @@ import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
@@ -51,15 +50,6 @@ export const Widget = React.memo(() => {
   const defaultVolume = _volume && parseInt(_volume);
   const [volume, setVolume] = React.useState(defaultVolume);
   const [dragging, setDragging] = React.useState(false);
-
-  /**
-   * Reset the widget state
-   */
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-    setIsMpdActive(false);
-  };
 
   /**
    * Fetch MPD data
@@ -121,7 +111,6 @@ export const Widget = React.memo(() => {
     if (!dragging) setVolume(volume);
   }, [dragging, volume]);
 
-  useServerSocket("mpd", visible, getMpd, resetWidget, setLoading);
   useWidgetRefresh(visible, getMpd, refresh);
 
   if (loading) return <DataWidgetLoader.Widget className="mpd" />;

@@ -5,7 +5,6 @@ import * as Icons from "../icons/icons.jsx";
 import { SuspenseIcon } from "../icons/icon.jsx";
 import Graph from "./graph.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh.js";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils.js";
 
@@ -50,15 +49,6 @@ export const Widget = React.memo(() => {
   const [loading, setLoading] = React.useState(visible);
 
   /**
-   * Resets the widget state.
-   */
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-    setGraph([]);
-  };
-
-  /**
    * Fetches network statistics.
    */
   const getNetstats = React.useCallback(async () => {
@@ -88,8 +78,6 @@ export const Widget = React.memo(() => {
     isDisabled.current = !visible;
   }, [visible]);
 
-  // Set up server socket and widget refresh hooks
-  useServerSocket("netstats", visible, getNetstats, resetWidget, setLoading);
   useWidgetRefresh(visible, getNetstats, refresh);
 
   if (loading)

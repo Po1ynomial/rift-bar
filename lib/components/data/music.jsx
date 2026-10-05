@@ -3,7 +3,6 @@ import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
@@ -40,15 +39,6 @@ export const Widget = React.memo(() => {
   const [isMusicActive, setIsMusicActive] = React.useState(false);
 
   /**
-   * Resets the widget state.
-   */
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-    setIsMusicActive(false);
-  };
-
-  /**
    * Fetches the current music information.
    */
   const getMusic = React.useCallback(async () => {
@@ -81,8 +71,6 @@ export const Widget = React.memo(() => {
     setLoading(false);
   }, [visible, refresh]);
 
-  // Use server socket to listen for music events
-  useServerSocket("music", visible, getMusic, resetWidget, setLoading);
   // Refresh the widget at the specified interval
   useWidgetRefresh(visible, getMusic, refresh);
 

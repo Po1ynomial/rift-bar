@@ -101,14 +101,6 @@
         "slidingAnimationPace": {
           "type": "number",
           "description": "Determine the speed of the sliding animation for widgets with overflowing text. Default is \"4\". The higher slidingAnimationPace value, the faster the texts slides (must be > 0)"
-        },
-        "enableServer": {
-          "type": "boolean",
-          "description": "Enable websocket connection to the server in each data widget. You must install and launch simple-bar-server before activating this setting"
-        },
-        "serverSocketPort": {
-          "type": "number",
-          "description": "Determine the port on which the websockets will be opened. Check you simple-bar-server config file to get the right port if you changed it"
         }
       }
     },

@@ -3,7 +3,6 @@ import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
@@ -39,14 +38,6 @@ export const Widget = React.memo(() => {
   const [loading, setLoading] = React.useState(visible);
 
   /**
-   * Resets the widget state.
-   */
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-  };
-
-  /**
    * Fetches the current keyboard layout or input mode.
    */
   const getKeyboard = React.useCallback(async () => {
@@ -80,8 +71,6 @@ export const Widget = React.memo(() => {
     setLoading(false);
   }, [visible, refresh]);
 
-  // Use server socket to listen for keyboard events
-  useServerSocket("keyboard", visible, getKeyboard, resetWidget, setLoading);
   // Refresh the widget at the specified interval
   useWidgetRefresh(visible, getKeyboard, refresh);
 

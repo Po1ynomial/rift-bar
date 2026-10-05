@@ -14,7 +14,6 @@ import * as Uebersicht from "uebersicht";
 import * as AppIcons from "../../app-icons.js";
 import { SuspenseIcon } from "../icons/icon.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
@@ -123,14 +122,6 @@ export const Widget = React.memo(() => {
   const [state, setState] = React.useState([]);
   const [loading, setLoading] = React.useState(visible);
 
-  /**
-   * Resets the widget state.
-   */
-  const resetWidget = React.useCallback(() => {
-    setState([]);
-    setLoading(false);
-  }, []);
-
   // Build the exclusion list from the comma-separated setting
   const exclusionList = React.useMemo(
     () =>
@@ -161,15 +152,6 @@ export const Widget = React.memo(() => {
     }
     setLoading(false);
   }, [visible, refresh, exclusionList]);
-
-  // Server socket for real-time updates
-  useServerSocket(
-    "notifications",
-    visible,
-    getNotifications,
-    resetWidget,
-    setLoading,
-  );
 
   // Refresh the widget at the specified interval
   useWidgetRefresh(visible, getNotifications, refresh);

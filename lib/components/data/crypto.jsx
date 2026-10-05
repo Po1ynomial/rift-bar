@@ -3,7 +3,6 @@ import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
@@ -59,12 +58,6 @@ export const Widget = React.memo(() => {
   const [state, setState] = React.useState();
   const [loading, setLoading] = React.useState(visible);
 
-  // Reset the widget state
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-  };
-
   /**
    * Fetches cryptocurrency prices from the CoinGecko API
    */
@@ -90,7 +83,6 @@ export const Widget = React.memo(() => {
     denominatorToken,
   ]);
 
-  useServerSocket("crypto", visible, getCrypto, resetWidget, setLoading);
   useWidgetRefresh(visible, getCrypto, refresh);
 
   /**

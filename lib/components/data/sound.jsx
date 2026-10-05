@@ -4,7 +4,6 @@ import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import { SuspenseIcon } from "../icons/icon.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
@@ -42,14 +41,6 @@ export const Widget = React.memo(() => {
   const [dragging, setDragging] = React.useState(false);
 
   /**
-   * Reset the widget state.
-   */
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-  };
-
-  /**
    * Fetch the current sound settings.
    */
   const getSound = React.useCallback(async () => {
@@ -66,8 +57,6 @@ export const Widget = React.memo(() => {
     setLoading(false);
   }, [visible, refresh]);
 
-  // Use server socket to listen for sound updates.
-  useServerSocket("sound", visible, getSound, resetWidget, setLoading);
   // Refresh the widget at the specified interval.
   useWidgetRefresh(visible, getSound, refresh);
 

@@ -16,7 +16,6 @@ import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
@@ -239,14 +238,6 @@ export const Widget = React.memo(() => {
   const [loading, setLoading] = React.useState(visible);
 
   /**
-   * Resets the widget state.
-   */
-  const resetWidget = React.useCallback(() => {
-    setState(null);
-    setLoading(false);
-  }, []);
-
-  /**
    * Fetches next meeting and updates the state.
    */
   const getMeeting = React.useCallback(async () => {
@@ -263,9 +254,6 @@ export const Widget = React.memo(() => {
     }
     setLoading(false);
   }, [visible, icalBuddyPath, lookAheadHours]);
-
-  // Server socket for real-time updates
-  useServerSocket("next-meeting", visible, getMeeting, resetWidget, setLoading);
 
   // Refresh the widget at the specified interval
   useWidgetRefresh(visible, getMeeting, refresh);

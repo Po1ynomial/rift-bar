@@ -3,7 +3,6 @@ import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Settings from "../../settings";
 import * as Utils from "../../utils";
@@ -62,15 +61,6 @@ const UserWidget = React.memo(({ index, widget }) => {
     Utils.isVisibleOnDisplay(displayIndex, showOnDisplay) && active;
 
   /**
-   * Resets the widget state and loading status.
-   */
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-    setIsWidgetActive(true);
-  };
-
-  /**
    * Fetches the widget output and updates the state.
    */
   const getUserWidget = React.useCallback(async () => {
@@ -93,16 +83,6 @@ const UserWidget = React.memo(({ index, widget }) => {
     setIsWidgetActive(true);
     setLoading(false);
   }, [visible, output, hideWhenNoOutput, refreshFrequency]);
-
-  // Use server socket to listen for widget updates
-  useServerSocket(
-    "user-widget",
-    visible,
-    getUserWidget,
-    resetWidget,
-    setLoading,
-    index,
-  );
 
   // Refresh the widget at the specified frequency
   useWidgetRefresh(visible, getUserWidget, refreshFrequency);

@@ -2,7 +2,6 @@ import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
@@ -55,14 +54,6 @@ export const Widget = React.memo(() => {
   );
 
   /**
-   * Resets the widget state.
-   */
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-  };
-
-  /**
    * Fetches the current time and updates the widget state.
    */
   const getTime = React.useCallback(() => {
@@ -72,8 +63,6 @@ export const Widget = React.memo(() => {
     setLoading(false);
   }, [visible, options]);
 
-  // Use server socket to get time updates
-  useServerSocket("time", visible, getTime, resetWidget, setLoading);
   // Refresh the widget at the specified interval
   useWidgetRefresh(visible, getTime, refresh);
 

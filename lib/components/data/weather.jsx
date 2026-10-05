@@ -4,7 +4,6 @@ import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import * as Utils from "../../utils";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 
 export { weatherStyles as styles } from "../../styles/components/data/weather";
@@ -46,14 +45,6 @@ export const Widget = React.memo(() => {
   );
 
   /**
-   * Resets the widget state and loading status
-   */
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-  };
-
-  /**
    * Fetches weather data from wttr.in
    */
   const getWeather = React.useCallback(async () => {
@@ -78,7 +69,6 @@ export const Widget = React.memo(() => {
     setLoading(false);
   }, [visible, location]);
 
-  useServerSocket("weather", visible, getWeather, resetWidget, setLoading);
   useWidgetRefresh(visible, getWeather, refresh);
 
   if (loading) return <DataWidgetLoader.Widget className="weather" />;

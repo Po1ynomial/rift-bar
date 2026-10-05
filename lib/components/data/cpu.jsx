@@ -4,7 +4,6 @@ import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import Graph from "./graph.jsx";
 import * as Icons from "../icons/icons.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
@@ -48,15 +47,6 @@ export const Widget = React.memo(() => {
   const [loading, setLoading] = React.useState(visible);
 
   /**
-   * Reset the widget state
-   */
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-    setGraph([]);
-  };
-
-  /**
    * Fetch CPU usage data
    */
   const getCpu = React.useCallback(async () => {
@@ -77,8 +67,6 @@ export const Widget = React.memo(() => {
     }
   }, [displayAsGraph, setGraph, visible, refresh]);
 
-  // Use server socket to fetch CPU data
-  useServerSocket("cpu", visible, getCpu, resetWidget, setLoading);
   // Refresh the widget at the specified interval
   useWidgetRefresh(visible, getCpu, refresh);
 

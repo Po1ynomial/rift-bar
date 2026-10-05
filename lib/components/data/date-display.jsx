@@ -4,7 +4,6 @@ import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import * as Utils from "../../utils";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 
 export { dateStyles as styles } from "../../styles/components/data/date-display";
@@ -60,14 +59,6 @@ export const Widget = React.memo(() => {
   const _locale = locale.length > 4 ? locale : "en-UK";
 
   /**
-   * Reset the widget state.
-   */
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-  };
-
-  /**
    * Get the current date and update the state.
    */
   const getDate = React.useCallback(() => {
@@ -77,8 +68,6 @@ export const Widget = React.memo(() => {
     setLoading(false);
   }, [_locale, options, visible]);
 
-  // Use server socket to get date updates
-  useServerSocket("date-display", visible, getDate, resetWidget, setLoading);
   // Refresh the widget at the specified interval
   useWidgetRefresh(visible, getDate, refresh);
 

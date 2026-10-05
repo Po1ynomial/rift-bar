@@ -4,7 +4,6 @@ import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import { SuspenseIcon } from "../icons/icon.jsx";
 import useWidgetRefresh from "../../hooks/use-widget-refresh";
-import useServerSocket from "../../hooks/use-server-socket";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
@@ -37,14 +36,6 @@ export const Widget = React.memo(() => {
 
   const [state, setState] = React.useState();
   const [loading, setLoading] = React.useState(visible);
-
-  /**
-   * Resets the widget state
-   */
-  const resetWidget = () => {
-    setState(undefined);
-    setLoading(false);
-  };
 
   /**
    * Fetches the current browser track information
@@ -88,13 +79,6 @@ export const Widget = React.memo(() => {
     setLoading(false);
   }, [visible, refresh]);
 
-  useServerSocket(
-    "browser-track",
-    visible,
-    getBrowserTrack,
-    resetWidget,
-    setLoading,
-  );
   useWidgetRefresh(visible, getBrowserTrack, refresh);
 
   if (loading) return <DataWidgetLoader.Widget className="browser-track" />;
