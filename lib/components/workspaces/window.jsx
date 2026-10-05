@@ -3,7 +3,7 @@ import * as AppIcons from "../../app-icons";
 import { SuspenseIcon } from "../icons/icon.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
-import * as WorkspaceManager from "../../workspace-manager";
+import * as Rift from "../../rift";
 
 const { React } = Uebersicht;
 
@@ -47,7 +47,7 @@ export default function Window({ window }) {
    */
   const onClick = (e) => {
     !displayOnlyCurrent && Utils.clickEffect(e);
-    WorkspaceManager.focusWindow(id);
+    Rift.focusWindow(id);
   };
 
   /**

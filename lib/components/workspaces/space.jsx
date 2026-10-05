@@ -2,7 +2,7 @@ import * as Uebersicht from "uebersicht";
 import OpenedApps from "./opened-apps.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils.js";
-import * as WorkspaceManager from "../../workspace-manager.js";
+import * as Rift from "../../rift.js";
 
 const { React } = Uebersicht;
 
@@ -31,9 +31,9 @@ export default function Space({ space, lastOfSpace }) {
   const onClick = (e) => {
     if (
       focused &&
-      (settings.global.windowManager !== "rift" || space.monitor === displayIndex)
+      space.monitor === displayIndex
     ) return;
-    WorkspaceManager.goToSpace(space);
+    Rift.goToSpace(space);
     Utils.clickEffect(e);
   };
 

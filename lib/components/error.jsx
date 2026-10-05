@@ -4,8 +4,6 @@ import * as Utils from "../utils";
 // Error messages for different types of errors
 const message = {
   error: "Something went wrong…",
-  yabaiError: "yabai is not running",
-  aerospaceError: "AeroSpace is either not running or outdated",
   riftError: "Cannot query Rift. Check rift-cli, jq, and that Rift is running.",
   noOutput: "Loading…",
   noData: "JSON error…",
@@ -30,7 +28,7 @@ export function Component({ type, classes }) {
   }
 
   // Retry a stopped window manager without polling during normal operation.
-  if (type === "yabaiError" || type === "aerospaceError" || type === "riftError") {
+  if (type === "riftError") {
     setTimeout(Utils.softRefresh, 15000);
   }
 

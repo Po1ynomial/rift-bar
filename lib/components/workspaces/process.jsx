@@ -1,7 +1,7 @@
 import * as Uebersicht from "uebersicht";
 import Window from "./window.jsx";
 import * as Utils from "../../utils";
-import { useAerospaceContext } from "../aerospace-context.jsx";
+import { useWorkspaceContext } from "../workspace-context.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 
 export { processStyles as styles } from "../../styles/components/process";
@@ -13,8 +13,8 @@ const { React } = Uebersicht;
  * @returns {JSX.Element|null} The rendered component or null if not visible.
  */
 const Component = React.memo(() => {
-  // Get spaces from aerospace context
-  const { spaces } = useAerospaceContext();
+  // Get workspaces from context
+  const { spaces } = useWorkspaceContext();
   // Get settings and display index from simple bar context
   const { settings, displayIndex } = useSimpleBarContext();
   const { spacesDisplay, process, widgets } = settings;

@@ -1,9 +1,8 @@
 import * as Uebersicht from "uebersicht";
 import Space from "./space.jsx";
-import { useAerospaceContext } from "../aerospace-context.jsx";
+import { useWorkspaceContext } from "../workspace-context.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils.js";
-import * as WorkspaceManager from "../../workspace-manager.js";
 
 export { spacesStyles as styles } from "../../styles/components/spaces/spaces.js";
 
@@ -14,8 +13,8 @@ const { React } = Uebersicht;
  * @returns {JSX.Element|null} The rendered component.
  */
 const Component = React.memo(() => {
-  // Get spaces from aerospace context
-  const { spaces } = useAerospaceContext();
+  // Get workspaces from context
+  const { spaces } = useWorkspaceContext();
   // Get displays, displayIndex, and settings from simple bar context
   const { displays, displayIndex, settings } = useSimpleBarContext();
   const { spacesDisplay, process } = settings;
@@ -37,7 +36,7 @@ const Component = React.memo(() => {
 
   // Map through displays and render spaces for the current display
   return displays.map((display) => {
-    const displayId = WorkspaceManager.getDisplayIndex(display);
+    const displayId = display.index;
     if (displayId !== displayIndex) return null;
 
     // Filter spaces based on display settings

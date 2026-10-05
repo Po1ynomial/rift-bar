@@ -34,8 +34,7 @@ test("Wi-Fi preserves real names and existing display options", () => {
 });
 
 test("workspace buttons use the configured font size", () => {
-  // The shared rule ends with .stickies__inner and also applies to .space__inner.
-  assert.equal(declarations("\\.space__inner,\\s*\\.spaces__add,\\s*\\.stickies__inner")["font-size"], "var(--font-size)");
+  assert.equal(declarations("\\.space__inner")["font-size"], "var(--font-size)");
 });
 
 test("workspace app icons scale with the configured font size", () => {

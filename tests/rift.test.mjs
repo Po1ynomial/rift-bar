@@ -7,44 +7,30 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { SourceTextModule, SyntheticModule, createContext } from "node:vm";
 
-async function loadBackend(manager = "rift", run) {
+async function loadBackend(run) {
   const calls = [];
   const context = createContext();
-  let riftModule;
-  const settings = { global: { windowManager: manager, riftPath: "/tmp/Rift's CLI" } };
+  const settings = { global: { riftPath: "/tmp/Rift's CLI" } };
   const dependencies = new Map([
     ["uebersicht", { run: async (command) => {
       calls.push(command);
       return run ? run(command, calls.length) : "{}";
     } }],
     ["./settings", { get: () => settings }],
-    ["./aerospace", {
-      getDisplayIndex: (display) => display.aerospaceIndex,
-      goToSpace: async (workspace) => calls.push(["workspace", workspace]),
-      focusWindow: async (id) => calls.push(["window", id]),
-    }],
   ]);
-  async function linker(specifier) {
-    if (specifier === "./rift") {
-      riftModule = new SourceTextModule(
-        await readFile(new URL("../lib/rift.js", import.meta.url), "utf8"),
-        { context },
-      );
-      return riftModule;
-    }
+  const module = new SourceTextModule(
+    await readFile(new URL("../lib/rift.js", import.meta.url), "utf8"),
+    { context },
+  );
+  await module.link(async (specifier) => {
     const exports = dependencies.get(specifier);
     assert.ok(exports, `Unexpected dependency: ${specifier}`);
     return new SyntheticModule(Object.keys(exports), function () {
       for (const [name, value] of Object.entries(exports)) this.setExport(name, value);
     }, { context });
-  }
-  const module = new SourceTextModule(
-    await readFile(new URL("../lib/workspace-manager.js", import.meta.url), "utf8"),
-    { context },
-  );
-  await module.link(linker);
+  });
   await module.evaluate();
-  return { backend: module.namespace, rift: riftModule.namespace, calls };
+  return { backend: module.namespace, rift: module.namespace, calls };
 }
 
 test("Rift commands quote paths and focus the target display before switching", async () => {
@@ -63,15 +49,6 @@ test("window focus uses the complete Rift ID", async () => {
   const { backend, calls } = await loadBackend();
   await backend.focusWindow({ pid: 123, idx: 456 });
   assert.ok(calls[0].endsWith(`execute window focus --window-id '{"pid":123,"idx":456}'`));
-  assert.equal(backend.getDisplayIndex({ index: 2 }), 2);
-});
-
-test("AeroSpace commands retain their original arguments", async () => {
-  const { backend, calls } = await loadBackend("aerospace");
-  await backend.goToSpace({ workspace: "Web" });
-  await backend.focusWindow(42);
-  assert.deepEqual(calls, [["workspace", "Web"], ["window", 42]]);
-  assert.equal(backend.getDisplayIndex({ aerospaceIndex: 4 }), 4);
 });
 
 test("event setup runs once per widget instance, snapshots run on every refresh", async () => {
@@ -84,7 +61,7 @@ test("event setup runs once per widget instance, snapshots run on every refresh"
 });
 
 test("failed subscription setup is retried instead of caching rejection", async () => {
-  const { rift, calls } = await loadBackend("rift", async (_command, count) => {
+  const { rift, calls } = await loadBackend(async (_command, count) => {
     if (count === 1) throw new Error("Rift is stopped");
     return "{}";
   });
@@ -133,6 +110,7 @@ test("snapshot preserves per-display workspace identity, names, and titles", asy
     const result = spawnSync("sh", [script, mock], { encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr);
     const snapshot = JSON.parse(result.stdout);
+    assert.deepEqual(Object.keys(snapshot).sort(), ["displays", "spaces"]);
     assert.deepEqual(snapshot.displays.map(({ id, index }) => [id, index]), [[7, 1], [1, 2]]);
     assert.equal(snapshot.spaces.length, 4);
     assert.notEqual(snapshot.spaces[0].workspace, snapshot.spaces[2].workspace);

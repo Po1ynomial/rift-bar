@@ -1,18 +1,24 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "config.json",
-  "title": "simple-bar config JSON schema",
+  "title": "rift-bar config JSON schema",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "$schema": { "type": "string" },
+    "$schema": {
+      "type": "string"
+    },
     "global": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "theme": {
           "type": "string",
-          "enum": ["auto", "dark", "light"],
+          "enum": [
+            "auto",
+            "dark",
+            "light"
+          ],
           "description": "Theme to use"
         },
         "floatingBar": {
@@ -34,10 +40,6 @@
         "sideDecoration": {
           "type": "boolean",
           "description": "Add an Apple logo on the left side of simple-bar"
-        },
-        "inlineSpacesOptions": {
-          "type": "boolean",
-          "description": "Show spaces options inline"
         },
         "disableAnimations": {
           "type": "boolean",
@@ -75,31 +77,25 @@
           "type": "string",
           "description": "Define the font size for all the widgets. You can use any css unit. It can particulary be usefull if you have displays with different pixel density and different scaling factor in which case you can set a value with a relative viewport unit like 1vh. Be careful to not set a value too high as it could break all simple-bar interface as this setting is used for every texts"
         },
-        "yabaiPath": {
-          "type": "string",
-          "description": "Determine the path to the yabai binary"
-        },
-        "aerospacePath": {
-          "type": "string",
-          "description": "Determine the path to the aerospace binary"
-        },
         "riftPath": {
           "type": "string",
           "description": "Path to the rift-cli binary"
         },
-        "windowManager": {
-          "type": "string",
-          "enum": ["yabai", "aerospace", "rift"],
-          "description": "Window manager used to display spaces and processes: yabai, aerospace, or rift"
-        },
         "shell": {
           "type": "string",
-          "enum": ["sh", "bash", "dash"],
+          "enum": [
+            "sh",
+            "bash",
+            "dash"
+          ],
           "description": "Depending on your preference you can choose between these 3 shell for all simple-bar scripts execution: sh, bash, dash"
         },
         "terminal": {
           "type": "string",
-          "enum": ["Terminal", "iTerm2"],
+          "enum": [
+            "Terminal",
+            "iTerm2"
+          ],
           "description": "Define the terminal used by simple-bar to run commands"
         },
         "slidingAnimationPace": {
@@ -113,14 +109,6 @@
         "serverSocketPort": {
           "type": "number",
           "description": "Determine the port on which the websockets will be opened. Check you simple-bar-server config file to get the right port if you changed it"
-        },
-        "yabaiServerRefresh": {
-          "type": "boolean",
-          "description": "Enable websocket connection to the server in yabai spaces & process widgets. You must install and launch simple-bar-server before activating this setting"
-        },
-        "aerospaceServerRefresh": {
-          "type": "boolean",
-          "description": "Enable websocket connection to the server in AeroSpace spaces widgets. You must install and launch simple-bar-server before activating this setting"
         }
       }
     },
@@ -214,10 +202,6 @@
           "type": "boolean",
           "description": "The process widget will be centered. Do not activate it if you run simple-bar on a mac with a notch"
         },
-        "showCurrentSpaceMode": {
-          "type": "boolean",
-          "description": "[yabai] Show the current space yabai mode on the left of the processes"
-        },
         "hideWindowTitle": {
           "type": "boolean",
           "description": "Hide window titles"
@@ -229,18 +213,6 @@
         "expandAllProcesses": {
           "type": "boolean",
           "description": "All processes are revealed"
-        },
-        "displaySkhdMode": {
-          "type": "boolean",
-          "description": "[yabai] If the current space is in stack mode, each process will have its stack index displayed"
-        },
-        "displayStackIndex": {
-          "type": "boolean",
-          "description": "[yabai] Show stack index only on focused process"
-        },
-        "displayOnlyCurrentStack": {
-          "type": "boolean",
-          "description": "[yabai] Show stack-index only for focused process"
         }
       }
     },
@@ -276,35 +248,9 @@
           "type": "boolean",
           "description": "Each instance of an app is displayed separately in their respective space. You can merge all duplicates with this setting"
         },
-        "displayStickyWindowsSeparately": {
-          "type": "boolean",
-          "description": "[yabai] Sticky windows are displayed on each screens by default. You can choose to displayed only in one place thanks to this settings (at the left of all the spaces)"
-        },
-        "hideCreateSpaceButton": {
-          "type": "boolean",
-          "description": "[yabai] Simply hide the \"+\" button (which is only visible if you have SIP disabled)"
-        },
         "hideEmptySpaces": {
           "type": "boolean",
           "description": "Hide spaces with no opened apps"
-        },
-        "showOptionsOnHover": {
-          "type": "boolean",
-          "description": "Space options are opened on right click if this setting is set to false"
-        },
-        "switchSpacesWithoutYabai": {
-          "type": "boolean",
-          "description": "Instead of relying on yabai to switch to a specific space (on space click), simple-bar will trigger the \"switch to prev/next\" space shortcut which need to be enabled in macos settings to be working"
-        },
-        "customAeroSpaceDisplayIndexes": {
-          "type": "object",
-          "description": "[AeroSpace] Allow display numbering override in case of monitor numbering mismatch between AeroSpace and Übersicht",
-          "patternProperties": {
-            "^\\d+$": {
-              "type": "number",
-              "description": "Override the display index for the monitor with the given ID"
-            }
-          }
         }
       }
     },
@@ -462,7 +408,10 @@
         },
         "unit": {
           "type": "string",
-          "enum": ["C", "F"],
+          "enum": [
+            "C",
+            "F"
+          ],
           "description": "The temperature unit to use (C or F)"
         },
         "hideLocation": {
@@ -531,7 +480,11 @@
         },
         "cpuMonitorApp": {
           "type": "string",
-          "enum": ["Activity Monitor", "Top", "None"],
+          "enum": [
+            "Activity Monitor",
+            "Top",
+            "None"
+          ],
           "description": "Define the opened app on widget click: Activity Monitor, Top or None"
         }
       }
@@ -566,7 +519,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "refreshFrequency": { "type": "number" },
+        "refreshFrequency": {
+          "type": "number"
+        },
         "showOnDisplay": {
           "type": "string",
           "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
@@ -581,7 +536,11 @@
         },
         "memoryMonitorApp": {
           "type": "string",
-          "enum": ["Activity Monitor", "Top", "None"],
+          "enum": [
+            "Activity Monitor",
+            "Top",
+            "None"
+          ],
           "description": "Define the opened app on widget click: Activity Monitor, Top or None"
         }
       }
@@ -830,7 +789,10 @@
         },
         "denomination": {
           "type": "string",
-          "enum": ["usd", "eur"],
+          "enum": [
+            "usd",
+            "eur"
+          ],
           "description": "The displayed denomination, usd or eur"
         },
         "identifiers": {
@@ -991,8 +953,14 @@
           "type": "string",
           "description": "The binary path required to run mpc commands from the widget"
         },
-        "mpdPort": { "type": "string", "description": "The port used by MPD" },
-        "mpdHost": { "type": "string", "description": "The host used by MPD" },
+        "mpdPort": {
+          "type": "string",
+          "description": "The port used by MPD"
+        },
+        "mpdHost": {
+          "type": "string",
+          "description": "The host used by MPD"
+        },
         "mpdFormatString": {
           "type": "string",
           "description": "The format string used by MPC"

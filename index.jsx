@@ -45,24 +45,14 @@ import * as Rift from "./lib/rift";
 // Destructure React from Uebersicht in order to make eslint catch hook rules for example
 const { React } = Uebersicht;
 
-// Spaces & process components are lazy loaded to avoid loading them when not needed
-const YabaiContextProvider = React.lazy(
-  () => import("./lib/components/yabai-context.jsx"),
+const WorkspaceContextProvider = React.lazy(
+  () => import("./lib/components/workspace-context.jsx"),
 );
-const AerospaceContextProvider = React.lazy(
-  () => import("./lib/components/aerospace-context.jsx"),
+const WorkspaceSpaces = React.lazy(
+  () => import("./lib/components/workspaces/spaces.jsx"),
 );
-const YabaiSpaces = React.lazy(
-  () => import("./lib/components/yabai/spaces.jsx"),
-);
-const YabaiProcess = React.lazy(
-  () => import("./lib/components/yabai/process.jsx"),
-);
-const AerospaceSpaces = React.lazy(
-  () => import("./lib/components/aerospace/spaces.jsx"),
-);
-const AerospaceProcess = React.lazy(
-  () => import("./lib/components/aerospace/process.jsx"),
+const WorkspaceProcess = React.lazy(
+  () => import("./lib/components/workspaces/process.jsx"),
 );
 
 // Window-manager events trigger refreshes. No periodic workspace polling.
@@ -71,33 +61,8 @@ const refreshFrequency = false;
 // Init settings from file if existing
 Settings.init();
 
-// Get settings from the Settings module
 const settings = Settings.get();
-const {
-  // Do not edit the yabaiPath or aerospacePath lines, theses values are simply
-  // a default value used if nothing is defined in settings.
-  // You can setup your custom yabai or AeroSpace path in the settings module (Global tab) :
-  // while on an empty workspace, click on simple-bar then press cmd + , to open it.
-  yabaiPath = "/opt/homebrew/bin/yabai",
-  aerospacePath = "/opt/homebrew/bin/aerospace",
-  windowManager, // Window manager type (yabai, aerospace, or rift)
-  shell, // Shell to use for commands
-  enableServer, // Enable server mode
-  yabaiServerRefresh, // Refresh rate for yabai server
-} = settings.global;
-const { hideWindowTitle, displayOnlyIcon, displaySkhdMode } = settings.process;
-
-// Determine if signals should be disabled based on settings
-const disableSignals = enableServer && yabaiServerRefresh;
-const enableTitleChangedSignal = !hideWindowTitle && !displayOnlyIcon;
-
-// Construct command arguments based on window manager type
-const yabaiArgs = `${yabaiPath} ${displaySkhdMode} ${disableSignals} ${enableTitleChangedSignal}`;
-const aerospaceArgs = `${aerospacePath}`;
-const args = getArguments(windowManager, yabaiArgs, aerospaceArgs);
-const command = windowManager === "rift"
-  ? Rift.getSnapshot
-  : `${shell} simple-bar/lib/scripts/init-${windowManager}.sh ${args}`;
+const command = Rift.getSnapshot;
 
 // Inject global styles into the document
 // I prefer using native CSS instead of Emotion bundled by default in Übersicht
@@ -148,7 +113,6 @@ function render({ output, error }) {
     "simple-bar--no-bar-background": settings.global.noBarBg,
     "simple-bar--no-color-in-data": settings.global.noColorInData,
     "simple-bar--on-bottom": settings.global.bottomBar,
-    "simple-bar--inline-spaces-options": settings.global.inlineSpacesOptions,
     "simple-bar--animations-disabled": settings.global.disableAnimations,
     "simple-bar--spaces-background-color-as-foreground":
       settings.global.spacesBackgroundColorAsForeground,
@@ -171,8 +135,7 @@ function render({ output, error }) {
   const cleanedUpOutput = Utils.cleanupOutput(output);
 
   // Handle window-manager query failures
-  const errors = ["yabaiError", "aerospaceError", "riftError"];
-  if (errors.includes(cleanedUpOutput)) {
+  if (cleanedUpOutput === "riftError") {
     return <Error.Component type={cleanedUpOutput} classes={baseClasses} />;
   }
 
@@ -180,15 +143,7 @@ function render({ output, error }) {
   const data = Utils.parseJson(cleanedUpOutput);
   if (!data) return <Error.Component type="noData" classes={baseClasses} />;
 
-  const { displays, shadow, skhdMode, SIP, spaces, windows } = data;
-
-  // Check if SIP (System Integrity Protection) is disabled
-  const SIPDisabled = SIP !== "System Integrity Protection status: enabled.";
-
-  // Define additional classes based on data
-  const classes = Utils.classNames(baseClasses, {
-    "simple-bar--no-shadow": shadow !== "on",
-  });
+  const { displays, spaces } = data;
 
   // Handle bar focus ring on click
   Utils.handleBarFocus();
@@ -198,27 +153,14 @@ function render({ output, error }) {
     <SimpleBarContextProvider
       initialSettings={settings}
       displays={displays}
-      SIPDisabled={SIPDisabled}
     >
-      <div className={classes}>
+      <div className={baseClasses}>
         <SideIcon.Component />
         <React.Suspense fallback={<React.Fragment />}>
-          {windowManager === "yabai" && (
-            <YabaiContextProvider
-              spaces={spaces}
-              windows={windows}
-              skhdMode={skhdMode}
-            >
-              <YabaiSpaces />
-              <YabaiProcess />
-            </YabaiContextProvider>
-          )}
-          {(windowManager === "aerospace" || windowManager === "rift") && (
-            <AerospaceContextProvider spaces={spaces}>
-              <AerospaceSpaces />
-              <AerospaceProcess />
-            </AerospaceContextProvider>
-          )}
+          <WorkspaceContextProvider spaces={spaces}>
+            <WorkspaceSpaces />
+            <WorkspaceProcess />
+          </WorkspaceContextProvider>
         </React.Suspense>
         <Settings.Wrapper />
         <div className="simple-bar__data">
@@ -255,13 +197,3 @@ function render({ output, error }) {
 }
 
 export { command, refreshFrequency, render };
-
-function getArguments(windowManager, yabaiArgs, aerospaceArgs) {
-  if (windowManager === "yabai") {
-    return yabaiArgs;
-  }
-  if (windowManager === "aerospace") {
-    return aerospaceArgs;
-  }
-  return "";
-}

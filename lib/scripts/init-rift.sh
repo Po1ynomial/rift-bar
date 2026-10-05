@@ -40,7 +40,5 @@ printf '%s' "$displays" | jq -ce --argjson spaces "$spaces" '{
   displays: ([.[] | select(.space != null)] | to_entries | map(
     .value + {id: .value.screen_id, index: (.key + 1)}
   )),
-  spaces: $spaces,
-  SIP: "System Integrity Protection status: enabled.",
-  shadow: "on"
+  spaces: $spaces
 }' || fail
