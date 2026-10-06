@@ -5,8 +5,8 @@ Generated from `lib/config.js`. All fields are optional overrides. Omitted field
 | Field | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `appearance.theme` | `auto`, `dark`, `light` | `"auto"` | Appearance |
-| `appearance.dark_theme` | `NightShiftDark`, `MacOSDark`, `OneDark`, `GruvboxDark`, `GruvboxMaterial`, `Dracula`, `Nord`, `Amarena`, `SolarizedDark`, `Cisco`, `Sylens`, `SpaceDuck`, `MidsummerNightDark`, `Catppuccin`, `CatppuccinFrappe`, `CatppuccinMacchiato`, `CatppuccinMocha`, `TokyoNight`, `MaterialOcean`, `NightOwl`, `NightfoxDark`, `VscodeDarkModern`, `RosePine`, `RosePineMoon`, `CyberdreamDark` | `"NightShiftDark"` | Dark theme |
-| `appearance.light_theme` | `NightShiftLight`, `MacOSLight`, `OneLight`, `GruvboxLight`, `SolarizedLight`, `CatppuccinLatte`, `NightfoxLight`, `RosePineDawn`, `CyberdreamLight` | `"NightShiftLight"` | Light theme |
+| `appearance.dark_theme` | `NightShiftDark`, `MacOSDark`, `OneDark`, `GruvboxDark`, `GruvboxMaterial`, `Dracula`, `Nord`, `Amarena`, `SolarizedDark`, `Cisco`, `Sylens`, `SpaceDuck`, `MidsummerNightDark`, `Catppuccin`, `CatppuccinFrappe`, `CatppuccinMacchiato`, `CatppuccinMocha`, `TokyoNight`, `MaterialOcean`, `NightOwl`, `NightfoxDark`, `VscodeDarkModern`, `RosePine`, `RosePineMoon`, `CyberdreamDark`, `WallustDark` | `"NightShiftDark"` | Dark theme |
+| `appearance.light_theme` | `NightShiftLight`, `MacOSLight`, `OneLight`, `GruvboxLight`, `SolarizedLight`, `CatppuccinLatte`, `NightfoxLight`, `RosePineDawn`, `CyberdreamLight`, `WallustLight` | `"NightShiftLight"` | Light theme |
 | `appearance.font` | string | `"JetBrains Mono, Monaco, Menlo, monospace"` | Font |
 | `appearance.font_size` | string | `"11px"` | Font size |
 | `appearance.animations` | boolean | `true` | Persistent animations |

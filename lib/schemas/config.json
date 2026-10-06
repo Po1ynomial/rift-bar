@@ -45,7 +45,8 @@
             "VscodeDarkModern",
             "RosePine",
             "RosePineMoon",
-            "CyberdreamDark"
+            "CyberdreamDark",
+            "WallustDark"
           ]
         },
         "light_theme": {
@@ -61,7 +62,8 @@
             "CatppuccinLatte",
             "NightfoxLight",
             "RosePineDawn",
-            "CyberdreamLight"
+            "CyberdreamLight",
+            "WallustLight"
           ]
         },
         "font": {

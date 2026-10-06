@@ -87,6 +87,10 @@ The bar includes clock, date, battery/caffeinate, Wi-Fi, output and input volume
 
 Zoom depends on its application UI and automation permissions. GitHub requires an authenticated `gh`; an absent binary produces an unavailable state.
 
+## Wallpaper themes
+
+The `WallustDark` and `WallustLight` themes color the bar from [wallust](https://codeberg.org/explosion-mental/wallust) wallpaper palettes. Run `extras/wallust/wallust-rift-bar.sh <image>` (optionally with separate dark and light images), select the themes in appearance settings, and reload. Without palette files the themes fall back to NightShift colors. See [docs/wallust.md](docs/wallust.md).
+
 ## Widget protocol
 
 A definition declares a stable `id`, a positive default `refreshFrequency`, a `load({ config, signal, force })` function, and a snapshot validator. Views call `useWidget(definition, active, config)` and receive `data`, `status`, `error`, `updatedAt`, and `refresh`. Configuration defaults, validation, controls, and generated schema entries come from `lib/config.js`. Views use the resolved snake_case widget settings directly.

@@ -1,0 +1,4 @@
+palette = "light"
+
+[templates]
+rift_bar = { template = "rift-bar.json", target = "~/.config/rift-bar/wallust-light.json" }

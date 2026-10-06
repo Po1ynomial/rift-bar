@@ -286,3 +286,36 @@ test("shell persistence preserves Unicode, quotes, backslashes, and newlines in 
     await settings.set({ widgets: { weather: { location_mode: "configured", location } } });
     assert.deepEqual(parseConfig(await readFile(path, "utf8")).widgets.weather.location, location);
   }));
+
+test("a wallust palette beside the TOML recolors the Wallust themes", async () =>
+  sandbox(async ({ home, path, run }) => {
+    await mkdir(join(path, ".."), { recursive: true });
+    const palette = {
+      background: "#101418",
+      foreground: "#e8ecf0",
+      cursor: "#c08769",
+      ...Object.fromEntries(
+        Array.from({ length: 16 }, (_, index) => [
+          `color${index}`,
+          `#${String(16 + index).padStart(2, "0")}1010`,
+        ]),
+      ),
+    };
+    const palettePath = join(home, ".config", "rift-bar", "wallust-dark.json");
+    await writeFile(palettePath, JSON.stringify(palette));
+    const { settings } = await preferences(run);
+    await settings.init();
+    // The stamp is computed in the settings module's realm; it identifies the
+    // applied palette without crossing realm boundaries.
+    const stamp = settings.getState().paletteStamp;
+    assert.ok(stamp.includes("#101418"));
+    assert.ok(stamp.endsWith("|undefined"));
+    await writeFile(palettePath, JSON.stringify({ ...palette, background: "#202428" }));
+    await settings.reload();
+    const changed = settings.getState().paletteStamp;
+    assert.notEqual(changed, stamp);
+    assert.ok(changed.includes("#202428"));
+    await rm(palettePath);
+    await settings.reload();
+    assert.equal(settings.getState().paletteStamp, "undefined|undefined");
+  }));

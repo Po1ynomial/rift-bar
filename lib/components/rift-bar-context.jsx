@@ -23,7 +23,7 @@ export default function RiftBarContextProvider({ initialSettings, displays, chil
   React.useEffect(() => Settings.subscribe(setConfig), []);
   React.useEffect(() => {
     Utils.injectStyles("rift-bar-config-styles", [buildStyles(config.settings)]);
-  }, [config.settings]);
+  }, [config.settings, config.paletteStamp]);
   React.useEffect(() => {
     const pending = timers.current;
     return () => {
