@@ -36,14 +36,59 @@ export const React = {
   createContext: () => ({ Provider: () => {} }),
 };
 
-export async function loadModule(path, { globals = {}, mocks = {}, evaluate = true } = {}) {
+// A small JSX transform for element-tree assertions. This does not simulate a DOM.
+function elementJSX(source) {
+  const ast = parse(source, { ecmaVersion: "latest", sourceType: "module", ecmaFeatures: { jsx: true } });
+  function js(node) {
+    const replacements = [];
+    function visit(child) {
+      if (child.type === "JSXElement" || child.type === "JSXFragment") {
+        replacements.push([child.start, child.end, element(child)]);
+        return;
+      }
+      for (const key of VisitorKeys[child.type] || []) {
+        const children = Array.isArray(child[key]) ? child[key] : [child[key]];
+        for (const value of children) if (value) visit(value);
+      }
+    }
+    visit(node);
+    let result = source.slice(node.start, node.end);
+    for (const [start, end, value] of replacements.reverse()) {
+      result = result.slice(0, start - node.start) + value + result.slice(end - node.start);
+    }
+    return result;
+  }
+  function element(node) {
+    const opening = node.openingElement;
+    const name = opening ? source.slice(opening.name.start, opening.name.end) : "React.Fragment";
+    const tag = /^[a-z]/.test(name) ? JSON.stringify(name) : name;
+    const attributes = (opening?.attributes || []).map((attribute) => {
+      if (attribute.type === "JSXSpreadAttribute") return `...${js(attribute.argument)}`;
+      const value = !attribute.value ? "true" : attribute.value.type === "Literal"
+        ? JSON.stringify(attribute.value.value) : js(attribute.value.expression);
+      return `${JSON.stringify(attribute.name.name)}: ${value}`;
+    });
+    const children = node.children.flatMap((child) => {
+      if (child.type === "JSXText") {
+        const text = child.value.replace(/\s+/g, " ").trim();
+        return text ? [JSON.stringify(text)] : [];
+      }
+      if (child.type === "JSXExpressionContainer") return child.expression.type === "JSXEmptyExpression" ? [] : [js(child.expression)];
+      return [element(child)];
+    });
+    return `React.createElement(${tag}, {${attributes.join(",")}}${children.length ? `,${children.join(",")}` : ""})`;
+  }
+  return js(ast);
+}
+
+export async function loadModule(path, { globals = {}, mocks = {}, evaluate = true, jsx = false } = {}) {
   const context = createContext({ console, ...globals });
   const modules = new Map();
   async function load(filename) {
     if (!modules.has(filename)) {
       modules.set(filename, (async () => {
         let source = await readFile(filename, "utf8");
-        if (filename.endsWith(".jsx")) source = stripJSX(source);
+        if (filename.endsWith(".jsx")) source = jsx ? elementJSX(source) : stripJSX(source);
         return new SourceTextModule(source, { context, identifier: filename });
       })());
     }

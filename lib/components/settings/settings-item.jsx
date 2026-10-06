@@ -55,13 +55,13 @@ export default function SettingsItem({
       <div className="settings__item-option" key={option} onClick={onClick}>
         <input
           name={code}
-          id={option}
+          id={`${code}-${option}`}
           value={option}
           type="radio"
           defaultChecked={option === defaultValue}
         />
         <label
-          htmlFor={option}
+          htmlFor={`${code}-${option}`}
           dangerouslySetInnerHTML={{ __html: `${option} ${label}` }}
         />
       </div>

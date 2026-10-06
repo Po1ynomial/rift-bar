@@ -1,15 +1,16 @@
 import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
-import useWidgetRefresh from "../../hooks/use-widget-refresh";
+import useWidget from "../../hooks/use-widget.js";
+import { time as definition } from "../../widgets/system.js";
+import WidgetStatus from "./widget-status.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
+export { definition };
 export { timeStyles as styles } from "../../styles/components/data/time";
 
 const { React } = Uebersicht;
-
-const DEFAULT_REFRESH_FREQUENCY = 1000;
 
 /**
  * Time widget component.
@@ -17,54 +18,13 @@ const DEFAULT_REFRESH_FREQUENCY = 1000;
  */
 export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
-  const { widgets, timeWidgetOptions } = settings;
-  const { timeWidget } = widgets;
-  const {
-    refreshFrequency,
-    hour12,
-    dayProgress,
-    showSeconds,
-    showOnDisplay,
-    showIcon,
-  } = timeWidgetOptions;
-
-  // Determine if the widget should be visible on the current display
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, showOnDisplay) && timeWidget;
-
-  // Calculate the refresh frequency for the widget
-  const refresh = React.useMemo(
-    () =>
-      Utils.getRefreshFrequency(refreshFrequency, DEFAULT_REFRESH_FREQUENCY),
-    [refreshFrequency],
-  );
-
-  const [state, setState] = React.useState();
-  const [loading, setLoading] = React.useState(visible);
-
-  // Options for formatting the time string
-  const options = React.useMemo(
-    () => ({
-      hour: "numeric",
-      minute: "numeric",
-      second: showSeconds ? "numeric" : undefined,
-      hour12,
-    }),
-    [hour12, showSeconds],
-  );
-
-  /**
-   * Fetches the current time and updates the widget state.
-   */
-  const getTime = React.useCallback(() => {
-    if (!visible) return;
-    const time = new Date().toLocaleString("en-UK", options);
-    setState({ time });
-    setLoading(false);
-  }, [visible, options]);
-
-  // Refresh the widget at the specified interval
-  useWidgetRefresh(visible, getTime, refresh);
+  const config = settings.timeWidgetOptions;
+  const { dayProgress, showIcon } = config;
+  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.timeWidget;
+  const { data: state, status, error, refresh: getTime } = useWidget(definition, visible, config);
+  const loading = status === "idle" || status === "loading";
+  if (!visible) return null;
+  if (!loading && state === undefined) return <WidgetStatus name="time" status={status} error={error} onRetry={getTime} />;
 
   if (loading) return <DataWidgetLoader.Widget className="time" />;
   if (!state) return null;
@@ -89,6 +49,8 @@ export const Widget = React.memo(() => {
 
   return (
     <DataWidget.Widget
+      status={status}
+      title={error?.message}
       classes="time"
       Icon={showIcon ? TimeIcon : null}
       disableSlider

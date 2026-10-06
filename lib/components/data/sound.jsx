@@ -3,15 +3,16 @@ import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import { SuspenseIcon } from "../icons/icon.jsx";
-import useWidgetRefresh from "../../hooks/use-widget-refresh";
+import useWidget from "../../hooks/use-widget.js";
+import { sound as definition } from "../../widgets/system.js";
+import WidgetStatus from "./widget-status.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
+export { definition };
 export { soundStyles as styles } from "../../styles/components/data/sound";
 
 const { React } = Uebersicht;
-
-const DEFAULT_REFRESH_FREQUENCY = 20000;
 
 /**
  * Sound widget component.
@@ -19,61 +20,19 @@ const DEFAULT_REFRESH_FREQUENCY = 20000;
  */
 export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
-  const { widgets, soundWidgetOptions } = settings;
-  const { soundWidget } = widgets;
-  const { refreshFrequency, showOnDisplay, showIcon } = soundWidgetOptions;
-
-  // Determine the refresh frequency for the widget.
-  const refresh = React.useMemo(
-    () =>
-      Utils.getRefreshFrequency(refreshFrequency, DEFAULT_REFRESH_FREQUENCY),
-    [refreshFrequency],
-  );
-
-  // Determine if the widget should be visible on the current display.
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, showOnDisplay) && soundWidget;
-
-  const [state, setState] = React.useState();
-  const [loading, setLoading] = React.useState(visible);
+  const config = settings.soundWidgetOptions;
+  const { showIcon } = config;
+  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.soundWidget;
+  const { data: state, status, error, refresh: getSound } = useWidget(definition, visible, config);
+  const loading = status === "idle" || status === "loading";
   const { volume: _volume } = state || {};
-  const [volume, setVolume] = React.useState(_volume && parseInt(_volume, 10));
+  const [volume, setVolume] = React.useState();
   const [dragging, setDragging] = React.useState(false);
-
-  /**
-   * Fetch the current sound settings.
-   */
-  const getSound = React.useCallback(async () => {
-    if (!visible) return;
-    const output = await Utils.cachedRun(
-      `osascript -e 'set v to get volume settings' -e 'output volume of v & "," & output muted of v'`,
-      refresh,
-    );
-    const parts = Utils.cleanupOutput(output).split(",");
-    setState({
-      volume: parts[0],
-      muted: parts[1],
-    });
-    setLoading(false);
-  }, [visible, refresh]);
-
-  // Refresh the widget at the specified interval.
-  useWidgetRefresh(visible, getSound, refresh);
-
-  // Update the sound settings when dragging ends.
   React.useEffect(() => {
-    if (!dragging) setSound(volume);
-  }, [dragging, volume]);
-
-  // Update the volume state when the fetched volume changes.
-  React.useEffect(() => {
-    setVolume((currentVolume) => {
-      if (_volume && currentVolume !== parseInt(_volume, 10)) {
-        return parseInt(_volume, 10);
-      }
-      return currentVolume;
-    });
+    if (_volume !== undefined) setVolume(parseInt(_volume, 10));
   }, [_volume]);
+  if (!visible) return null;
+  if (!loading && state === undefined) return <WidgetStatus name="sound" status={status} error={error} onRetry={getSound} />;
 
   if (loading) return <DataWidgetLoader.Widget className="sound" />;
   if (!state || volume === undefined) return null;
@@ -93,10 +52,11 @@ export const Widget = React.memo(() => {
   const onChange = (e) => {
     const value = parseInt(e.target.value, 10);
     setVolume(value);
+    if (!dragging) setSound(value);
   };
 
   const onMouseDown = () => setDragging(true);
-  const onMouseUp = () => setDragging(false);
+  const onMouseUp = () => { setDragging(false); setSound(volume); };
 
   const formattedVolume = `${volume.toString().padStart(2, "0")}%`;
 
@@ -105,7 +65,7 @@ export const Widget = React.memo(() => {
   });
 
   return (
-    <DataWidget.Widget classes={classes} disableSlider>
+    <DataWidget.Widget status={status} title={error?.message} classes={classes} disableSlider>
       <div className="sound__display">
         {showIcon && (
           <SuspenseIcon>

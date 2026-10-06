@@ -13,7 +13,9 @@
 import * as Uebersicht from "uebersicht";
 import * as AppIcons from "../../app-icons.js";
 import { SuspenseIcon } from "../icons/icon.jsx";
-import useWidgetRefresh from "../../hooks/use-widget-refresh";
+import useWidget from "../../hooks/use-widget.js";
+import { defineWidget, widgetInterval } from "../../widgets/runtime.js";
+import WidgetStatus from "./widget-status.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
@@ -21,7 +23,15 @@ export { notificationsStyles as styles } from "../../styles/components/data/noti
 
 const { React } = Uebersicht;
 
-const DEFAULT_REFRESH_FREQUENCY = 10000;
+export const definition = defineWidget({
+  id: "notifications", refreshFrequency: 10000,
+  load: async ({ config, force }) => {
+    const excluded = (config.excludedApps || "").split(",").map((name) => name.trim().toLowerCase());
+    const output = await Utils.cachedRun(COMMAND, widgetInterval(config.refreshFrequency, 10000), { force });
+    return parseNotifications(output).filter((item) => !excluded.includes(item.name.toLowerCase()));
+  },
+  validate: (data) => Array.isArray(data),
+});
 
 // Shell command to get notification badges from running apps
 const COMMAND = `lsappinfo -all list 2>/dev/null | perl -0777 -pe 's/---/\\n---\\n/g' | perl -ne '
@@ -103,64 +113,17 @@ NotificationPill.displayName = "NotificationPill";
  */
 export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
-  const { widgets, notificationsWidgetOptions } = settings;
-  const { notificationsWidget } = widgets;
-  const { refreshFrequency, showOnDisplay, excludedApps } = notificationsWidgetOptions;
-
-  // Determine if the widget should be visible based on display settings
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, showOnDisplay) &&
-    notificationsWidget;
-
-  // Calculate the refresh frequency for the widget
-  const refresh = React.useMemo(
-    () =>
-      Utils.getRefreshFrequency(refreshFrequency, DEFAULT_REFRESH_FREQUENCY),
-    [refreshFrequency],
-  );
-
-  const [state, setState] = React.useState([]);
-  const [loading, setLoading] = React.useState(visible);
-
-  // Build the exclusion list from the comma-separated setting
-  const exclusionList = React.useMemo(
-    () =>
-      excludedApps
-        ? excludedApps
-            .split(",")
-            .map((s) => s.trim().toLowerCase())
-            .filter(Boolean)
-        : [],
-    [excludedApps],
-  );
-
-  /**
-   * Fetches notification badges and updates the state.
-   */
-  const getNotifications = React.useCallback(async () => {
-    if (!visible) return;
-    try {
-      const output = await Utils.cachedRun(COMMAND, refresh);
-      const notifications = parseNotifications(output).filter(
-        (item) => !exclusionList.includes(item.name.toLowerCase()),
-      );
-      setState(notifications);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching notifications:", error);
-      setState([]);
-    }
-    setLoading(false);
-  }, [visible, refresh, exclusionList]);
-
-  // Refresh the widget at the specified interval
-  useWidgetRefresh(visible, getNotifications, refresh);
+  const config = settings.notificationsWidgetOptions;
+  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.notificationsWidget;
+  const { data: state, status, error, refresh } = useWidget(definition, visible, config);
+  if (!visible) return null;
+  if (status === "error" || status === "unavailable") return <WidgetStatus name="Notifications" status={status} error={error} onRetry={refresh} />;
 
   // Don't render anything if loading or no notifications
-  if (loading || !state.length) return null;
+  if (!state?.length) return null;
 
   return (
-    <div className="notifications">
+    <div className="notifications" data-status={status} title={error?.message}>
       {state.map((app) => (
         <NotificationPill key={app.bundlePath} app={app} />
       ))}

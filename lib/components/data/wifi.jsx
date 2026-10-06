@@ -2,15 +2,16 @@ import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
-import useWidgetRefresh from "../../hooks/use-widget-refresh";
+import useWidget from "../../hooks/use-widget.js";
+import { wifi as definition } from "../../widgets/system.js";
+import WidgetStatus from "./widget-status.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
+export { definition };
 export { wifiStyles as styles } from "../../styles/components/data/wifi";
 
 const { React } = Uebersicht;
-
-const DEFAULT_REFRESH_FREQUENCY = 20000;
 
 /**
  * Wifi widget component.
@@ -18,58 +19,19 @@ const DEFAULT_REFRESH_FREQUENCY = 20000;
  */
 export const Widget = React.memo(() => {
   const { displayIndex, settings, pushMissive } = useSimpleBarContext();
-  const { widgets, networkWidgetOptions } = settings;
-  const { wifiWidget } = widgets;
-  const {
-    refreshFrequency,
-    hideWifiIfDisabled,
-    toggleWifiOnClick,
-    networkDevice,
-    hideNetworkName,
-    showOnDisplay,
-    showIcon,
-  } = networkWidgetOptions;
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, showOnDisplay) && wifiWidget;
-
-  const refresh = React.useMemo(
-    () =>
-      Utils.getRefreshFrequency(refreshFrequency, DEFAULT_REFRESH_FREQUENCY),
-    [refreshFrequency],
-  );
-
-  const [state, setState] = React.useState();
-  const [loading, setLoading] = React.useState(visible);
-
-  /**
-   * Fetches the wifi status and SSID.
-   */
-  const getWifi = React.useCallback(async () => {
-    if (!visible) return;
-    const [status, ssid] = await Promise.all([
-      Utils.cachedRun(
-        `ifconfig ${networkDevice} | grep status | cut -c 10-`,
-        refresh,
-      ),
-      Utils.cachedRun(
-        `system_profiler SPAirPortDataType | awk '/Current Network/ {getline;$1=$1;print $0 | "tr -d ':'";exit}'`,
-        refresh,
-      ),
-    ]);
-    setState({
-      status: Utils.cleanupOutput(status),
-      ssid: Utils.cleanupOutput(ssid),
-    });
-    setLoading(false);
-  }, [networkDevice, visible, refresh]);
-
-  useWidgetRefresh(visible, getWifi, refresh);
+  const config = settings.networkWidgetOptions;
+  const { hideWifiIfDisabled, toggleWifiOnClick, networkDevice, hideNetworkName, showIcon } = config;
+  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.wifiWidget;
+  const { data: state, status, error, refresh: getWifi } = useWidget(definition, visible, config);
+  const loading = status === "idle" || status === "loading";
+  if (!visible) return null;
+  if (!loading && state === undefined) return <WidgetStatus name="wifi" status={status} error={error} onRetry={getWifi} />;
 
   if (loading) return <DataWidgetLoader.Widget className="wifi" />;
   if (!state) return null;
 
-  const { status, ssid } = state;
-  const isActive = status === "active";
+  const { status: connectionStatus, ssid } = state;
+  const isActive = connectionStatus === "active";
   const name = renderName(ssid, hideNetworkName);
 
   if (hideWifiIfDisabled && !isActive) return null;
@@ -93,6 +55,8 @@ export const Widget = React.memo(() => {
 
   return (
     <DataWidget.Widget
+      status={status}
+      title={error?.message}
       classes={classes}
       Icon={showIcon ? Icon : null}
       onClick={toggleWifiOnClick ? onClick : undefined}

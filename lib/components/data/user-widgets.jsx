@@ -2,7 +2,9 @@ import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
-import useWidgetRefresh from "../../hooks/use-widget-refresh";
+import useWidget from "../../hooks/use-widget.js";
+import { defineWidget, widgetInterval } from "../../widgets/runtime.js";
+import WidgetStatus from "./widget-status.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Settings from "../../settings";
 import * as Utils from "../../utils";
@@ -39,17 +41,12 @@ UserWidgets.displayName = "UserWidgets";
  */
 const UserWidget = React.memo(({ index, widget }) => {
   const { displayIndex, settings } = useSimpleBarContext();
-  const [state, setState] = React.useState();
-  const [loading, setLoading] = React.useState(true);
-  const [isWidgetActive, setIsWidgetActive] = React.useState(true);
   const {
     icon,
     backgroundColor,
-    output,
     onClickAction,
     onRightClickAction,
     onMiddleClickAction,
-    refreshFrequency,
     active,
     noIcon,
     hideWhenNoOutput = true,
@@ -60,35 +57,18 @@ const UserWidget = React.memo(({ index, widget }) => {
   const visible =
     Utils.isVisibleOnDisplay(displayIndex, showOnDisplay) && active;
 
-  /**
-   * Fetches the widget output and updates the state.
-   */
-  const getUserWidget = React.useCallback(async () => {
-    if (!visible) return;
-    const widgetOutput = await Utils.cachedRun(output, refreshFrequency);
-    const cleanedOutput = Utils.cleanupOutput(widgetOutput);
-
-    // Hide widget if script returns empty output and hideWhenNoOutput is enabled
-    if (
-      hideWhenNoOutput &&
-      (!cleanedOutput.length || cleanedOutput.trim() === "")
-    ) {
-      setLoading(false);
-      setIsWidgetActive(false);
-      setState(undefined);
-      return;
-    }
-
-    setState(widgetOutput);
-    setIsWidgetActive(true);
-    setLoading(false);
-  }, [visible, output, hideWhenNoOutput, refreshFrequency]);
-
-  // Refresh the widget at the specified frequency
-  useWidgetRefresh(visible, getUserWidget, refreshFrequency);
+  const definition = React.useMemo(() => defineWidget({
+    id: `user-${index}`, refreshFrequency: 10000,
+    load: ({ config, force }) => Utils.cachedRun(config.output, widgetInterval(config.refreshFrequency, 10000), { force }),
+    validate: (data) => typeof data === "string",
+  }), [index]);
+  const { data: state, status, error, refresh: getUserWidget } = useWidget(definition, visible, widget);
+  const loading = status === "idle" || status === "loading";
+  const isWidgetActive = state !== undefined && Utils.cleanupOutput(state).trim().length > 0;
+  if (visible && !loading && state === undefined) return <WidgetStatus name={widget.title || "Custom widget"} status={status} error={error} onRetry={getUserWidget} />;
 
   // Hide widget if not visible or if script indicates it should be inactive (only when hideWhenNoOutput is enabled)
-  if (!visible || (hideWhenNoOutput && !isWidgetActive)) return null;
+  if (!visible || (!loading && hideWhenNoOutput && !isWidgetActive)) return null;
 
   const isCustomColor = !Settings.userWidgetColors.includes(backgroundColor);
 
@@ -148,6 +128,8 @@ const UserWidget = React.memo(({ index, widget }) => {
 
   return (
     <DataWidget.Widget
+      status={status}
+      title={error?.message}
       classes={`user-widget user-widget--${index}`}
       Icon={Icon}
       style={style}

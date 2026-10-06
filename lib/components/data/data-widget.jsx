@@ -1,5 +1,4 @@
 import * as Uebersicht from "uebersicht";
-import * as Specter from "./specter.jsx";
 import * as Utils from "../../utils";
 import { SuspenseIcon } from "../icons/icon.jsx";
 export { dataWidgetStyles as styles } from "../../styles/components/data/data-widget";
@@ -7,7 +6,7 @@ export { dataWidgetStyles as styles } from "../../styles/components/data/data-wi
 const { React } = Uebersicht;
 
 /**
- * Widget component that renders a clickable data widget with optional icon and specter.
+ * Widget component that renders a clickable data widget with an optional icon.
  * @param {Object} props - The properties object.
  * @param {React.Component} props.Icon - The icon component to display.
  * @param {string} props.classes - Additional classes for the widget.
@@ -17,7 +16,8 @@ const { React } = Uebersicht;
  * @param {function} props.onMiddleClick - The middle-click event handler.
  * @param {Object} props.style - The style object.
  * @param {boolean} props.disableSlider - Flag to disable the slider effect.
- * @param {boolean} props.showSpecter - Flag to show the specter widget.
+ * @param {string} props.status - Data lifecycle status.
+ * @param {string} props.title - Accessible status or action description.
  * @param {boolean} props.useDivForClick - Render a div for click handling instead of a button.
  * @param {React.ReactNode} props.children - The child elements to render inside the widget.
  * @returns {React.ReactElement} The rendered widget component.
@@ -31,7 +31,8 @@ export function Widget({
   onMiddleClick,
   style,
   disableSlider,
-  showSpecter,
+  status,
+  title,
   useDivForClick,
   children,
 }) {
@@ -89,12 +90,15 @@ export function Widget({
     <Tag
       ref={ref}
       className={dataWidgetClasses}
+      data-status={status}
+      title={title}
+      aria-busy={status === "loading" || status === "refreshing"}
       href={href}
       onClick={onClickProp}
       role={renderDivButton ? "button" : undefined}
       tabIndex={renderDivButton ? 0 : undefined}
       onKeyDown={renderDivButton ? onKeyDown : undefined}
-      onContextMenu={onRightClick || undefined}
+      onContextMenu={onRightClick ? (event) => { event.preventDefault(); onRightClick(event); } : undefined}
       onMouseEnter={!disableSlider ? onMouseEnter : undefined}
       onMouseLeave={!disableSlider ? onMouseLeave : undefined}
       style={style}
@@ -104,7 +108,6 @@ export function Widget({
           <Icon />
         </SuspenseIcon>
       )}
-      {showSpecter && <Specter.Widget />}
       <Inner disableSlider={disableSlider}>{children}</Inner>
     </Tag>
   );

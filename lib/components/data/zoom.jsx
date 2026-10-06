@@ -3,15 +3,16 @@ import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import { SuspenseIcon } from "../icons/icon.jsx";
-import useWidgetRefresh from "../../hooks/use-widget-refresh";
+import useWidget from "../../hooks/use-widget.js";
+import { zoom as definition } from "../../widgets/system.js";
+import WidgetStatus from "./widget-status.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
+export { definition };
 export { zoomStyles as styles } from "../../styles/components/data/zoom";
 
 const { React } = Uebersicht;
-
-const DEFAULT_REFRESH_FREQUENCY = 5000;
 
 /**
  * Zoom widget component.
@@ -19,55 +20,13 @@ const DEFAULT_REFRESH_FREQUENCY = 5000;
  */
 export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
-  const { widgets, zoomWidgetOptions } = settings;
-  const { zoomWidget } = widgets;
-  const { refreshFrequency, showVideo, showMic, showOnDisplay } =
-    zoomWidgetOptions;
-
-  // Determine the refresh frequency for the widget
-  const refresh = React.useMemo(
-    () =>
-      Utils.getRefreshFrequency(refreshFrequency, DEFAULT_REFRESH_FREQUENCY),
-    [refreshFrequency],
-  );
-
-  // Determine if the widget should be visible
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, showOnDisplay) && zoomWidget;
-
-  const [state, setState] = React.useState();
-  const [loading, setLoading] = React.useState(visible);
-
-  /**
-   * Fetch the Zoom status for mic and video.
-   */
-  const getZoom = React.useCallback(async () => {
-    if (!visible) return;
-    try {
-      const [mic, video] = await Promise.all([
-        Utils.cachedRun(
-          `osascript ./simple-bar/lib/scripts/zoom-mute-status.applescript`,
-          refresh,
-        ),
-        Utils.cachedRun(
-          `osascript ./simple-bar/lib/scripts/zoom-video-status.applescript`,
-          refresh,
-        ),
-      ]);
-      setState({
-        mic: Utils.cleanupOutput(mic),
-        video: Utils.cleanupOutput(video),
-      });
-      setLoading(false);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching Zoom status:", error);
-      setLoading(false);
-    }
-  }, [visible, refresh]);
-
-  // Refresh the widget at the specified interval
-  useWidgetRefresh(visible, getZoom, refresh);
+  const config = settings.zoomWidgetOptions;
+  const { showVideo, showMic } = config;
+  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.zoomWidget;
+  const { data: state, status, error, refresh: getZoom } = useWidget(definition, visible, config);
+  const loading = status === "idle" || status === "loading";
+  if (!visible) return null;
+  if (!loading && state === undefined) return <WidgetStatus name="zoom" status={status} error={error} onRetry={getZoom} />;
 
   if (loading) return <DataWidgetLoader.Widget className="zoom" />;
   if (!state || (!state.mic.length && !state.video.length)) return null;
@@ -78,7 +37,7 @@ export const Widget = React.memo(() => {
   const MicIcon = mic === "off" ? Icons.MicOff : Icons.MicOn;
 
   return (
-    <DataWidget.Widget classes="zoom">
+    <DataWidget.Widget status={status} title={error?.message} classes="zoom">
       {showVideo && (
         <SuspenseIcon>
           <VideoIcon className={`zoom__icon zoom__icon--${video}`} />

@@ -50,9 +50,10 @@ Native macOS Space creation/deletion is not implemented. Only each display's cur
 - `lib/snapshot.js` validates normalized snapshots without changing their strings.
 - `lib/scripts/save-settings.sh` atomically persists preferences.
 - `lib/components/workspace-context.jsx` and `lib/components/workspaces/` render snapshots without backend selection or background workspace queries.
-- `lib/components/data/` contains the retained data widgets. Their implementations and independently configured refresh intervals are unchanged; the optional simple-bar-server connection has been removed.
-- `lib/settings.js` and `lib/schemas/config.json` define settings and preference migration. Core schema parity is checked separately from deferred widget options.
-- `tests/` covers real local module exports, startup ordering, atomic persistence, snapshots, Rift commands, restart-hook behavior, recovery timers, and retained widget source checks.
+- `lib/widgets/` defines widget resources and data collectors. `lib/hooks/use-widget.js` connects their snapshots to React.
+- `lib/components/data/` renders the retained widgets and handles user actions. Collectors do not own loading flags or polling timers.
+- `lib/settings.js` and `lib/schemas/config.json` define settings and preference migration. Schema/default parity includes every retained widget and custom-widget field.
+- `tests/` covers module exports, startup, persistence, Rift snapshots and commands, recovery, widget resources, collector fixtures, weather, preference migration, and widget element trees.
 
 The yabai/AeroSpace backends, native-Space controls, backend chooser, and server hooks are removed. Shared CSS and storage names still use `simple-bar` to preserve existing preferences and custom styles. Links in the settings UI refer only to the original documentation for shared widget/theme options, not Rift behavior.
 
@@ -64,7 +65,7 @@ npm test
 npm run lint
 ```
 
-Unit tests mock Rift responses and commands. Shell tests use temporary preferences and mock CLI executables; they do not change the running window manager or real preferences. The module-wiring tests replace JSX expressions with `null` for linking, but keep real imports and exports. They are not component-rendering tests.
+Unit tests mock Rift responses, system commands, geolocation, and weather HTTP responses. Shell tests use temporary preferences and mock CLI executables; they do not change the running window manager or real preferences. Module-wiring tests replace JSX with `null` for linking. Widget-view tests separately compile JSX into element trees and exercise loading, success, stale, failure, and disabled states. These tests do not simulate browser layout or the React DOM renderer.
 
 The optional live latency regression clicks workspace buttons, checks updates below 250ms and no idle snapshot polling, then restores the original workspaces and focused window from the host even if browser evaluation fails. It uses the configured CLI path, with an optional `RIFT_CLI` environment override, and identifies buttons by display UUID and workspace index rather than names. It skips when there are no visible displays with two usable workspaces. With all-display workspace rendering enabled, it also exercises cross-display clicks. It requires `agent-browser` and should run while the desktop is otherwise idle:
 
@@ -72,11 +73,29 @@ The optional live latency regression clicks workspace buttons, checks updates be
 npm run test:latency
 ```
 
-## Deferred widget work
+## Retained widgets
 
-Widget content and presentation are reserved for a separate redesign. The `Widget`/`Component`/`styles` exports, context fields, preference sections, and `useWidgetRefresh(active, getter, refreshFrequency)` signature remain intact. This pass does not fix retained data-fetching or loading behavior, process-icon sizing, stock quota handling, or the disabled manual Pywal integration.
+Builtins are retained for current use, not possible future use. The bar keeps clock, date, battery/caffeinate, Wi-Fi, output and input volume, keyboard layout, CPU, memory, network statistics, Dock notification badges, weather, GitHub, and Zoom. Rift workspaces and windows remain core bar functionality. Custom shell widgets remain available because their removal has not been selected.
 
-The widget-option schema still lacks `batteryWidgetOptions.disableCaffeinateInvertedBackground` and places `keyboardMaxLength` under sound instead of keyboard. Full schema validation and widget lifecycle/rendering tests remain deferred. The data-refresh source checks establish only that the hook calls remain and server hooks are absent.
+GPU/macmon, next meeting/icalBuddy, stock, crypto, Viscosity VPN, Spotify, Music/iTunes, YouTube Music, MPD, browser-track scripts, and playback decoration have been removed. Migration deletes their known toggles and option sections while preserving unrelated extension fields, custom widgets, and custom CSS. System collectors keep their existing macOS commands. Zoom still depends on its application UI and automation permissions. GitHub requires an authenticated `gh`; an absent binary produces an unavailable state.
+
+## Widget protocol
+
+A definition declares a stable `id`, a positive default `refreshFrequency`, a `load({ config, signal, force })` function, and a snapshot validator. Views call `useWidget(definition, active, config)` and receive `data`, `status`, `error`, `updatedAt`, and `refresh`. Existing `Widget` and `styles` exports remain the entry point's rendering interface. Configuration defaults, controls, and schema entries remain in the settings module.
+
+The resource owns polling, a 15-second load deadline, bounded retry backoff, loading/error transitions, and cleanup. It allows one in-flight load per resource, validates results before publication, preserves the last successful snapshot as stale on failure, and ignores results from disposed resources. Missing dependencies use `unavailable` instead of endless loading. Invalid or nonpositive refresh intervals use the widget default; positive intervals have a 250ms lower bound. Manual refreshes and error retries bypass the command-result cache.
+
+Shell commands cannot be physically cancelled through Übersicht's `run` API. After a deadline the resource exits loading and ignores late results, but does not overlap a stuck collector with another attempt. A disposed resource never publishes. Fetch and geolocation collectors honor the abort signal. Command results are cached in shared browser storage across display instances; concurrent commands within one instance share an in-flight promise. Separate WebViews may still race on an initially empty cache.
+
+## Weather
+
+Weather uses [Open-Meteo](https://open-meteo.com/) current temperature and WMO weather codes, plus sunrise/sunset times. It never sends a city name or placeholder to the forecast endpoint.
+
+In settings, choose `configured` location mode, search for a city or postal code, select the intended result, and save. Alternatively enter latitude and longitude directly. The selected coordinates and label are persisted in `weatherWidgetOptions.weatherLocation`. Configured mode does not request location permission. Automatic mode uses standard browser geolocation coordinates with a five-second timeout and reports permission denial or unavailable location without guessing a city.
+
+Legacy nonempty `customLocation` values become configured labels without guessed coordinates. Select a search result once to finish migration. Blank legacy locations retain automatic mode. Placeholder labels such as `null` become an unselected configured location rather than a forecast for another city. Transient forecast failures retain the last successful reading and display a stale marker. Right-click requests a fresh forecast. The weather link credits Open-Meteo.
+
+Process-icon sizing and the disabled manual Pywal integration remain outside this widget pass.
 
 ## Local relocation
 

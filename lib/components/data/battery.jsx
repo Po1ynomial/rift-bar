@@ -3,15 +3,16 @@ import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import { SuspenseIcon } from "../icons/icon.jsx";
-import useWidgetRefresh from "../../hooks/use-widget-refresh";
+import useWidget from "../../hooks/use-widget.js";
+import { battery as definition } from "../../widgets/system.js";
+import WidgetStatus from "./widget-status.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
+export { definition };
 export { batteryStyles as styles } from "../../styles/components/data/battery";
 
 const { React } = Uebersicht;
-
-const DEFAULT_REFRESH_FREQUENCY = 10000;
 
 /**
  * Battery widget component
@@ -19,66 +20,13 @@ const DEFAULT_REFRESH_FREQUENCY = 10000;
  */
 export const Widget = React.memo(() => {
   const { displayIndex, settings, pushMissive } = useSimpleBarContext();
-  const { widgets, batteryWidgetOptions } = settings;
-  const { batteryWidget } = widgets;
-  const {
-    refreshFrequency,
-    toggleCaffeinateOnClick,
-    caffeinateOption,
-    disableCaffeinateInvertedBackground,
-    showOnDisplay,
-    showIcon,
-  } = batteryWidgetOptions;
-
-  // Determine if the widget should be visible based on display settings
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, showOnDisplay) && batteryWidget;
-
-  // Calculate the refresh frequency for the widget
-  const refresh = React.useMemo(
-    () =>
-      Utils.getRefreshFrequency(refreshFrequency, DEFAULT_REFRESH_FREQUENCY),
-    [refreshFrequency],
-  );
-
-  const [state, setState] = React.useState();
-  const [loading, setLoading] = React.useState(visible);
-
-  /**
-   * Fetch battery information and update the state
-   */
-  const getBattery = React.useCallback(async () => {
-    if (!visible) return;
-    // Fetch battery information and parse the results
-    const [system, percentage, status, caffeinate, lowPowerMode] =
-      await Promise.all([
-        Utils.getSystem(),
-        Utils.cachedRun(
-          `pmset -g batt | grep -Eo '[0-9]+%' | head -1 | tr -d '%'`,
-          refresh,
-        ),
-        Utils.cachedRun(
-          `pmset -g batt | head -1 | grep -q 'AC Power' && echo 'AC' || echo 'Batt'`,
-          refresh,
-        ),
-        Uebersicht.run(`pgrep caffeinate`),
-        Utils.cachedRun(
-          `pmset -g | awk '/lowpowermode|powermode/ {print $2; exit}'`,
-          refresh,
-        ),
-      ]);
-    setState({
-      system,
-      percentage: parseInt(percentage, 10),
-      charging: Utils.cleanupOutput(status) === "AC",
-      caffeinate: Utils.cleanupOutput(caffeinate),
-      lowPowerMode: Utils.cleanupOutput(lowPowerMode) === "1",
-    });
-    setLoading(false);
-  }, [visible, refresh]);
-
-  // Refresh the widget at the specified interval
-  useWidgetRefresh(visible, getBattery, refresh);
+  const config = settings.batteryWidgetOptions;
+  const { toggleCaffeinateOnClick, caffeinateOption, disableCaffeinateInvertedBackground, showIcon } = config;
+  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.batteryWidget;
+  const { data: state, status, error, refresh: getBattery } = useWidget(definition, visible, config);
+  const loading = status === "idle" || status === "loading";
+  if (!visible) return null;
+  if (!loading && state === undefined) return <WidgetStatus name="battery" status={status} error={error} onRetry={getBattery} />;
 
   if (loading) return <DataWidgetLoader.Widget className="battery" />;
   if (!state) return null;
@@ -125,6 +73,8 @@ export const Widget = React.memo(() => {
 
   return (
     <DataWidget.Widget
+      status={status}
+      title={error?.message}
       classes={classes}
       Icon={showIcon ? Icon : null}
       disableSlider

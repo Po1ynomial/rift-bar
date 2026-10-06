@@ -27,6 +27,7 @@ async function loadSettings(config = {}, run) {
     ["uebersicht", { run: async (command) => { commands.push(command); return run ? run(command) : ""; } }],
     ["./styles/themes", { collection: {} }],
     ["./components/settings/user-widgets-creator.jsx", { default: () => {} }],
+    ["./components/settings/weather-location-picker.jsx", { default: () => {} }],
     ["./components/settings/settings.jsx", { Component: () => {}, Wrapper: () => {}, styles: "" }],
   ]);
   const modules = new Map();
@@ -121,7 +122,7 @@ test("failed persistence rejects without changing browser storage", async () => 
   assert.equal(storage.get("simple-bar-settings"), before);
 });
 
-test("migration removes only explicitly retired options and preserves deferred fields", async () => {
+test("migration removes only explicitly retired options and preserves retained fields", async () => {
   const config = {
     global: { shell: "bash", futureOption: "keep" },
     process: { futureOption: 42 },
@@ -236,4 +237,99 @@ test("a failed atomic replacement leaves the old file and no temporary files", a
     assert.equal(await readFile(join(home, ".simplebarrc"), "utf8"), "original");
     assert.deepEqual((await readdir(home)).sort(), [".simplebarrc", "bin"]);
   });
+});
+
+
+test("widget triage removes every retired toggle and section but preserves extensions", async () => {
+  const names = ["gpu", "nextMeeting", "crypto", "stock", "spotify", "youtubeMusic", "music", "mpd", "browserTrack", "vpn"];
+  const config = {
+    widgets: { githubWidget: true, zoomWidget: true, futureWidget: true },
+    futureSection: { token: "keep" },
+    userWidgets: { userWidgetsList: { 0: { output: "echo retained" } } },
+  };
+  for (const name of names) {
+    config.widgets[name + "Widget"] = true;
+    config[name + "WidgetOptions"] = { secret: "retire" };
+  }
+  const { settings, storage } = await loadSettings(config);
+  const current = settings.get();
+  assert.equal(current.widgets.githubWidget, true);
+  assert.equal(current.widgets.zoomWidget, true);
+  assert.equal(current.widgets.futureWidget, true);
+  assert.equal(current.futureSection.token, "keep");
+  assert.equal(current.userWidgets.userWidgetsList[0].output, "echo retained");
+  for (const name of names) {
+    assert.ok(!(name + "Widget" in current.widgets));
+    assert.ok(!(name + "WidgetOptions" in current));
+    assert.ok(!(name + "Widget" in settings.data));
+    assert.ok(!(name + "WidgetOptions" in settings.data));
+  }
+  await settings.set(current);
+  const saved = JSON.parse(storage.get("simple-bar-settings"));
+  for (const name of names) assert.ok(!(name + "WidgetOptions" in saved));
+});
+
+test("legacy city names require an explicit selection instead of guessing coordinates", async () => {
+  for (const [name, mode, label] of [["Paris", "configured", "Paris"], ["", "auto", ""], ["null", "configured", ""], ["undefined", "configured", ""]]) {
+    const { settings } = await loadSettings({ weatherWidgetOptions: { customLocation: name } });
+    const weather = settings.get().weatherWidgetOptions;
+    assert.equal(weather.locationMode, mode);
+    assert.equal(weather.weatherLocation.label, label);
+    assert.equal(weather.weatherLocation.latitude, null);
+    assert.equal(weather.weatherLocation.longitude, null);
+    assert.ok(!("customLocation" in weather));
+    assert.equal(settings.defaultSettings.weatherWidgetOptions.weatherLocation.label, "");
+  }
+});
+
+test("selected weather coordinates survive saves and override retired location strings", async () => {
+  const { settings } = await loadSettings();
+  await settings.set({ weatherWidgetOptions: {
+    customLocation: "old", locationMode: "configured",
+    weatherLocation: { label: "Selected", latitude: 0, longitude: 0 },
+  } });
+  const weather = settings.get().weatherWidgetOptions;
+  assert.equal(weather.weatherLocation.label, "Selected");
+  assert.equal(weather.weatherLocation.latitude, 0);
+  assert.equal(weather.locationMode, "configured");
+  assert.ok(!("customLocation" in weather));
+});
+
+test("every retained default and custom-widget field has a matching schema and control", async () => {
+  const { settings } = await loadSettings();
+  const schema = JSON.parse(await readFile(new URL("../lib/schemas/config.json", import.meta.url), "utf8"));
+  assert.deepEqual(Object.keys(settings.defaultSettings).sort(), Object.keys(schema.properties).filter((key) => key !== "$schema").sort());
+  function check(value, definition, path) {
+    const type = value === null ? "null" : typeof value;
+    const types = Array.isArray(definition.type) ? definition.type : [definition.type];
+    assert.ok(types.includes(type), path);
+    if (definition.enum) assert.ok(definition.enum.includes(value), path);
+    if (type === "object") {
+      assert.deepEqual(Object.keys(value).sort(), Object.keys(definition.properties).sort(), path);
+      for (const [key, child] of Object.entries(value)) check(child, definition.properties[key], path + "." + key);
+    }
+  }
+  for (const [section, values] of Object.entries(settings.defaultSettings)) {
+    const properties = schema.properties[section].properties;
+    assert.deepEqual(Object.keys(values).sort(), Object.keys(properties).sort(), section);
+    for (const [key, value] of Object.entries(values)) {
+      assert.ok(settings.data[key], "Missing control: " + section + "." + key);
+      if (key === "userWidgetsList") continue;
+      check(value, properties[key], section + "." + key);
+    }
+  }
+  const userSchema = schema.properties.userWidgets.properties.userWidgetsList.patternProperties["^[0-9]+$"];
+  check(settings.userWidgetDefault, userSchema, "userWidgetDefault");
+});
+
+test("invalid retained widget types and weather coordinates cannot be saved", async () => {
+  const { settings } = await loadSettings();
+  for (const config of [
+    { widgets: { githubWidget: "yes" } },
+    { githubWidgetOptions: { refreshFrequency: "fast" } },
+    { weatherWidgetOptions: { locationMode: "unknown" } },
+    { weatherWidgetOptions: { unit: "K" } },
+    { weatherWidgetOptions: { weatherLocation: { latitude: "null" } } },
+    { weatherWidgetOptions: { weatherLocation: { latitude: 91, longitude: 0 } } },
+  ]) await assert.rejects(settings.set(config), /Invalid/);
 });

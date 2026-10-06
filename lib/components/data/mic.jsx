@@ -3,15 +3,16 @@ import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import { SuspenseIcon } from "../icons/icon.jsx";
-import useWidgetRefresh from "../../hooks/use-widget-refresh";
+import useWidget from "../../hooks/use-widget.js";
+import { mic as definition } from "../../widgets/system.js";
+import WidgetStatus from "./widget-status.jsx";
 import * as Utils from "../../utils";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 
 const { React } = Uebersicht;
 
+export { definition };
 export { micStyles as styles } from "../../styles/components/data/mic";
-
-const DEFAULT_REFRESH_FREQUENCY = 20000;
 
 /**
  * Mic widget component.
@@ -19,57 +20,19 @@ const DEFAULT_REFRESH_FREQUENCY = 20000;
  */
 export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
-  const { widgets, micWidgetOptions } = settings;
-  const { micWidget } = widgets;
-  const { refreshFrequency, showOnDisplay, showIcon } = micWidgetOptions;
-
-  // Determine the refresh frequency for the widget.
-  const refresh = React.useMemo(
-    () =>
-      Utils.getRefreshFrequency(refreshFrequency, DEFAULT_REFRESH_FREQUENCY),
-    [refreshFrequency],
-  );
-
-  // Determine if the widget should be visible.
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, showOnDisplay) && micWidget;
-
-  const [state, setState] = React.useState();
-  const [loading, setLoading] = React.useState(visible);
+  const config = settings.micWidgetOptions;
+  const { showIcon } = config;
+  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.micWidget;
+  const { data: state, status, error, refresh: getMic } = useWidget(definition, visible, config);
+  const loading = status === "idle" || status === "loading";
   const { volume: _volume } = state || {};
-  const [volume, setVolume] = React.useState(_volume && parseInt(_volume, 10));
+  const [volume, setVolume] = React.useState();
   const [dragging, setDragging] = React.useState(false);
-
-  /**
-   * Fetch the current microphone volume.
-   */
-  const getMic = React.useCallback(async () => {
-    if (!visible) return;
-    const volume = await Utils.cachedRun(
-      `osascript -e 'input volume of (get volume settings)'`,
-      refresh,
-    );
-    setState({ volume: Utils.cleanupOutput(volume) });
-    setLoading(false);
-  }, [visible, refresh]);
-
-  // Refresh the widget periodically.
-  useWidgetRefresh(visible, getMic, refresh);
-
-  // Update the mic volume when dragging state changes.
   React.useEffect(() => {
-    if (!dragging) setMic(volume);
-  }, [dragging, volume]);
-
-  // Update the volume state when the fetched volume changes.
-  React.useEffect(() => {
-    setVolume((currentVolume) => {
-      if (_volume && currentVolume !== parseInt(_volume, 10)) {
-        return parseInt(_volume, 10);
-      }
-      return currentVolume;
-    });
+    if (_volume !== undefined) setVolume(parseInt(_volume, 10));
   }, [_volume]);
+  if (!visible) return null;
+  if (!loading && state === undefined) return <WidgetStatus name="mic" status={status} error={error} onRetry={getMic} />;
 
   if (loading) return <DataWidgetLoader.Widget className="mic" />;
   if (!state || volume === undefined || _volume === "missing value")
@@ -84,6 +47,7 @@ export const Widget = React.memo(() => {
   const onChange = (e) => {
     const value = parseInt(e.target.value, 10);
     setVolume(value);
+    if (!dragging) setMic(value);
   };
 
   /**
@@ -94,7 +58,7 @@ export const Widget = React.memo(() => {
   /**
    * Handle mouse up event on the slider.
    */
-  const onMouseUp = () => setDragging(false);
+  const onMouseUp = () => { setDragging(false); setMic(volume); };
 
   const formattedVolume = `${volume.toString().padStart(2, "0")}%`;
 
@@ -103,7 +67,7 @@ export const Widget = React.memo(() => {
   });
 
   return (
-    <DataWidget.Widget classes={classes} disableSlider>
+    <DataWidget.Widget status={status} title={error?.message} classes={classes} disableSlider>
       <div className="mic__display">
         {showIcon && (
           <SuspenseIcon>

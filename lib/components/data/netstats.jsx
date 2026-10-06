@@ -4,15 +4,17 @@ import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import { SuspenseIcon } from "../icons/icon.jsx";
 import Graph from "./graph.jsx";
-import useWidgetRefresh from "../../hooks/use-widget-refresh.js";
+import useWidget from "../../hooks/use-widget.js";
+import { netstats as definition } from "../../widgets/system.js";
+import WidgetStatus from "./widget-status.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils.js";
 
+export { definition };
 export { netstatsStyles as styles } from "../../styles/components/data/netstats";
 
 const { React } = Uebersicht;
 
-const DEFAULT_REFRESH_FREQUENCY = 2000;
 const GRAPH_LENGTH = 30;
 
 /**
@@ -21,64 +23,17 @@ const GRAPH_LENGTH = 30;
  */
 export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
-  const { widgets, netstatsWidgetOptions } = settings;
-  const { netstatsWidget } = widgets;
-  const {
-    refreshFrequency,
-    showOnDisplay,
-    displayAsGraph,
-    showIcon,
-    netstatsThreshold,
-  } = netstatsWidgetOptions;
-
-  const isDisabled = React.useRef(false);
-
-  // Determine the refresh frequency for the widget
-  const refresh = React.useMemo(
-    () =>
-      Utils.getRefreshFrequency(refreshFrequency, DEFAULT_REFRESH_FREQUENCY),
-    [refreshFrequency],
-  );
-
-  // Determine if the widget should be visible
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, showOnDisplay) && netstatsWidget;
-
+  const config = settings.netstatsWidgetOptions;
+  const { displayAsGraph, showIcon, netstatsThreshold } = config;
+  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.netstatsWidget;
+  const { data: state, status, error, refresh: getNetstats } = useWidget(definition, visible, config);
+  const loading = status === "idle" || status === "loading";
   const [graph, setGraph] = React.useState([]);
-  const [state, setState] = React.useState();
-  const [loading, setLoading] = React.useState(visible);
-
-  /**
-   * Fetches network statistics.
-   */
-  const getNetstats = React.useCallback(async () => {
-    if (!visible) return;
-    try {
-      const output = await Utils.cachedRun(
-        `bash ./simple-bar/lib/scripts/netstats.sh 2>&1`,
-        refresh,
-      );
-      if (!visible || isDisabled.current) {
-        return;
-      }
-      const data = Utils.cleanupOutput(output);
-      const json = JSON.parse(data);
-      setState(json);
-      if (displayAsGraph) {
-        Utils.addToGraphHistory(json, setGraph, GRAPH_LENGTH);
-      }
-      setLoading(false);
-    } catch {
-      setTimeout(getNetstats, 1000);
-    }
-  }, [displayAsGraph, setGraph, visible, refresh]);
-
-  // Update the disabled state based on visibility
   React.useEffect(() => {
-    isDisabled.current = !visible;
-  }, [visible]);
-
-  useWidgetRefresh(visible, getNetstats, refresh);
+    if (state && displayAsGraph) Utils.addToGraphHistory(state, setGraph, GRAPH_LENGTH);
+  }, [state, displayAsGraph]);
+  if (!visible) return null;
+  if (!loading && state === undefined) return <WidgetStatus name="netstats" status={status} error={error} onRetry={getNetstats} />;
 
   if (loading)
     return (
@@ -113,7 +68,7 @@ export const Widget = React.memo(() => {
 
   if (displayAsGraph) {
     return (
-      <DataWidget.Widget classes="netstats netstats--graph" disableSlider>
+      <DataWidget.Widget status={status} title={error?.message} classes="netstats netstats--graph" disableSlider>
         <Graph
           className="netstats__graph"
           caption={{
@@ -137,7 +92,7 @@ export const Widget = React.memo(() => {
 
   return (
     <React.Fragment>
-      <DataWidget.Widget classes="netstats" disableSlider>
+      <DataWidget.Widget status={status} title={error?.message} classes="netstats" disableSlider>
         <div className="netstats__item">
           {showIcon && (
             <SuspenseIcon>
@@ -150,7 +105,7 @@ export const Widget = React.memo(() => {
           />
         </div>
       </DataWidget.Widget>
-      <DataWidget.Widget classes="netstats" disableSlider>
+      <DataWidget.Widget status={status} title={error?.message} classes="netstats" disableSlider>
         <div className="netstats__item">
           {showIcon && (
             <SuspenseIcon>

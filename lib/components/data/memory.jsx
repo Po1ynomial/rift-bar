@@ -1,15 +1,16 @@
 import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
-import useWidgetRefresh from "../../hooks/use-widget-refresh";
+import useWidget from "../../hooks/use-widget.js";
+import { memory as definition } from "../../widgets/system.js";
+import WidgetStatus from "./widget-status.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
 import * as Utils from "../../utils";
 
+export { definition };
 export { memoryStyles as styles } from "../../styles/components/data/memory";
 
 const { React } = Uebersicht;
-
-const DEFAULT_REFRESH_FREQUENCY = 4000;
 
 /**
  * Memory Widget component
@@ -17,45 +18,13 @@ const DEFAULT_REFRESH_FREQUENCY = 4000;
  */
 export const Widget = () => {
   const { displayIndex, settings } = useSimpleBarContext();
-  const { widgets, memoryWidgetOptions } = settings;
-  const { memoryWidget } = widgets;
-  const {
-    refreshFrequency,
-    showOnDisplay,
-    memoryMonitorApp,
-    showIcon,
-    memoryUsageThreshold,
-  } = memoryWidgetOptions;
-
-  // Determine the refresh frequency for the widget
-  const refresh = React.useMemo(
-    () =>
-      Utils.getRefreshFrequency(refreshFrequency, DEFAULT_REFRESH_FREQUENCY),
-    [refreshFrequency],
-  );
-
-  // Determine if the widget should be visible
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, showOnDisplay) && memoryWidget;
-
-  const [state, setState] = Uebersicht.React.useState();
-  const [loading, setLoading] = Uebersicht.React.useState(visible);
-
-  /**
-   * Fetch memory usage data
-   */
-  const getMemory = React.useCallback(async () => {
-    const output = await Utils.cachedRun(
-      'vm_stat | awk \'BEGIN {page_size=4096} /page size of/ {page_size=$8} /Pages free/ {free=$3} /Pages inactive/ {inactive=$3} /Pages speculative/ {spec=$4} /Pages active/ {active=$3} /Pages wired/ {wired=$4} END {gsub(/\\./, "", free); gsub(/\\./, "", inactive); gsub(/\\./, "", spec); gsub(/\\./, "", active); gsub(/\\./, "", wired); available=free+inactive+spec; total=available+active+wired; printf "%.0f", (available/total)*100}\'',
-      refresh,
-    );
-    const free = parseInt(Utils.cleanupOutput(output), 10);
-    setState({ free });
-    setLoading(false);
-  }, [setLoading, setState, refresh]);
-
-  // Refresh the widget at the specified interval
-  useWidgetRefresh(visible, getMemory, refresh);
+  const config = settings.memoryWidgetOptions;
+  const { memoryMonitorApp, showIcon, memoryUsageThreshold } = config;
+  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.memoryWidget;
+  const { data: state, status, error, refresh: getMemory } = useWidget(definition, visible, config);
+  const loading = status === "idle" || status === "loading";
+  if (!visible) return null;
+  if (!loading && state === undefined) return <WidgetStatus name="memory" status={status} error={error} onRetry={getMemory} />;
 
   if (loading) return <DataWidgetLoader.Widget className="memory" />;
   if (!state) return null;
@@ -98,6 +67,8 @@ export const Widget = () => {
 
   return (
     <DataWidget.Widget
+      status={status}
+      title={error?.message}
       classes={classes}
       Icon={showIcon ? Pie : null}
       onClick={onClick}
