@@ -7,7 +7,7 @@ import useWidget from "../../hooks/use-widget.js";
 import { mic as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
 import * as Utils from "../../utils";
-import { useSimpleBarContext } from "../simple-bar-context.jsx";
+import { useSimpleBarContext } from "../rift-bar-context.jsx";
 
 const { React } = Uebersicht;
 

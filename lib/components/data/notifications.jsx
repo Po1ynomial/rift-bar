@@ -16,7 +16,7 @@ import { SuspenseIcon } from "../icons/icon.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { defineWidget, widgetInterval } from "../../widgets/runtime.js";
 import WidgetStatus from "./widget-status.jsx";
-import { useSimpleBarContext } from "../simple-bar-context.jsx";
+import { useSimpleBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils";
 
 export { notificationsStyles as styles } from "../../styles/components/data/notifications";

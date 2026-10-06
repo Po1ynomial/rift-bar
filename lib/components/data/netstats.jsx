@@ -7,7 +7,7 @@ import Graph from "./graph.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { netstats as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
-import { useSimpleBarContext } from "../simple-bar-context.jsx";
+import { useSimpleBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils.js";
 
 export { definition };

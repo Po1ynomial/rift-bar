@@ -37,7 +37,7 @@ for (const [name, data] of Object.entries(cases)) {
       jsx: true,
       mocks: {
         uebersicht: { React },
-        "../simple-bar-context.jsx": { useSimpleBarContext: () => ({ displayIndex: 1, settings }) },
+        "../rift-bar-context.jsx": { useSimpleBarContext: () => ({ displayIndex: 1, settings }) },
         "../../hooks/use-widget.js": {
           default: () => ({
             ...snapshot,
@@ -78,7 +78,7 @@ test("a successful weather response renders content instead of remaining a loade
     jsx: true,
     mocks: {
       uebersicht: { React },
-      "../simple-bar-context.jsx": { useSimpleBarContext: () => ({ displayIndex: 1, settings }) },
+      "../rift-bar-context.jsx": { useSimpleBarContext: () => ({ displayIndex: 1, settings }) },
       "../../hooks/use-widget.js": {
         default: () => ({ status: "ready", data: cases.weather, refresh: () => {} }),
       },

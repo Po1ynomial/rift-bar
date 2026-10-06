@@ -2,7 +2,7 @@ import * as Uebersicht from "uebersicht";
 import * as ErrorView from "./lib/components/error.jsx";
 import SimpleBarContextProvider, {
   useSimpleBarContext,
-} from "./lib/components/simple-bar-context.jsx";
+} from "./lib/components/rift-bar-context.jsx";
 import * as Variables from "./lib/styles/core/variables.js";
 import * as Base from "./lib/styles/core/base.js";
 import * as Spaces from "./lib/styles/components/spaces/spaces.js";

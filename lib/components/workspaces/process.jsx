@@ -2,7 +2,7 @@ import * as Uebersicht from "uebersicht";
 import Window from "./window.jsx";
 import * as Utils from "../../utils.js";
 import { useWorkspaceContext } from "../workspace-context.jsx";
-import { useSimpleBarContext } from "../simple-bar-context.jsx";
+import { useSimpleBarContext } from "../rift-bar-context.jsx";
 export { styles } from "../../styles/components/process.js";
 const { React } = Uebersicht;
 const Component = React.memo(() => {

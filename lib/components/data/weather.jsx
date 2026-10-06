@@ -6,7 +6,7 @@ import * as Icons from "../icons/icons.jsx";
 import * as Utils from "../../utils.js";
 import useWidget from "../../hooks/use-widget.js";
 import { weather as definition, weatherIcon } from "../../widgets/weather.js";
-import { useSimpleBarContext } from "../simple-bar-context.jsx";
+import { useSimpleBarContext } from "../rift-bar-context.jsx";
 
 export { definition };
 export { weatherStyles as styles } from "../../styles/components/data/weather.js";

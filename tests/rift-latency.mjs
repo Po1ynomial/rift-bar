@@ -123,7 +123,7 @@ async function measure(options) {
   try {
     for (let i = 0; i < 6; i++) {
       const snapshot = waitForSnapshot();
-      await U.run("/bin/sh simple-bar/lib/scripts/refresh-rift.sh");
+      await U.run("/bin/sh rift-bar/lib/scripts/refresh-rift.sh");
       await snapshot;
       await new Promise((resolve) => setTimeout(resolve, 25));
       const target = i % 2 === 0 ? options.alternate : options.original;

@@ -2,7 +2,7 @@ import * as Uebersicht from "uebersicht";
 import { controls, definition, editOverride, getPath } from "../../config.js";
 import SettingsItem from "./settings-item.jsx";
 import WeatherLocationPicker from "./weather-location-picker.jsx";
-import { useSimpleBarContext } from "../simple-bar-context.jsx";
+import { useSimpleBarContext } from "../rift-bar-context.jsx";
 
 const { React } = Uebersicht;
 export default function SettingsInner({ section, overrides, effective, setOverrides }) {

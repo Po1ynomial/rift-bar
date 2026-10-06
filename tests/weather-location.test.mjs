@@ -32,7 +32,7 @@ test("automatic weather without geolocation never forecasts a placeholder city",
     },
     mocks: {
       uebersicht: { React },
-      "../simple-bar-context.jsx": {
+      "../rift-bar-context.jsx": {
         useSimpleBarContext: () => ({ displayUuid: "display", settings }),
       },
       "../../hooks/use-widget.js": {

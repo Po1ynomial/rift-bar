@@ -1,6 +1,6 @@
 import * as Uebersicht from "uebersicht";
 import OpenedApps from "./opened-apps.jsx";
-import { useSimpleBarContext } from "../simple-bar-context.jsx";
+import { useSimpleBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils.js";
 import * as Rift from "../../rift.js";
 const { React } = Uebersicht;

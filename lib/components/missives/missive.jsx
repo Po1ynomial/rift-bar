@@ -1,7 +1,7 @@
 import * as Uebersicht from "uebersicht";
 import { SuspenseIcon } from "../icons/icon.jsx";
 import * as Icons from "../icons/icons.jsx";
-import { useSimpleBarContext } from "../simple-bar-context.jsx";
+import { useSimpleBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils.js";
 
 const { React } = Uebersicht;

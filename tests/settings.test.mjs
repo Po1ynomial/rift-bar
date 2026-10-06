@@ -49,7 +49,7 @@ async function sandbox(fn, xdg = "") {
     return (
       await execute(
         "/bin/sh",
-        ["-c", command.replaceAll("simple-bar/lib/scripts/", "lib/scripts/")],
+        ["-c", command.replaceAll("rift-bar/lib/scripts/", "lib/scripts/")],
         {
           env: {
             ...process.env,
@@ -68,16 +68,15 @@ async function sandbox(fn, xdg = "") {
   }
 }
 
-test("missing XDG config uses defaults without reading legacy preferences or creating files", async () =>
+test("missing XDG config uses defaults without creating files", async () =>
   sandbox(async ({ home, run, commands }) => {
-    await writeFile(join(home, ".simplebarrc"), "not JSON");
     const { settings } = await preferences(run);
     const [first, second] = await Promise.all([settings.init(), settings.init()]);
     assert.equal(first, second);
     assert.equal(first.appearance.font_size, "11px");
     assert.equal(settings.getState().revision, "missing");
     assert.equal(commands.length, 1);
-    assert.deepEqual(await readdir(home), [".simplebarrc"]);
+    assert.deepEqual(await readdir(home), []);
     assert.equal(JSON.stringify(settings.getState().overrides), "{}");
   }));
 

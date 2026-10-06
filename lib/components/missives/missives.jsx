@@ -1,5 +1,5 @@
 import * as Uebersicht from "uebersicht";
-import { useSimpleBarContext } from "../simple-bar-context.jsx";
+import { useSimpleBarContext } from "../rift-bar-context.jsx";
 import Missive from "./missive.jsx";
 
 export { missivesStyles as styles } from "../../styles/components/missives";
