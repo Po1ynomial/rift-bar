@@ -212,7 +212,8 @@ test("snapshot preserves per-display workspace identity, names, and titles", asy
       { mode: 0o700 },
     );
     const script = fileURLToPath(new URL("../lib/scripts/init-rift.sh", import.meta.url));
-    const result = spawnSync("sh", [script, mock], { encoding: "utf8" });
+    const env = { ...process.env, RIFT_BAR_NODE: process.execPath };
+    const result = spawnSync("sh", [script, mock], { encoding: "utf8", env });
     assert.equal(result.status, 0, result.stderr);
     const snapshot = parseSnapshot(result.stdout);
     assert.deepEqual(Object.keys(snapshot).sort(), ["displays", "spaces"]);
@@ -230,7 +231,10 @@ test("snapshot preserves per-display workspace identity, names, and titles", asy
     assert.equal(snapshot.spaces[0].windows[0]["window-title"], workspaces[0].windows[0].title);
     assert.deepEqual(snapshot.spaces[0].windows[0]["window-id"], { pid: 123, idx: 456 });
     assert.deepEqual(snapshot.spaces[1].windows, []);
-    const failure = spawnSync("sh", [script, join(directory, "missing")], { encoding: "utf8" });
+    const failure = spawnSync("sh", [script, join(directory, "missing")], {
+      encoding: "utf8",
+      env,
+    });
     assert.equal(failure.status, 0);
     assert.equal(failure.stdout.trim(), "riftError");
   } finally {

@@ -15,7 +15,6 @@ The `simple-bar` installation name is intentional. Widget command paths, CSS cla
 Requirements:
 
 - Rift with `rift-cli`, tested with Rift 0.6.2.
-- `jq`, available through Homebrew.
 - Übersicht at `/Applications/Übersicht.app`, with its local message bus on port `41416`.
 
 Preferences live in `$XDG_CONFIG_HOME/rift-bar/config.toml`, falling back to `~/.config/rift-bar/config.toml`. TOML is a sparse override of builtin defaults and the source of truth. There is no legacy preference loading or migration. Click the bar and press `cmd + ,` to edit settings, `cmd + r` to reload configuration, or `cmd + t` to toggle the bar's dark/light appearance. The [configuration guide](docs/config.md) explains the contract; the [field reference](docs/config-fields.md) lists every option.
@@ -35,7 +34,7 @@ Window gaps are configured separately in Rift. Account for `bar.foreground_heigh
 
 ## Refresh and workspace behavior
 
-`lib/scripts/init-rift.sh` queries each display's current native Space, including all its virtual workspaces and windows. Rift screen IDs match Übersicht screen IDs. Clicking a workspace focuses its display before switching the zero-based workspace index. Window clicks use the full Rift window ID.
+`lib/scripts/init-rift.mjs` queries each display's current native Space, including all its virtual workspaces and windows. It runs on Übersicht's bundled Node runtime (falling back to `node` on `PATH`, overridable with `RIFT_BAR_NODE`) through the `init-rift.sh` launcher; snapshot collection has no shell or `jq` dependency. Rift screen IDs match Übersicht screen IDs. Clicking a workspace focuses its display before switching the zero-based workspace index. Window clicks use the full Rift window ID.
 
 `lib/scripts/subscribe-rift.sh` registers `workspace_changed`, `windows_changed`, `focused_window_changed`, and `window_title_changed` once per widget instance. Concurrent refreshes share subscription setup. The script resolves its physical directory so invocation from the source path or widget symlink registers identical callbacks. Rift deduplicates them; the script does not remove other integrations' subscriptions. Events send `WIDGET_WANTS_REFRESH` through Übersicht's bundled Node runtime and WebSocket library. Workspace snapshots do not poll while idle.
 
@@ -50,7 +49,7 @@ Native macOS Space creation/deletion is not implemented. Only each display's cur
 - `lib/snapshot.js` validates normalized snapshots without changing their strings.
 - `lib/config.js` defines defaults, typed fields, TOML parsing, sparse overrides, validation, and GUI bindings.
 - `lib/settings.js` owns loaded configuration state and cross-display reload notifications.
-- `lib/scripts/config-file.sh` resolves the XDG path and performs read-only loads and conflict-checked atomic saves.
+- `lib/scripts/config-file.mjs` resolves the XDG path and performs read-only loads and conflict-checked atomic saves, launched through `config-file.sh`.
 - `lib/components/workspace-context.jsx` and `lib/components/workspaces/` render snapshots without backend selection or background workspace queries.
 - `lib/widgets/` defines widget resources and data collectors. `lib/hooks/use-widget.js` connects their snapshots to React.
 - `lib/components/data/` renders the retained widgets and handles user actions. Collectors do not own loading flags or polling timers.
@@ -70,7 +69,7 @@ pnpm run --reporter=silent check
 
 `check` verifies formatting, lint, and portable tests without changing files. Successful checks are silent; failures retain diagnostics and nonzero exit codes. Individual commands are `format:check`, `lint`, and `test`. Use `pnpm run format` to apply formatting. `test:verbose` selects the full Node test report. Use `--reporter=silent` to suppress pnpm's own lifecycle headers; the pinned pnpm 12 no longer uses `-s` for silent execution.
 
-`.github/workflows/ci.yml` runs the portable checks on Ubuntu with the pinned Node LTS, frozen dependencies, and jq. It does not run host or desktop tests. The [tooling notes](docs/tooling.md) record lint migration differences and output behavior. After changing configuration fields, run `pnpm run config:generate` to regenerate the schema and field reference.
+`.github/workflows/ci.yml` runs the portable checks on Ubuntu with the pinned Node LTS and frozen dependencies. It does not run host or desktop tests. The [tooling notes](docs/tooling.md) record lint migration differences and output behavior. After changing configuration fields, run `pnpm run config:generate` to regenerate the schema and field reference.
 
 Unit tests mock Rift responses, system commands, geolocation, and weather HTTP responses. Shell tests use temporary preferences and mock CLI executables; they do not change the running window manager or real preferences. Module-wiring tests replace JSX with `null` for linking. Widget-view tests separately compile JSX into element trees and exercise loading, success, stale, failure, and disabled states. These tests do not simulate browser layout or the React DOM renderer.
 

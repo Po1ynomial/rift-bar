@@ -7,7 +7,7 @@ const { React } = Uebersicht;
 // Error messages for different types of errors
 const message = {
   error: "Something went wrong…",
-  riftError: "Cannot query Rift. Check rift-cli, jq, and that Rift is running.",
+  riftError: "Cannot query Rift. Check the rift-cli path and that Rift is running.",
   noOutput: "Loading…",
   noData: "JSON error…",
 };

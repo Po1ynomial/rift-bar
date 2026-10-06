@@ -50,7 +50,14 @@ async function sandbox(fn, xdg = "") {
       await execute(
         "/bin/sh",
         ["-c", command.replaceAll("simple-bar/lib/scripts/", "lib/scripts/")],
-        { env: { ...process.env, HOME: home, XDG_CONFIG_HOME: xdg } },
+        {
+          env: {
+            ...process.env,
+            HOME: home,
+            XDG_CONFIG_HOME: xdg,
+            RIFT_BAR_NODE: process.execPath,
+          },
+        },
       )
     ).stdout;
   };
@@ -190,7 +197,12 @@ test("symlinks are followed, and dangling links, directories, and relative XDG p
     await assert.rejects(settings.init(), /directory/);
     await assert.rejects(
       execute("/bin/sh", ["lib/scripts/config-file.sh", "read"], {
-        env: { ...process.env, HOME: home, XDG_CONFIG_HOME: "relative" },
+        env: {
+          ...process.env,
+          HOME: home,
+          XDG_CONFIG_HOME: "relative",
+          RIFT_BAR_NODE: process.execPath,
+        },
       }),
       /must be absolute/,
     );

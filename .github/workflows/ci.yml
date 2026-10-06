@@ -25,12 +25,6 @@ jobs:
         with:
           node-version-file: .node-version
           cache: pnpm
-      - name: Ensure jq is available
-        run: |
-          if ! command -v jq >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y jq
-          fi
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
       - name: Format, lint, and test
