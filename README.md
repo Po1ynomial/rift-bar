@@ -1,33 +1,35 @@
 # rift-bar
 
-A Rift status bar for Übersicht, derived from [Jean Tinland's simple-bar](https://github.com/Jean-Tinland/simple-bar) at revision `fb5cada`. This is an independently maintained local project, not an upstream Rift-support patch. The original MIT license and attribution are retained in `LICENSE`.
+A [Rift](https://github.com/acsandmann/rift) status bar for [Übersicht](https://github.com/felixhageloh/uebersicht).
+
+rift-bar is derived from [Jean Tinland's simple-bar](https://github.com/Jean-Tinland/simple-bar) at revision `fb5cada`, ported from yabai/AeroSpace to Rift and independently maintained since. Upstream's MIT license and copyright are retained in `LICENSE`.
 
 ## Installation
 
-The source lives at `~/projects/rift-bar`. Übersicht loads it through a symlink named `simple-bar` in its widgets directory:
+Clone this repository into your Übersicht widgets directory:
 
 ```sh
-ln -s "$HOME/projects/rift-bar" "$HOME/Library/Application Support/Übersicht/widgets/simple-bar"
+git clone http://github.com/Po1ynomial/rift-bar "$HOME/Library/Application Support/Übersicht/widgets/rift-bar"
 ```
 
-The `simple-bar` installation name is intentional. Widget command paths, CSS classes, command-cache storage, and the refresh message's widget ID retain that name. Übersicht loads and watches source files through the symlink. The configuration contract is independently maintained and has no legacy compatibility.
+The clone directory must be named `rift-bar`. Übersicht compiles and watches the widget in place, and widget command paths, CSS classes, and the message-bus widget ID are derived from that name.
 
 Requirements:
 
 - Rift with `rift-cli`, tested with Rift 0.6.2.
 - Übersicht at `/Applications/Übersicht.app`, with its local message bus on port `41416`.
 
-Preferences live in `$XDG_CONFIG_HOME/rift-bar/config.toml`, falling back to `~/.config/rift-bar/config.toml`. TOML is a sparse override of builtin defaults and the source of truth. There is no legacy preference loading or migration. Click the bar and press `cmd + ,` to edit settings, `cmd + r` to reload configuration, or `cmd + t` to toggle the bar's dark/light appearance. The [configuration guide](docs/config.md) explains the contract; the [field reference](docs/config-fields.md) lists every option.
+Preferences live in `$XDG_CONFIG_HOME/rift-bar/config.toml`, falling back to `~/.config/rift-bar/config.toml`. TOML is a sparse override of builtin defaults and the source of truth. Click the bar and press `cmd + ,` to edit settings, `cmd + r` to reload configuration, or `cmd + t` to toggle the bar's dark/light appearance. The [configuration guide](docs/config.md) explains the contract; the [field reference](docs/config-fields.md) lists every option.
 
-The Rift CLI path defaults to `/opt/homebrew/bin/rift-cli`, configurable through `rift.cli_path`. The `simple-bar` widget name, Übersicht application path, and message-bus port remain fixed installation requirements.
+The Rift CLI path defaults to `/opt/homebrew/bin/rift-cli`, configurable through `rift.cli_path`. The Übersicht application path and message-bus port are fixed installation requirements.
 
 Startup loads and validates TOML before generating styles or querying Rift, without creating or rewriting a file. GUI saves preserve untouched overrides, not comments or original formatting. Saves detect concurrent edits, follow existing configuration symlinks, and atomically replace the target. Invalid reloads retain the last valid running settings and report an error instead of overwriting the file. Successful saves and explicit reloads update other display instances.
 
-Add this hook to `~/.config/rift/config.toml` to restore subscriptions after Rift restarts. Use the same CLI path as the bar's preferences, and adjust the source path if the checkout moves:
+Add this hook to `~/.config/rift/config.toml` to restore subscriptions after Rift restarts. Use the same CLI path as the bar's preferences:
 
 ```toml
 [settings]
-run_on_start = ["/bin/sh \"$HOME/projects/rift-bar/lib/scripts/subscribe-rift.sh\" '/opt/homebrew/bin/rift-cli' --refresh"]
+run_on_start = ["/bin/sh \"$HOME/Library/Application Support/Übersicht/widgets/rift-bar/lib/scripts/subscribe-rift.sh\" '/opt/homebrew/bin/rift-cli' --refresh"]
 ```
 
 Window gaps are configured separately in Rift. Account for `bar.foreground_height`, additive vertical padding, theme borders, and any floating inset; the bar does not change Rift's gaps.
@@ -36,7 +38,7 @@ Window gaps are configured separately in Rift. Account for `bar.foreground_heigh
 
 `lib/scripts/init-rift.mjs` queries each display's current native Space, including all its virtual workspaces and windows. It runs on Übersicht's bundled Node runtime (falling back to `node` on `PATH`, overridable with `RIFT_BAR_NODE`) through the `init-rift.sh` launcher; snapshot collection has no shell or `jq` dependency. Rift screen IDs match Übersicht screen IDs. Clicking a workspace focuses its display before switching the zero-based workspace index. Window clicks use the full Rift window ID.
 
-`lib/scripts/subscribe-rift.sh` registers `workspace_changed`, `windows_changed`, `focused_window_changed`, and `window_title_changed` once per widget instance. Concurrent refreshes share subscription setup. The script resolves its physical directory so invocation from the source path or widget symlink registers identical callbacks. Rift deduplicates them; the script does not remove other integrations' subscriptions. Events send `WIDGET_WANTS_REFRESH` through Übersicht's bundled Node runtime and WebSocket library. Workspace snapshots do not poll while idle.
+`lib/scripts/subscribe-rift.sh` registers `workspace_changed`, `windows_changed`, `focused_window_changed`, and `window_title_changed` once per widget instance. Concurrent refreshes share subscription setup. The script resolves its physical directory so every invocation registers the same callback path. Rift deduplicates them; the script does not remove other integrations' subscriptions. Events send `WIDGET_WANTS_REFRESH` through Übersicht's bundled Node runtime and WebSocket library. Workspace snapshots do not poll while idle.
 
 Snapshots use ordinary JSON parsing with structural validation before rendering. Window titles and workspace names are not repaired or rewritten. A failed Rift query invalidates subscription setup so an error retry can register it again. Error-only retry timers stop when the error view unmounts or recovers. The startup hook is still required after a restart that occurs entirely between queries, because there is no idle polling to detect it.
 
@@ -46,17 +48,15 @@ Native macOS Space creation/deletion is not implemented. Only each display's cur
 
 - `index.jsx` initializes preferences and styles, renders the bar, and runs Rift's event-driven snapshot command.
 - `lib/rift.js` handles Rift subscriptions, snapshots, and workspace/window clicks.
-- `lib/snapshot.js` validates normalized snapshots without changing their strings.
+- `lib/snapshot.js` validates normalized snapshots without changing their strings; `lib/snapshot-build.js` builds them from `rift-cli` output.
 - `lib/config.js` defines defaults, typed fields, TOML parsing, sparse overrides, validation, and GUI bindings.
 - `lib/settings.js` owns loaded configuration state and cross-display reload notifications.
 - `lib/scripts/config-file.mjs` resolves the XDG path and performs read-only loads and conflict-checked atomic saves, launched through `config-file.sh`.
-- `lib/components/workspace-context.jsx` and `lib/components/workspaces/` render snapshots without backend selection or background workspace queries.
+- `lib/components/rift-bar-context.jsx` and `lib/components/workspaces/` render snapshots without backend selection or background workspace queries.
 - `lib/widgets/` defines widget resources and data collectors. `lib/hooks/use-widget.js` connects their snapshots to React.
 - `lib/components/data/` renders the retained widgets and handles user actions. Collectors do not own loading flags or polling timers.
 - `tools/config-reference.mjs` generates `lib/schemas/config.json` and the configuration field reference from the same field definitions used by the GUI.
 - `tests/` covers module exports, startup, sparse overrides, TOML validation, GUI edits and resets, save conflicts, persistence, cross-display reloads, Rift snapshots and commands, recovery, widget resources, collector fixtures, weather, and widget element trees.
-
-The yabai/AeroSpace backends, native-Space controls, backend chooser, and server hooks are removed. Custom widgets, arbitrary CSS, and palette-variable overrides are also removed from configuration. Source edits remain the way to add features or redesign widget presentation.
 
 ## Development
 
@@ -81,15 +81,15 @@ The optional live latency regression clicks workspace buttons, checks updates be
 pnpm run test:latency
 ```
 
-## Retained widgets
+## Widgets
 
-Builtins are retained for current use, not possible future use. The bar keeps clock, date, battery/caffeinate, Wi-Fi, output and input volume, keyboard layout, CPU, memory, network statistics, Dock notification badges, weather, GitHub, and Zoom. Rift workspaces and windows remain core bar functionality.
+The bar includes clock, date, battery/caffeinate, Wi-Fi, output and input volume, keyboard layout, CPU, memory, network statistics, Dock notification badges, weather, GitHub, and Zoom, alongside Rift workspaces and windows.
 
-GPU/macmon, next meeting/icalBuddy, stock, crypto, Viscosity VPN, Spotify, Music/iTunes, YouTube Music, MPD, browser-track scripts, and playback decoration have been removed. System collectors keep their existing macOS commands. Zoom still depends on its application UI and automation permissions. GitHub requires an authenticated `gh`; an absent binary produces an unavailable state.
+Zoom depends on its application UI and automation permissions. GitHub requires an authenticated `gh`; an absent binary produces an unavailable state.
 
 ## Widget protocol
 
-A definition declares a stable `id`, a positive default `refreshFrequency`, a `load({ config, signal, force })` function, and a snapshot validator. Views call `useWidget(definition, active, config)` and receive `data`, `status`, `error`, `updatedAt`, and `refresh`. Existing `Widget` and `styles` exports remain the entry point's rendering interface. Configuration defaults, validation, controls, and generated schema entries come from `lib/config.js`. Views use the resolved snake_case widget settings directly.
+A definition declares a stable `id`, a positive default `refreshFrequency`, a `load({ config, signal, force })` function, and a snapshot validator. Views call `useWidget(definition, active, config)` and receive `data`, `status`, `error`, `updatedAt`, and `refresh`. Configuration defaults, validation, controls, and generated schema entries come from `lib/config.js`. Views use the resolved snake_case widget settings directly.
 
 The resource owns polling, a 15-second load deadline, bounded retry backoff, loading/error transitions, and cleanup. It allows one in-flight load per resource, validates results before publication, preserves the last successful snapshot as stale on failure, and ignores results from disposed resources. Missing dependencies use `unavailable` instead of endless loading. Invalid or nonpositive refresh intervals use the widget default; positive intervals have a 250ms lower bound. Manual refreshes and error retries bypass the command-result cache.
 
@@ -102,9 +102,3 @@ Weather uses [Open-Meteo](https://open-meteo.com/) current temperature and WMO w
 In settings, choose `configured` location mode, search for a city or postal code, select the intended result, and save. Alternatively enter latitude and longitude directly. The selected coordinates and label are persisted in `widgets.weather.location`. Configured mode does not request location permission. Automatic mode uses standard browser geolocation coordinates with a five-second timeout and reports permission denial or unavailable location without guessing a city.
 
 Configured mode requires both coordinates; incomplete locations cannot be saved. Transient forecast failures retain the last successful reading and display a stale marker. Right-click requests a fresh forecast. The weather link credits Open-Meteo.
-
-The disabled manual Pywal integration remains a source-only integration outside the configuration contract.
-
-## Local relocation
-
-The original patched checkout, including its upstream Git history, is preserved at `~/Library/Application Support/Übersicht/simple-bar.before-rift-bar`. A historical preference backup is kept at `~/.simplebarrc.before-rift-bar`; it is not loaded by the current application. The new repository has its own history and no upstream remote. Its first commit preserves the working patched baseline before cleanup.
