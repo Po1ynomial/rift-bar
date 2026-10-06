@@ -21,19 +21,25 @@ export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
   const config = settings.keyboardWidgetOptions;
   const { showIcon, keyboardMaxLength } = config;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.keyboardWidget;
-  const { data: state, status, error, refresh: getKeyboard } = useWidget(definition, visible, config);
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.keyboardWidget;
+  const {
+    data: state,
+    status,
+    error,
+    refresh: getKeyboard,
+  } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   if (!visible) return null;
-  if (!loading && state === undefined) return <WidgetStatus name="keyboard" status={status} error={error} onRetry={getKeyboard} />;
+  if (!loading && state === undefined)
+    return <WidgetStatus name="keyboard" status={status} error={error} onRetry={getKeyboard} />;
 
   if (loading) return <DataWidgetLoader.Widget className="keyboard" />;
   if (!state) return null;
   const { keyboard } = state;
 
   const maxLength = Number(keyboardMaxLength) || 0;
-  const displayKeyboard =
-    maxLength > 0 ? keyboard.slice(0, maxLength) : keyboard;
+  const displayKeyboard = maxLength > 0 ? keyboard.slice(0, maxLength) : keyboard;
 
   if (!displayKeyboard?.length) return null;
 

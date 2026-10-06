@@ -20,16 +20,40 @@ async function compiledWeather() {
   const filename = fileURLToPath(new URL("../../lib/widgets/weather.js", import.meta.url));
   // Match bundleWidget's options in Übersicht's server.js, not public/.babelrc.
   const { code } = babel.transformSync(await readFile(filename, "utf8"), {
-    filename, babelrc: false, configFile: false,
-    presets: [[env, { targets: "last 4 Safari versions", modules: "commonjs" }], [react, { pragma: "html" }]],
+    filename,
+    babelrc: false,
+    configFile: false,
+    presets: [
+      [env, { targets: "last 4 Safari versions", modules: "commonjs" }],
+      [react, { pragma: "html" }],
+    ],
     plugins: [rest, emotion],
   });
   const exports = {};
   const context = createContext({
-    exports, console, URL, URLSearchParams, DOMException, AbortController, setTimeout, clearTimeout,
-    require: (specifier) => { assert.equal(specifier, "./runtime.js"); return runtime; },
-    navigator: { geolocation: { getCurrentPosition: (resolve) => resolve({ coords: { latitude: 48.85, longitude: 2.35 } }) } },
-    fetch: async () => ({ ok: true, json: async () => ({ current: { temperature_2m: 12, weather_code: 0, is_day: 1, time: 1700000000 } }) }),
+    exports,
+    console,
+    URL,
+    URLSearchParams,
+    DOMException,
+    AbortController,
+    setTimeout,
+    clearTimeout,
+    require: (specifier) => {
+      assert.equal(specifier, "./runtime.js");
+      return runtime;
+    },
+    navigator: {
+      geolocation: {
+        getCurrentPosition: (resolve) => resolve({ coords: { latitude: 48.85, longitude: 2.35 } }),
+      },
+    },
+    fetch: async () => ({
+      ok: true,
+      json: async () => ({
+        current: { temperature_2m: 12, weather_code: 0, is_day: 1, time: 1700000000 },
+      }),
+    }),
   });
   runInContext(code, context, { filename });
   return { weather: exports, context };
@@ -51,9 +75,13 @@ test("Übersicht-compiled getPosition resolves its default inside the function b
 
 test("Übersicht-compiled configured weather never reads navigator", async () => {
   const { weather, context } = await compiledWeather();
-  Object.defineProperty(context, "navigator", { get: () => assert.fail("Configured mode must not access geolocation") });
+  Object.defineProperty(context, "navigator", {
+    get: () => assert.fail("Configured mode must not access geolocation"),
+  });
   const data = await weather.loadWeather({
-    locationMode: "configured", unit: "C", weatherLocation: { label: "Selected", latitude: 0, longitude: 0 },
+    locationMode: "configured",
+    unit: "C",
+    weatherLocation: { label: "Selected", latitude: 0, longitude: 0 },
   });
   assert.equal(data.latitude, 0);
   assert.equal(data.location, "Selected");
@@ -62,17 +90,29 @@ test("Übersicht-compiled configured weather never reads navigator", async () =>
 test("the real read-only AppleScript collector produces a valid sound snapshot", async () => {
   let raw;
   const { namespace } = await loadModule("lib/widgets/system.js", {
-    mocks: { uebersicht: { React, run: async (command) => {
-      assert.match(command, /^osascript /);
-      assert.match(command, /get volume settings/);
-      assert.doesNotMatch(command, /set volume (?:output|input)/);
-      const result = spawnSync("/bin/sh", ["-c", command], { encoding: "utf8", timeout: 10000 });
-      assert.equal(result.status, 0, result.error?.message || result.stderr);
-      raw = result.stdout;
-      return raw;
-    } } },
+    mocks: {
+      uebersicht: {
+        React,
+        run: async (command) => {
+          assert.match(command, /^osascript /);
+          assert.match(command, /get volume settings/);
+          assert.doesNotMatch(command, /set volume (?:output|input)/);
+          const result = spawnSync("/bin/sh", ["-c", command], {
+            encoding: "utf8",
+            timeout: 10000,
+          });
+          assert.equal(result.status, 0, result.error?.message || result.stderr);
+          raw = result.stdout;
+          return raw;
+        },
+      },
+    },
   });
   const data = await namespace.sound.load({ config: { refreshFrequency: 20000 }, force: true });
-  assert.equal(namespace.sound.validate(data), true, `Rejected real sound output: ${JSON.stringify(raw)}`);
+  assert.equal(
+    namespace.sound.validate(data),
+    true,
+    `Rejected real sound output: ${JSON.stringify(raw)}`,
+  );
   assert.match(raw.trim(), /^\d+,(?:true|false)$/);
 });

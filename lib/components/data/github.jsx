@@ -21,11 +21,13 @@ export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
   const config = settings.githubWidgetOptions;
   const { hideWhenNoNotification, notificationUrl, showIcon } = config;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.githubWidget;
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.githubWidget;
   const { data: state, status, error, refresh: getGitHub } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   if (!visible) return null;
-  if (!loading && state === undefined) return <WidgetStatus name="github" status={status} error={error} onRetry={getGitHub} />;
+  if (!loading && state === undefined)
+    return <WidgetStatus name="github" status={status} error={error} onRetry={getGitHub} />;
 
   if (loading) return <DataWidgetLoader.Widget className="github" />;
   if (!state) return null;

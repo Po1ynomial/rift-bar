@@ -16,36 +16,22 @@ const { React } = Uebersicht;
  * @param {Object} props.newSettings - Object containing current modified settings.
  * @param {Function} props.setNewSettings - Function allowing to save newly modified settings.
  */
-export default function SettingsInner({
-  settingKey,
-  setting,
-  newSettings,
-  setNewSettings,
-}) {
+export default function SettingsInner({ settingKey, setting, newSettings, setNewSettings }) {
   const { infos, documentation } = setting;
   return (
     <>
       {Object.keys(Settings.defaultSettings[settingKey]).map((subKey) => {
         const subSetting = Settings.data[subKey];
         if (!subSetting) return null;
-        const {
-          Component,
-          fullWidth,
-          label,
-          options,
-          placeholder,
-          title,
-          type,
-          minHeight,
-        } = subSetting;
+        const { Component, fullWidth, label, options, placeholder, title, type, minHeight } =
+          subSetting;
 
         const code = settingKey + subKey;
         const defaultValue = newSettings[settingKey][subKey];
 
         const classes = Utils.classNames("settings__item", {
           "settings__item--radio": type === "radio",
-          "settings__item--text":
-            type === "text" || type === "number" || type === "color",
+          "settings__item--text": type === "text" || type === "number" || type === "color",
           "settings__item--textarea": type === "textarea",
           "settings__item--color": type === "color",
           "settings__item--full-width": fullWidth,
@@ -73,10 +59,7 @@ export default function SettingsInner({
         return (
           <React.Fragment key={code}>
             {title && <div className="settings__item-title">{title}</div>}
-            <div
-              className={classes}
-              onChange={type === "radio" ? onChange : undefined}
-            >
+            <div className={classes} onChange={type === "radio" ? onChange : undefined}>
               <SettingsItem
                 code={code}
                 Component={Component}
@@ -110,11 +93,7 @@ export default function SettingsInner({
         <div className="settings__infos">
           <div className="settings__infos-title">Tips</div>
           {infos.map((info, i) => (
-            <div
-              key={i}
-              className="settings__info"
-              dangerouslySetInnerHTML={{ __html: info }}
-            />
+            <div key={i} className="settings__info" dangerouslySetInnerHTML={{ __html: info }} />
           ))}
         </div>
       )}

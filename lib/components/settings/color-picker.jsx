@@ -68,17 +68,10 @@ export default function ColorPicker({ callback, index, selectedColor }) {
               setOpen(false);
             };
             return (
-              <button
-                key={color}
-                onClick={onClick}
-                style={{ backgroundColor: `var(${color})` }}
-              />
+              <button key={color} onClick={onClick} style={{ backgroundColor: `var(${color})` }} />
             );
           })}
-          <div
-            className="color-picker__custom-color"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="color-picker__custom-color" onClick={(e) => e.stopPropagation()}>
             <div
               className="color-picker__custom-color-preview"
               style={{ backgroundColor: customColor }}

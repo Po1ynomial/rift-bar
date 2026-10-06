@@ -14,7 +14,9 @@ function effects() {
         cleanup = callback();
       }
     },
-    unmount() { cleanup?.(); },
+    unmount() {
+      cleanup?.();
+    },
   };
 }
 
@@ -25,13 +27,21 @@ test("error recovery schedules one timer and cleans it on state changes and unmo
   let refreshes = 0;
   const { namespace } = await loadModule("lib/components/error.jsx", {
     globals: {
-      setTimeout: (callback, delay) => { timers.set(++id, { callback, delay }); return id; },
+      setTimeout: (callback, delay) => {
+        timers.set(++id, { callback, delay });
+        return id;
+      },
       clearTimeout: (timer) => timers.delete(timer),
     },
-    mocks: { uebersicht: {
-      React: { ...React, useEffect: lifecycle.useEffect },
-      run: async () => { if (++refreshes === 1) throw new Error("Übersicht is restarting"); return ""; },
-    } },
+    mocks: {
+      uebersicht: {
+        React: { ...React, useEffect: lifecycle.useEffect },
+        run: async () => {
+          if (++refreshes === 1) throw new Error("Übersicht is restarting");
+          return "";
+        },
+      },
+    },
   });
   namespace.Component({ type: "error" });
   namespace.Component({ type: "error" });
@@ -41,7 +51,11 @@ test("error recovery schedules one timer and cleans it on state changes and unmo
   const [expiredId, expired] = [...timers][0];
   timers.delete(expiredId);
   await expired.callback();
-  assert.equal(timers.size, 1, "same-type failures must continue retrying even after a failed refresh");
+  assert.equal(
+    timers.size,
+    1,
+    "same-type failures must continue retrying even after a failed refresh",
+  );
   namespace.Component({ type: "riftError" });
   assert.equal(timers.size, 1);
   assert.equal([...timers.values()][0].delay, 15000);
@@ -64,7 +78,10 @@ for (const fails of [false, true]) {
         uebersicht: {
           React: {
             ...React,
-            useCallback: (callback) => { handleKeydown = callback; return callback; },
+            useCallback: (callback) => {
+              handleKeydown = callback;
+              return callback;
+            },
             useState: () => [false, () => {}],
             useEffect: () => {},
           },

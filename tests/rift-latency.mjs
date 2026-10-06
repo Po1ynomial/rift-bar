@@ -17,11 +17,14 @@ function execute(args) {
   assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
   return result.stdout;
 }
-function query(args) { return JSON.parse(execute(args)); }
+function query(args) {
+  return JSON.parse(execute(args));
+}
 
 function browser(...args) {
   const result = spawnSync("agent-browser", ["--session", session, "--json", ...args], {
-    encoding: "utf8", timeout: 30000,
+    encoding: "utf8",
+    timeout: 30000,
   });
   assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
   const response = JSON.parse(result.stdout);
@@ -45,19 +48,29 @@ async function measure(options) {
     if (typeof body === "string" && body.includes("init-rift.sh")) {
       snapshotCount++;
       const row = { start: performance.now() };
-      this.addEventListener("loadend", () => {
-        row.end = performance.now();
-        lastSnapshot = row;
-        nextSnapshot?.(row);
-      }, { once: true });
+      this.addEventListener(
+        "loadend",
+        () => {
+          row.end = performance.now();
+          lastSnapshot = row;
+          nextSnapshot?.(row);
+        },
+        { once: true },
+      );
     }
     return savedSend.apply(this, arguments);
   };
 
   function waitForSnapshot() {
     return new Promise((resolve, reject) => {
-      const receive = (row) => { cleanup(); resolve(row); };
-      const timer = setTimeout(() => { cleanup(); reject(new Error("Refresh did not run")); }, 4000);
+      const receive = (row) => {
+        cleanup();
+        resolve(row);
+      };
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(new Error("Refresh did not run"));
+      }, 4000);
       const cleanup = () => {
         clearTimeout(timer);
         if (nextSnapshot === receive) nextSnapshot = undefined;
@@ -76,7 +89,10 @@ async function measure(options) {
   function waitForVisible(index) {
     return new Promise((resolve, reject) => {
       const observer = new MutationObserver(check);
-      const timer = setTimeout(() => { cleanup(); reject(new Error("Workspace display did not update")); }, 4000);
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(new Error("Workspace display did not update"));
+      }, 4000);
       const cleanup = () => {
         clearTimeout(timer);
         observer.disconnect();
@@ -89,7 +105,12 @@ async function measure(options) {
         }
       }
       cleanups.add(cleanup);
-      observer.observe(document.body, { attributes: true, subtree: true, childList: true, characterData: true });
+      observer.observe(document.body, {
+        attributes: true,
+        subtree: true,
+        childList: true,
+        characterData: true,
+      });
       check();
     });
   }
@@ -119,7 +140,9 @@ async function measure(options) {
       });
     }
     const displays = JSON.parse(await U.run(`${executable} query displays`));
-    if (!displays.some((display) => display.uuid === options.displayUuid && display.is_active_context)) {
+    if (
+      !displays.some((display) => display.uuid === options.displayUuid && display.is_active_context)
+    ) {
       throw new Error("Workspace click did not focus the target display");
     }
     await new Promise((resolve) => setTimeout(resolve, 700));
@@ -133,9 +156,11 @@ async function measure(options) {
 }
 
 const displays = query(["query", "displays"]);
-const workspaces = new Map(displays.filter((display) => display.space != null).map((display) => [
-  display.uuid, query(["query", "workspaces", "--display", display.uuid]),
-]));
+const workspaces = new Map(
+  displays
+    .filter((display) => display.space != null)
+    .map((display) => [display.uuid, query(["query", "workspaces", "--display", display.uuid])]),
+);
 const plan = planLatency(displays, workspaces, settings);
 if (!plan.cases.length) {
   console.log("Skipped: no visible display has two usable workspaces.");
@@ -148,23 +173,40 @@ if (!plan.cases.length) {
       browserStarted = true;
       browser("open", `http://127.0.0.1:41416/${item.screenId}`);
       browser("wait", ".space__inner[data-workspace]");
-      const options = { cli, displayUuid: item.displayUuid, original: item.original.index, alternate: item.alternate.index };
+      const options = {
+        cli,
+        displayUuid: item.displayUuid,
+        original: item.original.index,
+        alternate: item.alternate.index,
+      };
       desktopTouched = true;
       const data = browser("eval", `(${measure.toString()})(${JSON.stringify(options)})`);
       const { samples, idleSnapshotQueries } = data.result;
       console.log(JSON.stringify({ samples, idleSnapshotQueries }, null, 2));
       assert.equal(samples?.length, 6, "Missing timing samples");
-      assert.ok(samples.every((sample) => sample.totalMs < 250), "Workspace bar update exceeded 250ms");
+      assert.ok(
+        samples.every((sample) => sample.totalMs < 250),
+        "Workspace bar update exceeded 250ms",
+      );
       assert.equal(idleSnapshotQueries, 0, "Workspace snapshots still poll while idle");
     }
-  } catch (error) { failures.push(error); }
-  finally {
+  } catch (error) {
+    failures.push(error);
+  } finally {
     // Stop browser-side clicks before restoring, including after an eval timeout.
     if (browserStarted) {
-      try { browser("close"); } catch (error) { failures.push(error); }
+      try {
+        browser("close");
+      } catch (error) {
+        failures.push(error);
+      }
     }
     if (desktopTouched) {
-      try { restoreDesktop(plan, query, execute); } catch (error) { failures.push(error); }
+      try {
+        restoreDesktop(plan, query, execute);
+      } catch (error) {
+        failures.push(error);
+      }
     }
   }
   if (failures.length) throw new AggregateError(failures, "Live latency regression failed");

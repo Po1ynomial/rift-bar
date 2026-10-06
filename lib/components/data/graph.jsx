@@ -17,13 +17,7 @@ export { graphStyles as styles } from "../../styles/components/data/graph";
  * @param {number} [props.maxValue] - Maximum value for scaling the bars.
  * @returns {JSX.Element|null} The rendered graph component or null if no caption is provided.
  */
-export default function Graph({
-  className,
-  caption,
-  values = [],
-  maxLength,
-  maxValue,
-}) {
+export default function Graph({ className, caption, values = [], maxLength, maxValue }) {
   // Return null if no caption is provided
   if (!caption) {
     return null;
@@ -68,10 +62,7 @@ export default function Graph({
             <div key={key} className="graph__data-item">
               {Icon && (
                 <SuspenseIcon>
-                  <Icon
-                    className="graph__data-item-icon"
-                    style={{ fill: color }}
-                  />
+                  <Icon className="graph__data-item-icon" style={{ fill: color }} />
                 </SuspenseIcon>
               )}
               <span

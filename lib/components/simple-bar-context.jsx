@@ -13,21 +13,13 @@ export function useSimpleBarContext() {
   return React.useContext(SimpleBarContext);
 }
 
-export default function SimpleBarContextProvider({
-  initialSettings,
-  displays,
-  children,
-}) {
+export default function SimpleBarContextProvider({ initialSettings, displays, children }) {
   const [settings, setSettings] = React.useState(initialSettings);
   const [missives, setMissives] = React.useState([]);
-  const ubersichtDisplayId = parseInt(
-    window.location.pathname.replace("/", ""),
-    10,
-  );
+  const ubersichtDisplayId = parseInt(window.location.pathname.replace("/", ""), 10);
 
   // Rift's screen IDs match Übersicht's screen IDs directly.
-  const currentDisplay =
-    displays?.find((display) => display.id === ubersichtDisplayId) || {};
+  const currentDisplay = displays?.find((display) => display.id === ubersichtDisplayId) || {};
   const displayIndex = currentDisplay.index ?? 1;
 
   const pushMissive = (newMissive) => {

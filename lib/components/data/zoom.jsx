@@ -22,11 +22,13 @@ export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
   const config = settings.zoomWidgetOptions;
   const { showVideo, showMic } = config;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.zoomWidget;
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.zoomWidget;
   const { data: state, status, error, refresh: getZoom } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   if (!visible) return null;
-  if (!loading && state === undefined) return <WidgetStatus name="zoom" status={status} error={error} onRetry={getZoom} />;
+  if (!loading && state === undefined)
+    return <WidgetStatus name="zoom" status={status} error={error} onRetry={getZoom} />;
 
   if (loading) return <DataWidgetLoader.Widget className="zoom" />;
   if (!state || (!state.mic.length && !state.video.length)) return null;

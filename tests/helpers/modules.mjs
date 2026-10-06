@@ -10,7 +10,9 @@ export const root = fileURLToPath(new URL("../../", import.meta.url));
 // all imports, exports, module initialization, and command functions stay intact.
 function stripJSX(source) {
   const ast = parse(source, {
-    ecmaVersion: "latest", sourceType: "module", ecmaFeatures: { jsx: true },
+    ecmaVersion: "latest",
+    sourceType: "module",
+    ecmaFeatures: { jsx: true },
   });
   const replacements = [];
   function visit(node) {
@@ -38,7 +40,11 @@ export const React = {
 
 // A small JSX transform for element-tree assertions. This does not simulate a DOM.
 function elementJSX(source) {
-  const ast = parse(source, { ecmaVersion: "latest", sourceType: "module", ecmaFeatures: { jsx: true } });
+  const ast = parse(source, {
+    ecmaVersion: "latest",
+    sourceType: "module",
+    ecmaFeatures: { jsx: true },
+  });
   function js(node) {
     const replacements = [];
     function visit(child) {
@@ -64,8 +70,11 @@ function elementJSX(source) {
     const tag = /^[a-z]/.test(name) ? JSON.stringify(name) : name;
     const attributes = (opening?.attributes || []).map((attribute) => {
       if (attribute.type === "JSXSpreadAttribute") return `...${js(attribute.argument)}`;
-      const value = !attribute.value ? "true" : attribute.value.type === "Literal"
-        ? JSON.stringify(attribute.value.value) : js(attribute.value.expression);
+      const value = !attribute.value
+        ? "true"
+        : attribute.value.type === "Literal"
+          ? JSON.stringify(attribute.value.value)
+          : js(attribute.value.expression);
       return `${JSON.stringify(attribute.name.name)}: ${value}`;
     });
     const children = node.children.flatMap((child) => {
@@ -73,7 +82,8 @@ function elementJSX(source) {
         const text = child.value.replace(/\s+/g, " ").trim();
         return text ? [JSON.stringify(text)] : [];
       }
-      if (child.type === "JSXExpressionContainer") return child.expression.type === "JSXEmptyExpression" ? [] : [js(child.expression)];
+      if (child.type === "JSXExpressionContainer")
+        return child.expression.type === "JSXEmptyExpression" ? [] : [js(child.expression)];
       return [element(child)];
     });
     return `React.createElement(${tag}, {${attributes.join(",")}}${children.length ? `,${children.join(",")}` : ""})`;
@@ -81,16 +91,22 @@ function elementJSX(source) {
   return js(ast);
 }
 
-export async function loadModule(path, { globals = {}, mocks = {}, evaluate = true, jsx = false } = {}) {
+export async function loadModule(
+  path,
+  { globals = {}, mocks = {}, evaluate = true, jsx = false } = {},
+) {
   const context = createContext({ console, ...globals });
   const modules = new Map();
   async function load(filename) {
     if (!modules.has(filename)) {
-      modules.set(filename, (async () => {
-        let source = await readFile(filename, "utf8");
-        if (filename.endsWith(".jsx")) source = jsx ? elementJSX(source) : stripJSX(source);
-        return new SourceTextModule(source, { context, identifier: filename });
-      })());
+      modules.set(
+        filename,
+        (async () => {
+          let source = await readFile(filename, "utf8");
+          if (filename.endsWith(".jsx")) source = jsx ? elementJSX(source) : stripJSX(source);
+          return new SourceTextModule(source, { context, identifier: filename });
+        })(),
+      );
     }
     return modules.get(filename);
   }
@@ -101,9 +117,16 @@ export async function loadModule(path, { globals = {}, mocks = {}, evaluate = tr
     const mock = mocks[absolute] ?? mocks[specifier];
     if (mock) {
       if (!modules.has(absolute)) {
-        modules.set(absolute, new SyntheticModule(Object.keys(mock), function () {
-          for (const [name, value] of Object.entries(mock)) this.setExport(name, value);
-        }, { context, identifier: absolute }));
+        modules.set(
+          absolute,
+          new SyntheticModule(
+            Object.keys(mock),
+            function () {
+              for (const [name, value] of Object.entries(mock)) this.setExport(name, value);
+            },
+            { context, identifier: absolute },
+          ),
+        );
       }
       return modules.get(absolute);
     }

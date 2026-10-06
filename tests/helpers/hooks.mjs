@@ -1,11 +1,19 @@
 export function createHookHarness() {
   const slots = [];
-  let cursor = 0, effects = [], writes = 0;
+  let cursor = 0,
+    effects = [],
+    writes = 0;
   const React = {
     useState(initial) {
       const index = cursor++;
       if (!(index in slots)) slots[index] = initial;
-      return [slots[index], (value) => { writes++; slots[index] = value; }];
+      return [
+        slots[index],
+        (value) => {
+          writes++;
+          slots[index] = value;
+        },
+      ];
     },
     useRef(initial) {
       const index = cursor++;
@@ -16,20 +24,31 @@ export function createHookHarness() {
       const index = cursor++;
       const old = slots[index];
       if (!old || deps.some((value, key) => !Object.is(value, old.deps[key]))) {
-        effects.push(() => { old?.cleanup?.(); slots[index] = { deps, cleanup: fn() }; });
+        effects.push(() => {
+          old?.cleanup?.();
+          slots[index] = { deps, cleanup: fn() };
+        });
       }
     },
-    useCallback(fn) { cursor++; return fn; },
+    useCallback(fn) {
+      cursor++;
+      return fn;
+    },
   };
   return {
     React,
-    get writes() { return writes; },
+    get writes() {
+      return writes;
+    },
     render(fn, ...args) {
-      cursor = 0; effects = [];
+      cursor = 0;
+      effects = [];
       const result = fn(...args);
       for (const effect of effects) effect();
       return result;
     },
-    unmount() { for (const slot of slots) slot?.cleanup?.(); },
+    unmount() {
+      for (const slot of slots) slot?.cleanup?.();
+    },
   };
 }

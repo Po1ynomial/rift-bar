@@ -4,17 +4,42 @@ import { test } from "node:test";
 import { loadModule, React } from "./helpers/modules.mjs";
 
 const widgets = [
-  "battery", "cpu", "date-display", "github", "keyboard", "memory", "mic",
-  "netstats", "notifications", "sound", "time", "user-widgets", "weather", "wifi", "zoom",
+  "battery",
+  "cpu",
+  "date-display",
+  "github",
+  "keyboard",
+  "memory",
+  "mic",
+  "netstats",
+  "notifications",
+  "sound",
+  "time",
+  "user-widgets",
+  "weather",
+  "wifi",
+  "zoom",
 ];
 const removed = [
-  "gpu", "next-meeting", "crypto", "stock", "spotify", "youtube-music",
-  "music", "mpd", "browser-track", "viscosity-vpn", "specter",
+  "gpu",
+  "next-meeting",
+  "crypto",
+  "stock",
+  "spotify",
+  "youtube-music",
+  "music",
+  "mpd",
+  "browser-track",
+  "viscosity-vpn",
+  "specter",
 ];
 
 for (const widget of widgets) {
   test(`${widget} delegates its lifecycle rather than scheduling its own refreshes`, async () => {
-    const source = await readFile(new URL(`../lib/components/data/${widget}.jsx`, import.meta.url), "utf8");
+    const source = await readFile(
+      new URL(`../lib/components/data/${widget}.jsx`, import.meta.url),
+      "utf8",
+    );
     assert.match(source, /useWidget\(definition, visible, /);
     assert.doesNotMatch(source, /setTimeout|setInterval|useWidgetRefresh|useServerSocket/);
   });
@@ -22,8 +47,13 @@ for (const widget of widgets) {
 
 for (const widget of removed) {
   test(`${widget} has no remaining component or stylesheet`, async () => {
-    await assert.rejects(access(new URL(`../lib/components/data/${widget}.jsx`, import.meta.url)), { code: "ENOENT" });
-    await assert.rejects(access(new URL(`../lib/styles/components/data/${widget}.js`, import.meta.url)), { code: "ENOENT" });
+    await assert.rejects(access(new URL(`../lib/components/data/${widget}.jsx`, import.meta.url)), {
+      code: "ENOENT",
+    });
+    await assert.rejects(
+      access(new URL(`../lib/styles/components/data/${widget}.js`, import.meta.url)),
+      { code: "ENOENT" },
+    );
   });
 }
 
@@ -48,12 +78,27 @@ function output(command) {
   assert.fail(`Unexpected collector command: ${command}`);
 }
 
-for (const name of ["time", "date", "cpu", "memory", "netstats", "battery", "wifi", "keyboard", "sound", "mic", "github", "zoom"]) {
+for (const name of [
+  "time",
+  "date",
+  "cpu",
+  "memory",
+  "netstats",
+  "battery",
+  "wifi",
+  "keyboard",
+  "sound",
+  "mic",
+  "github",
+  "zoom",
+]) {
   test(`${name} produces a validated snapshot through the real resource runtime`, async () => {
     const { namespace: definitions } = await loadModule("lib/widgets/system.js", {
       mocks: { uebersicht: { React, run: async (command) => output(command) } },
     });
-    const { namespace: settings } = await loadModule("lib/settings.js", { mocks: { uebersicht: { React } } });
+    const { namespace: settings } = await loadModule("lib/settings.js", {
+      mocks: { uebersicht: { React } },
+    });
     const section = name === "wifi" ? "networkWidgetOptions" : `${name}WidgetOptions`;
     const { createWidgetResource } = await import("../lib/widgets/runtime.js");
     const resource = createWidgetResource(definitions[name], settings.defaultSettings[section]);
@@ -61,10 +106,11 @@ for (const name of ["time", "date", "cpu", "memory", "netstats", "battery", "wif
       await resource.refresh();
       assert.equal(resource.state.status, "ready", resource.state.error?.message);
       assert.equal(definitions[name].validate(resource.state.data), true);
-    } finally { resource.stop(); }
+    } finally {
+      resource.stop();
+    }
   });
 }
-
 
 for (const raw of ["19, false\n", " 19 , true \n", "0,false\n", "100,true\n"]) {
   test("sound trims serialized fields: " + JSON.stringify(raw), async () => {
@@ -73,7 +119,10 @@ for (const raw of ["19, false\n", " 19 , true \n", "0,false\n", "100,true\n"]) {
     });
     const data = await namespace.sound.load({ config: {}, force: true });
     assert.equal(namespace.sound.validate(data), true);
-    const [volume, muted] = raw.trim().split(",").map((field) => field.trim());
+    const [volume, muted] = raw
+      .trim()
+      .split(",")
+      .map((field) => field.trim());
     assert.equal(data.volume, volume);
     assert.equal(data.muted, muted);
   });
@@ -85,4 +134,19 @@ test("sound still rejects list serialization rather than weakening the validator
   });
   const data = await namespace.sound.load({ config: {}, force: true });
   assert.equal(namespace.sound.validate(data), false);
+});
+
+test("clock sampling includes day progress so rendering stays pure", async () => {
+  class SampleDate extends Date {
+    constructor(value = "2024-06-20T12:00:00") {
+      super(value);
+    }
+  }
+  const { namespace } = await loadModule("lib/widgets/system.js", {
+    globals: { Date: SampleDate },
+    mocks: { uebersicht: { React } },
+  });
+  const data = namespace.time.load({ config: { hour12: false } });
+  assert.equal(data.fillerWidth, 0.5);
+  assert.equal(namespace.time.validate(data), true);
 });

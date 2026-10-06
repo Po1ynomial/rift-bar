@@ -70,7 +70,10 @@ export function Wrapper() {
             await Settings.set(updatedSettings);
             await Utils.hardRefresh();
           } catch {
-            Utils.notification("Cannot save preferences. Check file permissions and free disk space.", pushMissive);
+            Utils.notification(
+              "Cannot save preferences. Check file permissions and free disk space.",
+              pushMissive,
+            );
           }
         }
       }

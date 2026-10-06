@@ -15,23 +15,21 @@ const { React } = Uebersicht;
  * @param {Object} [props.style] - Additional styles for the loader.
  * @returns {JSX.Element} The rendered data widget loader component.
  */
-export const Widget = React.memo(
-  ({ width = 14, height = 14, className, style }) => {
-    // Generate class names using the Utils.classNames function
-    const classes = Utils.classNames("data-widget-loader", "data-widget", {
-      [className]: className,
-    });
+export const Widget = React.memo(({ width = 14, height = 14, className, style }) => {
+  // Generate class names using the Utils.classNames function
+  const classes = Utils.classNames("data-widget-loader", "data-widget", {
+    [className]: className,
+  });
 
-    // Return the JSX for the data widget loader
-    return (
-      <div className={classes} style={style}>
-        <div
-          className="data-widget-loader__inner"
-          style={{ width, height, flex: `0 0 ${width || height}px` }}
-        />
-      </div>
-    );
-  },
-);
+  // Return the JSX for the data widget loader
+  return (
+    <div className={classes} style={style}>
+      <div
+        className="data-widget-loader__inner"
+        style={{ width, height, flex: `0 0 ${width || height}px` }}
+      />
+    </div>
+  );
+});
 
 Widget.displayName = "DataWidgetLoader";

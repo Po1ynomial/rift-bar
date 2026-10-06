@@ -22,7 +22,8 @@ export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
   const config = settings.micWidgetOptions;
   const { showIcon } = config;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.micWidget;
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.micWidget;
   const { data: state, status, error, refresh: getMic } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   const { volume: _volume } = state || {};
@@ -32,11 +33,11 @@ export const Widget = React.memo(() => {
     if (_volume !== undefined) setVolume(parseInt(_volume, 10));
   }, [_volume]);
   if (!visible) return null;
-  if (!loading && state === undefined) return <WidgetStatus name="mic" status={status} error={error} onRetry={getMic} />;
+  if (!loading && state === undefined)
+    return <WidgetStatus name="mic" status={status} error={error} onRetry={getMic} />;
 
   if (loading) return <DataWidgetLoader.Widget className="mic" />;
-  if (!state || volume === undefined || _volume === "missing value")
-    return null;
+  if (!state || volume === undefined || _volume === "missing value") return null;
 
   const Icon = !volume ? Icons.MicOff : Icons.MicOn;
 
@@ -58,7 +59,10 @@ export const Widget = React.memo(() => {
   /**
    * Handle mouse up event on the slider.
    */
-  const onMouseUp = () => { setDragging(false); setMic(volume); };
+  const onMouseUp = () => {
+    setDragging(false);
+    setMic(volume);
+  };
 
   const formattedVolume = `${volume.toString().padStart(2, "0")}%`;
 

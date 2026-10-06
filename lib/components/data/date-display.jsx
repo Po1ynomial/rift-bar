@@ -21,11 +21,13 @@ export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
   const config = settings.dateWidgetOptions;
   const { calendarApp, showIcon } = config;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.dateWidget;
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.dateWidget;
   const { data: state, status, error, refresh: getDate } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   if (!visible) return null;
-  if (!loading && state === undefined) return <WidgetStatus name="date" status={status} error={error} onRetry={getDate} />;
+  if (!loading && state === undefined)
+    return <WidgetStatus name="date" status={status} error={error} onRetry={getDate} />;
 
   if (loading) return <DataWidgetLoader.Widget className="date-display" />;
   if (!state) return null;

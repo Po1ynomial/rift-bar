@@ -85,14 +85,7 @@ export default function UserWidgetsCreator({ defaultValue, onChange }) {
  * @param {Object} props.widget - The widget data.
  * @returns {JSX.Element} The UserWidgetCreator component.
  */
-function UserWidgetCreator({
-  index,
-  isFirst,
-  isLast,
-  onWidgetChange,
-  setWidgets,
-  widget,
-}) {
+function UserWidgetCreator({ index, isFirst, isLast, onWidgetChange, setWidgets, widget }) {
   const {
     title,
     icon,
@@ -114,10 +107,7 @@ function UserWidgetCreator({
   const onRemoveClick = () => {
     setWidgets((widgets) => {
       const keys = Object.keys(widgets);
-      return keys.reduce(
-        (acc, key) => (key === index ? acc : { ...acc, [key]: widgets[key] }),
-        {},
-      );
+      return keys.reduce((acc, key) => (key === index ? acc : { ...acc, [key]: widgets[key] }), {});
     });
   };
 
@@ -182,20 +172,14 @@ function UserWidgetCreator({
       <IconPicker callback={onWidgetChange} index={index} selectedIcon={icon} />
       <div className="user-widget-creator__right">
         <div className="user-widget-creator__right-top">
-          <ColorPicker
-            callback={onWidgetChange}
-            index={index}
-            selectedColor={backgroundColor}
-          />
+          <ColorPicker callback={onWidgetChange} index={index} selectedColor={backgroundColor} />
           <input
             className="user-widget-creator__title"
             onChange={onChange("title")}
             type="text"
             defaultValue={title}
           />
-          <label htmlFor={`refresh-frequency-${index}`}>
-            Refresh frequency (ms):
-          </label>
+          <label htmlFor={`refresh-frequency-${index}`}>Refresh frequency (ms):</label>
           <input
             className="user-widget-creator__refresh-frequency"
             onChange={onChange("refreshFrequency")}
@@ -228,9 +212,7 @@ function UserWidgetCreator({
           />
         </div>
         <div className="user-widget-creator__input-group">
-          <label htmlFor={`on-click-action-${index}`}>
-            On click command/script path:{" "}
-          </label>
+          <label htmlFor={`on-click-action-${index}`}>On click command/script path: </label>
           <input
             className="user-widget-creator__on-click-action"
             onChange={onChange("onClickAction")}
@@ -287,9 +269,7 @@ function UserWidgetCreator({
             defaultChecked={hideWhenNoOutput}
             onChange={onChange("hideWhenNoOutput", true)}
           />
-          <label htmlFor={`hide-when-no-output-${index}`}>
-            Hide when no script output
-          </label>
+          <label htmlFor={`hide-when-no-output-${index}`}>Hide when no script output</label>
         </div>
       </div>
     </div>

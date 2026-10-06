@@ -28,8 +28,8 @@ export function Component({ type, classes }) {
   // Retry failures without polling during normal operation. An effect owns the
   // timer so repeated renders cannot accumulate retries after recovery.
   React.useEffect(() => {
-    const delay = type === "riftError" ? 15000
-      : type === "error" || type === "noData" ? 2000 : undefined;
+    const delay =
+      type === "riftError" ? 15000 : type === "error" || type === "noData" ? 2000 : undefined;
     if (delay === undefined) return;
     let active = true;
     let timer;

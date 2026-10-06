@@ -21,12 +21,24 @@ const { React } = Uebersicht;
 export const Widget = React.memo(() => {
   const { displayIndex, settings, pushMissive } = useSimpleBarContext();
   const config = settings.batteryWidgetOptions;
-  const { toggleCaffeinateOnClick, caffeinateOption, disableCaffeinateInvertedBackground, showIcon } = config;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.batteryWidget;
-  const { data: state, status, error, refresh: getBattery } = useWidget(definition, visible, config);
+  const {
+    toggleCaffeinateOnClick,
+    caffeinateOption,
+    disableCaffeinateInvertedBackground,
+    showIcon,
+  } = config;
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.batteryWidget;
+  const {
+    data: state,
+    status,
+    error,
+    refresh: getBattery,
+  } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   if (!visible) return null;
-  if (!loading && state === undefined) return <WidgetStatus name="battery" status={status} error={error} onRetry={getBattery} />;
+  if (!loading && state === undefined)
+    return <WidgetStatus name="battery" status={status} error={error} onRetry={getBattery} />;
 
   if (loading) return <DataWidgetLoader.Widget className="battery" />;
   if (!state) return null;
@@ -37,8 +49,7 @@ export const Widget = React.memo(() => {
   const classes = Utils.classNames("battery", {
     "battery--low": isLowBattery,
     "battery--low-power-mode": lowPowerMode,
-    "battery--caffeinate":
-      !disableCaffeinateInvertedBackground && caffeinate.length > 0,
+    "battery--caffeinate": !disableCaffeinateInvertedBackground && caffeinate.length > 0,
   });
 
   const transformValue = getTransform(percentage);
@@ -58,10 +69,7 @@ export const Widget = React.memo(() => {
   const Icon = () => (
     <div className="battery__icon">
       <div className="battery__icon-inner">
-        <div
-          className="battery__icon-filler"
-          style={{ transform: transformValue }}
-        />
+        <div className="battery__icon-filler" style={{ transform: transformValue }} />
         {charging && (
           <SuspenseIcon>
             <Icons.Charging className="battery__charging-icon" />
@@ -112,8 +120,7 @@ function getTransform(value) {
  * @param {function} pushMissive - Function to push notifications
  */
 async function toggleCaffeinate(system, caffeinate, option, pushMissive) {
-  const command =
-    system === "x86_64" ? "caffeinate" : "arch -arch arm64 caffeinate";
+  const command = system === "x86_64" ? "caffeinate" : "arch -arch arm64 caffeinate";
   if (caffeinate.length === 0) {
     Uebersicht.run(`${command} ${option} &`);
     Utils.notification("Enabling caffeinate...", pushMissive);

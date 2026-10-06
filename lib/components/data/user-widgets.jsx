@@ -25,9 +25,7 @@ function UserWidgets() {
   const keys = Object.keys(userWidgetsList);
 
   // Map over the keys and render a UserWidget for each key
-  return keys.map((key) => (
-    <UserWidget key={key} index={key} widget={userWidgetsList[key]} />
-  ));
+  return keys.map((key) => <UserWidget key={key} index={key} widget={userWidgetsList[key]} />);
 }
 
 UserWidgets.displayName = "UserWidgets";
@@ -54,27 +52,43 @@ const UserWidget = React.memo(({ index, widget }) => {
   } = widget;
 
   // Determine if the widget should be visible based on display settings and active status
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, showOnDisplay) && active;
+  const visible = Utils.isVisibleOnDisplay(displayIndex, showOnDisplay) && active;
 
-  const definition = React.useMemo(() => defineWidget({
-    id: `user-${index}`, refreshFrequency: 10000,
-    load: ({ config, force }) => Utils.cachedRun(config.output, widgetInterval(config.refreshFrequency, 10000), { force }),
-    validate: (data) => typeof data === "string",
-  }), [index]);
-  const { data: state, status, error, refresh: getUserWidget } = useWidget(definition, visible, widget);
+  const definition = React.useMemo(
+    () =>
+      defineWidget({
+        id: `user-${index}`,
+        refreshFrequency: 10000,
+        load: ({ config, force }) =>
+          Utils.cachedRun(config.output, widgetInterval(config.refreshFrequency, 10000), { force }),
+        validate: (data) => typeof data === "string",
+      }),
+    [index],
+  );
+  const {
+    data: state,
+    status,
+    error,
+    refresh: getUserWidget,
+  } = useWidget(definition, visible, widget);
   const loading = status === "idle" || status === "loading";
   const isWidgetActive = state !== undefined && Utils.cleanupOutput(state).trim().length > 0;
-  if (visible && !loading && state === undefined) return <WidgetStatus name={widget.title || "Custom widget"} status={status} error={error} onRetry={getUserWidget} />;
+  if (visible && !loading && state === undefined)
+    return (
+      <WidgetStatus
+        name={widget.title || "Custom widget"}
+        status={status}
+        error={error}
+        onRetry={getUserWidget}
+      />
+    );
 
   // Hide widget if not visible or if script indicates it should be inactive (only when hideWhenNoOutput is enabled)
   if (!visible || (!loading && hideWhenNoOutput && !isWidgetActive)) return null;
 
   const isCustomColor = !Settings.userWidgetColors.includes(backgroundColor);
 
-  const property = settings.global.widgetsBackgroundColorAsForeground
-    ? "color"
-    : "backgroundColor";
+  const property = settings.global.widgetsBackgroundColorAsForeground ? "color" : "backgroundColor";
 
   const style = settings.global.noColorInData
     ? undefined

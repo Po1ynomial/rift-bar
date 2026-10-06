@@ -15,10 +15,12 @@ const { React } = Uebersicht;
 export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
   const config = settings.weatherWidgetOptions;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.weatherWidget;
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.weatherWidget;
   const { data, status, error, refresh } = useWidget(definition, visible, config);
   if (!visible) return null;
-  if (status === "idle" || status === "loading") return <DataWidgetLoader.Widget className="weather" />;
+  if (status === "idle" || status === "loading")
+    return <DataWidgetLoader.Widget className="weather" />;
   if (!data) return <WidgetStatus name="Weather" status={status} error={error} onRetry={refresh} />;
   const now = data.observedAt;
   const classes = Utils.classNames("weather", {
@@ -26,19 +28,28 @@ export const Widget = React.memo(() => {
     "weather--sunset": Math.abs(now - data.sunset) <= 3600000,
   });
   const label = `${config.hideLocation ? "" : `${data.location}, `}${Math.round(data.temperature)}°${data.unit}`;
-  const onRightClick = (event) => { event.preventDefault(); Utils.clickEffect(event); refresh(); };
+  const onRightClick = (event) => {
+    event.preventDefault();
+    Utils.clickEffect(event);
+    refresh();
+  };
   return (
     <DataWidget.Widget
       classes={classes}
       status={status}
-      title={error ? `Stale forecast: ${error.message}` : "Forecast by Open-Meteo. Right-click to refresh."}
+      title={
+        error
+          ? `Stale forecast: ${error.message}`
+          : "Forecast by Open-Meteo. Right-click to refresh."
+      }
       Icon={config.showIcon ? Icons[weatherIcon(data.code, data.isDay)] : null}
       href="https://open-meteo.com/"
       onRightClick={onRightClick}
       disableSlider
     >
       {!config.hideGradient && <div className="weather__gradient" />}
-      {label}{error && " (stale)"}
+      {label}
+      {error && " (stale)"}
     </DataWidget.Widget>
   );
 });

@@ -31,9 +31,7 @@ export default function IconPicker({ callback, index, selectedIcon }) {
     if (!searchTerm.trim()) {
       return keys;
     }
-    return keys.filter((key) =>
-      key.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
+    return keys.filter((key) => key.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [keys, searchTerm]);
 
   /**
@@ -66,15 +64,8 @@ export default function IconPicker({ callback, index, selectedIcon }) {
       </button>
       {open && (
         <div className="icon-picker__dropdown">
-          <div
-            className="icon-picker__search"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="icon-picker__back"
-              onClick={() => setOpen(false)}
-              type="button"
-            >
+          <div className="icon-picker__search" onClick={(e) => e.stopPropagation()}>
+            <button className="icon-picker__back" onClick={() => setOpen(false)} type="button">
               <Icons.ChevronLeft />
               Back
             </button>
@@ -87,11 +78,7 @@ export default function IconPicker({ callback, index, selectedIcon }) {
               autoFocus
             />
             {searchTerm && (
-              <button
-                className="icon-picker__search-clear"
-                onClick={clearSearch}
-                type="button"
-              >
+              <button className="icon-picker__search-clear" onClick={clearSearch} type="button">
                 ✕
               </button>
             )}
@@ -118,9 +105,7 @@ export default function IconPicker({ callback, index, selectedIcon }) {
                 );
               })
             ) : (
-              <div className="icon-picker__no-results">
-                No icons found for "{searchTerm}"
-              </div>
+              <div className="icon-picker__no-results">No icons found for "{searchTerm}"</div>
             )}
           </div>
         </div>

@@ -9,7 +9,10 @@ test("weather never submits a placeholder city to a forecast endpoint", async ()
   const legacy = {
     widgets: { weatherWidget: true },
     weatherWidgetOptions: {
-      refreshFrequency: 1800000, customLocation: "null", unit: "C", showOnDisplay: "",
+      refreshFrequency: 1800000,
+      customLocation: "null",
+      unit: "C",
+      showOnDisplay: "",
     },
   };
   const preferences = await loadModule("lib/settings.js", {
@@ -18,18 +21,29 @@ test("weather never submits a placeholder city to a forecast endpoint", async ()
   });
   const settings = preferences.namespace.get();
   const React = {
-    ...baseReact, useMemo: (fn) => fn(), useCallback: (fn) => fn,
-    useRef: (value) => ({ current: value }), useState: (value) => [value, () => {}],
+    ...baseReact,
+    useMemo: (fn) => fn(),
+    useCallback: (fn) => fn,
+    useRef: (value) => ({ current: value }),
+    useState: (value) => [value, () => {}],
   };
   const { namespace } = await loadModule("lib/components/data/weather.jsx", {
-    globals: { fetch: async (url) => { requests.push(String(url)); return { json: async () => ({}) }; } },
+    globals: {
+      fetch: async (url) => {
+        requests.push(String(url));
+        return { json: async () => ({}) };
+      },
+    },
     mocks: {
       uebersicht: { React },
       "../simple-bar-context.jsx": { useSimpleBarContext: () => ({ displayIndex: 1, settings }) },
-      "../../hooks/use-widget.js": { default: (definition, active, config) => {
-        if (active) load = () => definition.load({ config, signal: new AbortController().signal });
-        return { data: undefined, status: "loading", refresh: () => {} };
-      } },
+      "../../hooks/use-widget.js": {
+        default: (definition, active, config) => {
+          if (active)
+            load = () => definition.load({ config, signal: new AbortController().signal });
+          return { data: undefined, status: "loading", refresh: () => {} };
+        },
+      },
     },
   });
   namespace.Widget();

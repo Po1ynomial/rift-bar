@@ -20,12 +20,15 @@ const { React } = Uebersicht;
 export const Widget = React.memo(() => {
   const { displayIndex, settings, pushMissive } = useSimpleBarContext();
   const config = settings.networkWidgetOptions;
-  const { hideWifiIfDisabled, toggleWifiOnClick, networkDevice, hideNetworkName, showIcon } = config;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.wifiWidget;
+  const { hideWifiIfDisabled, toggleWifiOnClick, networkDevice, hideNetworkName, showIcon } =
+    config;
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.wifiWidget;
   const { data: state, status, error, refresh: getWifi } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   if (!visible) return null;
-  if (!loading && state === undefined) return <WidgetStatus name="wifi" status={status} error={error} onRetry={getWifi} />;
+  if (!loading && state === undefined)
+    return <WidgetStatus name="wifi" status={status} error={error} onRetry={getWifi} />;
 
   if (loading) return <DataWidgetLoader.Widget className="wifi" />;
   if (!state) return null;

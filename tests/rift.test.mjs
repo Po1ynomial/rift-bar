@@ -13,10 +13,15 @@ async function loadBackend(run) {
   const context = createContext();
   const settings = { global: { riftPath: "/tmp/Rift's CLI" } };
   const dependencies = new Map([
-    ["uebersicht", { run: async (command) => {
-      calls.push(command);
-      return run ? run(command, calls.length) : "{}";
-    } }],
+    [
+      "uebersicht",
+      {
+        run: async (command) => {
+          calls.push(command);
+          return run ? run(command, calls.length) : "{}";
+        },
+      },
+    ],
     ["./settings", { get: () => settings }],
     ["./snapshot.js", { parseSnapshot }],
   ]);
@@ -27,9 +32,13 @@ async function loadBackend(run) {
   await module.link(async (specifier) => {
     const exports = dependencies.get(specifier);
     assert.ok(exports, `Unexpected dependency: ${specifier}`);
-    return new SyntheticModule(Object.keys(exports), function () {
-      for (const [name, value] of Object.entries(exports)) this.setExport(name, value);
-    }, { context });
+    return new SyntheticModule(
+      Object.keys(exports),
+      function () {
+        for (const [name, value] of Object.entries(exports)) this.setExport(name, value);
+      },
+      { context },
+    );
   });
   await module.evaluate();
   return { backend: module.namespace, rift: module.namespace, calls };
@@ -38,7 +47,10 @@ async function loadBackend(run) {
 test("Rift commands quote paths and focus the target display before switching", async () => {
   const { backend, calls } = await loadBackend();
   await backend.goToSpace({ displayUuid: "display-two", index: 0, focused: false });
-  assert.equal(calls[0], `'/tmp/Rift'"'"'s CLI' execute display focus --uuid 'display-two' && '/tmp/Rift'"'"'s CLI' execute workspace switch '0'`);
+  assert.equal(
+    calls[0],
+    `'/tmp/Rift'"'"'s CLI' execute display focus --uuid 'display-two' && '/tmp/Rift'"'"'s CLI' execute workspace switch '0'`,
+  );
 });
 
 test("an active workspace only focuses its display", async () => {
@@ -74,7 +86,9 @@ test("failed subscription setup is retried instead of caching rejection", async 
 });
 
 test("a stopped Rift snapshot invalidates setup so the next retry resubscribes", async () => {
-  const { rift, calls } = await loadBackend(async (_command, count) => count === 2 ? "riftError\n" : "{}");
+  const { rift, calls } = await loadBackend(async (_command, count) =>
+    count === 2 ? "riftError\n" : "{}",
+  );
   assert.equal((await rift.getSnapshot()).trim(), "riftError");
   await rift.getSnapshot();
   assert.equal(calls.length, 4);
@@ -104,7 +118,12 @@ test("subscription script registers only relevant events and preserves other int
     const args = (await readFile(log, "utf8")).trim().split("\n");
     assert.equal(args.filter((arg) => arg === "subscribe").length, 4);
     assert.ok(!args.includes("unsub-cli"));
-    for (const event of ["workspace_changed", "windows_changed", "focused_window_changed", "window_title_changed"]) {
+    for (const event of [
+      "workspace_changed",
+      "windows_changed",
+      "focused_window_changed",
+      "window_title_changed",
+    ]) {
       assert.ok(args.includes(event));
     }
     const callback = fileURLToPath(new URL("../lib/scripts/refresh-rift.sh", import.meta.url));
@@ -142,8 +161,14 @@ test("restart hook rebuilds subscriptions before requesting a refresh", async ()
     const mock = join(directory, "rift-cli");
     await writeFile(mock, `#!/bin/sh\nprintf '%s\\n' "$@" >> '${log}'\n`, { mode: 0o700 });
     const script = join(directory, "subscribe-rift.sh");
-    await writeFile(script, await readFile(new URL("../lib/scripts/subscribe-rift.sh", import.meta.url)));
-    await writeFile(join(directory, "refresh-rift.sh"), `#!/bin/sh\nprintf '%s\\n' refreshed >> '${log}'\n`);
+    await writeFile(
+      script,
+      await readFile(new URL("../lib/scripts/subscribe-rift.sh", import.meta.url)),
+    );
+    await writeFile(
+      join(directory, "refresh-rift.sh"),
+      `#!/bin/sh\nprintf '%s\\n' refreshed >> '${log}'\n`,
+    );
     for (let restart = 0; restart < 2; restart++) {
       await writeFile(log, "");
       const result = spawnSync("sh", [script, mock, "--refresh"], { encoding: "utf8" });
@@ -165,17 +190,39 @@ test("snapshot preserves per-display workspace identity, names, and titles", asy
       { uuid: "external", space: 3, screen_id: 7 },
       { uuid: "internal", space: 9, screen_id: 1 },
     ];
-    const workspaces = [{
-      index: 0, name: "Code's workspace", is_active: true,
-      windows: [{ app_name: "kitty", title: "日本語 \"quoted\"\nnext line C:\\temp\\file ,]", id: { pid: 123, idx: 456 }, is_focused: true }],
-    }, { index: 1, name: "Empty", is_active: false, windows: [] }];
-    await writeFile(mock, `#!/bin/sh\ncase "$*" in\n  'query displays') printf '%s' '${JSON.stringify(displays)}' ;;\n  'query workspaces --space-id 3'|'query workspaces --space-id 9') printf '%s' '${JSON.stringify(workspaces).replace(/'/g, `'"'"'`)}' ;;\n  *) exit 1 ;;\nesac\n`, { mode: 0o700 });
+    const workspaces = [
+      {
+        index: 0,
+        name: "Code's workspace",
+        is_active: true,
+        windows: [
+          {
+            app_name: "kitty",
+            title: '日本語 "quoted"\nnext line C:\\temp\\file ,]',
+            id: { pid: 123, idx: 456 },
+            is_focused: true,
+          },
+        ],
+      },
+      { index: 1, name: "Empty", is_active: false, windows: [] },
+    ];
+    await writeFile(
+      mock,
+      `#!/bin/sh\ncase "$*" in\n  'query displays') printf '%s' '${JSON.stringify(displays)}' ;;\n  'query workspaces --space-id 3'|'query workspaces --space-id 9') printf '%s' '${JSON.stringify(workspaces).replace(/'/g, `'"'"'`)}' ;;\n  *) exit 1 ;;\nesac\n`,
+      { mode: 0o700 },
+    );
     const script = fileURLToPath(new URL("../lib/scripts/init-rift.sh", import.meta.url));
     const result = spawnSync("sh", [script, mock], { encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr);
     const snapshot = parseSnapshot(result.stdout);
     assert.deepEqual(Object.keys(snapshot).sort(), ["displays", "spaces"]);
-    assert.deepEqual(snapshot.displays.map(({ id, index }) => [id, index]), [[7, 1], [1, 2]]);
+    assert.deepEqual(
+      snapshot.displays.map(({ id, index }) => [id, index]),
+      [
+        [7, 1],
+        [1, 2],
+      ],
+    );
     assert.equal(snapshot.spaces.length, 4);
     assert.notEqual(snapshot.spaces[0].workspace, snapshot.spaces[2].workspace);
     assert.equal(snapshot.spaces[0].name, workspaces[0].name);

@@ -24,10 +24,15 @@ export { notificationsStyles as styles } from "../../styles/components/data/noti
 const { React } = Uebersicht;
 
 export const definition = defineWidget({
-  id: "notifications", refreshFrequency: 10000,
+  id: "notifications",
+  refreshFrequency: 10000,
   load: async ({ config, force }) => {
-    const excluded = (config.excludedApps || "").split(",").map((name) => name.trim().toLowerCase());
-    const output = await Utils.cachedRun(COMMAND, widgetInterval(config.refreshFrequency, 10000), { force });
+    const excluded = (config.excludedApps || "")
+      .split(",")
+      .map((name) => name.trim().toLowerCase());
+    const output = await Utils.cachedRun(COMMAND, widgetInterval(config.refreshFrequency, 10000), {
+      force,
+    });
     return parseNotifications(output).filter((item) => !excluded.includes(item.name.toLowerCase()));
   },
   validate: (data) => Array.isArray(data),
@@ -114,10 +119,13 @@ NotificationPill.displayName = "NotificationPill";
 export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
   const config = settings.notificationsWidgetOptions;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.notificationsWidget;
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) &&
+    settings.widgets.notificationsWidget;
   const { data: state, status, error, refresh } = useWidget(definition, visible, config);
   if (!visible) return null;
-  if (status === "error" || status === "unavailable") return <WidgetStatus name="Notifications" status={status} error={error} onRetry={refresh} />;
+  if (status === "error" || status === "unavailable")
+    return <WidgetStatus name="Notifications" status={status} error={error} onRetry={refresh} />;
 
   // Don't render anything if loading or no notifications
   if (!state?.length) return null;

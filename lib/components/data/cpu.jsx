@@ -24,7 +24,8 @@ export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
   const config = settings.cpuWidgetOptions;
   const { displayAsGraph, cpuMonitorApp, showIcon, cpuUsageThreshold } = config;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.cpuWidget;
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.cpuWidget;
   const { data: state, status, error, refresh: getCpu } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   const [graph, setGraph] = React.useState([]);
@@ -32,7 +33,8 @@ export const Widget = React.memo(() => {
     if (state && displayAsGraph) Utils.addToGraphHistory(state, setGraph, GRAPH_LENGTH);
   }, [state, displayAsGraph]);
   if (!visible) return null;
-  if (!loading && state === undefined) return <WidgetStatus name="cpu" status={status} error={error} onRetry={getCpu} />;
+  if (!loading && state === undefined)
+    return <WidgetStatus name="cpu" status={status} error={error} onRetry={getCpu} />;
 
   if (loading) return <DataWidgetLoader.Widget className="cpu" />;
   if (!state) return null;
@@ -55,8 +57,8 @@ export const Widget = React.memo(() => {
   if (displayAsGraph) {
     return (
       <DataWidget.Widget
-      status={status}
-      title={error?.message}
+        status={status}
+        title={error?.message}
         classes="cpu cpu--graph"
         onClick={onClick}
         disableSlider
@@ -79,7 +81,9 @@ export const Widget = React.memo(() => {
   }
 
   return (
-    <DataWidget.Widget status={status} title={error?.message}
+    <DataWidget.Widget
+      status={status}
+      title={error?.message}
       classes="cpu"
       Icon={showIcon ? Icons.CPU : null}
       onClick={onClick}

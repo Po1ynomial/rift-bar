@@ -18,15 +18,7 @@ export function Component() {
   return (
     <div className="missives">
       {missives.map(({ id, side, content, timeout }) => {
-        return (
-          <Missive
-            key={id}
-            id={id}
-            side={side}
-            content={content}
-            timeout={timeout}
-          />
-        );
+        return <Missive key={id} id={id} side={side} content={content} timeout={timeout} />;
       })}
     </div>
   );

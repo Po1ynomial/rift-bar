@@ -133,11 +133,7 @@ export default function SettingsItem({
         onChange={onChange}
         onClick={onClick}
       />
-      <label
-        htmlFor={code}
-        onClick={onClick}
-        dangerouslySetInnerHTML={{ __html: label }}
-      />
+      <label htmlFor={code} onClick={onClick} dangerouslySetInnerHTML={{ __html: label }} />
     </React.Fragment>
   );
 }

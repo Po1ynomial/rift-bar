@@ -8,11 +8,7 @@ export function useWorkspaceContext() {
 }
 
 function WorkspaceContextProvider({ children, spaces = [] }) {
-  return (
-    <WorkspaceContext.Provider value={{ spaces }}>
-      {children}
-    </WorkspaceContext.Provider>
-  );
+  return <WorkspaceContext.Provider value={{ spaces }}>{children}</WorkspaceContext.Provider>;
 }
 
 export default React.memo(WorkspaceContextProvider);

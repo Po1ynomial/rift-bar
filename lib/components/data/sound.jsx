@@ -22,7 +22,8 @@ export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
   const config = settings.soundWidgetOptions;
   const { showIcon } = config;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.soundWidget;
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.soundWidget;
   const { data: state, status, error, refresh: getSound } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   const { volume: _volume } = state || {};
@@ -32,7 +33,8 @@ export const Widget = React.memo(() => {
     if (_volume !== undefined) setVolume(parseInt(_volume, 10));
   }, [_volume]);
   if (!visible) return null;
-  if (!loading && state === undefined) return <WidgetStatus name="sound" status={status} error={error} onRetry={getSound} />;
+  if (!loading && state === undefined)
+    return <WidgetStatus name="sound" status={status} error={error} onRetry={getSound} />;
 
   if (loading) return <DataWidgetLoader.Widget className="sound" />;
   if (!state || volume === undefined) return null;
@@ -56,7 +58,10 @@ export const Widget = React.memo(() => {
   };
 
   const onMouseDown = () => setDragging(true);
-  const onMouseUp = () => { setDragging(false); setSound(volume); };
+  const onMouseUp = () => {
+    setDragging(false);
+    setSound(volume);
+  };
 
   const formattedVolume = `${volume.toString().padStart(2, "0")}%`;
 

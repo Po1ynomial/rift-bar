@@ -20,11 +20,13 @@ export const Widget = () => {
   const { displayIndex, settings } = useSimpleBarContext();
   const config = settings.memoryWidgetOptions;
   const { memoryMonitorApp, showIcon, memoryUsageThreshold } = config;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.memoryWidget;
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.memoryWidget;
   const { data: state, status, error, refresh: getMemory } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   if (!visible) return null;
-  if (!loading && state === undefined) return <WidgetStatus name="memory" status={status} error={error} onRetry={getMemory} />;
+  if (!loading && state === undefined)
+    return <WidgetStatus name="memory" status={status} error={error} onRetry={getMemory} />;
 
   if (loading) return <DataWidgetLoader.Widget className="memory" />;
   if (!state) return null;

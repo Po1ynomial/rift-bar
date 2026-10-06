@@ -6,7 +6,10 @@ import { spaceStyles } from "../lib/styles/components/spaces/space.js";
 
 // Test the actual pure name renderer without loading Übersicht or compiling JSX.
 // It is the final function in wifi.jsx.
-const wifiSource = await readFile(new URL("../lib/components/data/wifi.jsx", import.meta.url), "utf8");
+const wifiSource = await readFile(
+  new URL("../lib/components/data/wifi.jsx", import.meta.url),
+  "utf8",
+);
 const rendererStart = wifiSource.indexOf("function renderName(");
 assert.notEqual(rendererStart, -1, "Wi-Fi name renderer is missing");
 const renderName = runInNewContext(`(${wifiSource.slice(rendererStart)})`);
@@ -14,10 +17,16 @@ const renderName = runInNewContext(`(${wifiSource.slice(rendererStart)})`);
 function declarations(selector) {
   const rule = spaceStyles.match(new RegExp(`${selector}\\s*\\{([^}]+)\\}`));
   assert.ok(rule, `Missing CSS rule for ${selector}`);
-  return Object.fromEntries(rule[1].trim().split(";").filter(Boolean).map((declaration) => {
-    const separator = declaration.indexOf(":");
-    return [declaration.slice(0, separator).trim(), declaration.slice(separator + 1).trim()];
-  }));
+  return Object.fromEntries(
+    rule[1]
+      .trim()
+      .split(";")
+      .filter(Boolean)
+      .map((declaration) => {
+        const separator = declaration.indexOf(":");
+        return [declaration.slice(0, separator).trim(), declaration.slice(separator + 1).trim()];
+      }),
+  );
 }
 
 test("Wi-Fi hides a macOS-redacted SSID", () => {

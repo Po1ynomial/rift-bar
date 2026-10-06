@@ -24,16 +24,13 @@ const Component = React.memo(() => {
 
   // Determine if the component should be visible
   const visible =
-    spaces?.length &&
-    processWidget &&
-    Utils.isVisibleOnDisplay(displayIndex, showOnDisplay);
+    spaces?.length && processWidget && Utils.isVisibleOnDisplay(displayIndex, showOnDisplay);
 
   if (!visible) return null;
 
   // Find the focused space on the current display
   const { windows = [] } =
-    spaces.find((space) => space.focused && space.monitor === displayIndex) ||
-    {};
+    spaces.find((space) => space.focused && space.monitor === displayIndex) || {};
 
   if (!windows.length) return null;
 

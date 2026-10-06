@@ -19,16 +19,8 @@ export default function Ethereum(props) {
         id="Combined-Shape"
       />
       <polygon fill="#2F3030" id="Path-3" points="156 128 80 93.5809573 80 0" />
-      <polygon
-        fill="#131313"
-        id="Path-5"
-        points="156 131.011473 80 96 80 176"
-      />
-      <polygon
-        fill="#2F3030"
-        id="Path-7"
-        points="156 148 80 194.175361 80 256"
-      />
+      <polygon fill="#131313" id="Path-5" points="156 131.011473 80 96 80 176" />
+      <polygon fill="#2F3030" id="Path-7" points="156 148 80 194.175361 80 256" />
     </Icon>
   );
 }

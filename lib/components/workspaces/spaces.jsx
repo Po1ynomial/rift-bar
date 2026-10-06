@@ -21,10 +21,7 @@ const Component = React.memo(() => {
   const { displayAllSpacesOnAllScreens, showOnDisplay } = spacesDisplay;
   // Determine if the component should be visible on the current display
   const visible = Utils.isVisibleOnDisplay(displayIndex, showOnDisplay);
-  const isProcessVisible = Utils.isVisibleOnDisplay(
-    displayIndex,
-    process.showOnDisplay
-  );
+  const isProcessVisible = Utils.isVisibleOnDisplay(displayIndex, process.showOnDisplay);
 
   // If not visible, return null
   if (!visible) return null;
@@ -48,12 +45,9 @@ const Component = React.memo(() => {
       <div key={displayId} className="spaces">
         {filteredSpaces.map((space, i) => {
           const { workspace } = space;
-          const lastOfSpace =
-            i !== 0 && space.monitor !== filteredSpaces[i - 1].monitor;
+          const lastOfSpace = i !== 0 && space.monitor !== filteredSpaces[i - 1].monitor;
 
-          return (
-            <Space key={workspace} space={space} lastOfSpace={lastOfSpace} />
-          );
+          return <Space key={workspace} space={space} lastOfSpace={lastOfSpace} />;
         })}
         {isProcessVisible && <div className="spaces__end-separator" />}
       </div>

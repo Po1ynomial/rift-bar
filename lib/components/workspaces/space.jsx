@@ -17,11 +17,8 @@ export default function Space({ space, lastOfSpace }) {
   const { windows } = space;
   const { settings, displayIndex } = useSimpleBarContext();
   const { spacesDisplay } = settings;
-  const {
-    displayAllSpacesOnAllScreens,
-    exclusionsAsRegex,
-    hideDuplicateAppsInSpaces,
-  } = spacesDisplay;
+  const { displayAllSpacesOnAllScreens, exclusionsAsRegex, hideDuplicateAppsInSpaces } =
+    spacesDisplay;
   const { workspace, focused } = space;
 
   /**
@@ -29,10 +26,7 @@ export default function Space({ space, lastOfSpace }) {
    * @param {Event} e - The click event.
    */
   const onClick = (e) => {
-    if (
-      focused &&
-      space.monitor === displayIndex
-    ) return;
+    if (focused && space.monitor === displayIndex) return;
     Rift.goToSpace(space);
     Utils.clickEffect(e);
   };
@@ -58,9 +52,7 @@ export default function Space({ space, lastOfSpace }) {
   // Remove duplicate apps if the setting is enabled
   const displayedWindows = hideDuplicateAppsInSpaces
     ? filteredWindows.reduce((acc, window) => {
-        const isDuplicate = acc.find(
-          (w) => w["app-name"] === window["app-name"],
-        );
+        const isDuplicate = acc.find((w) => w["app-name"] === window["app-name"]);
         return isDuplicate ? acc : [...acc, window];
       }, [])
     : filteredWindows;
@@ -73,9 +65,7 @@ export default function Space({ space, lastOfSpace }) {
 
   return (
     <React.Fragment>
-      {displayAllSpacesOnAllScreens && lastOfSpace && (
-        <div className="spaces__separator" />
-      )}
+      {displayAllSpacesOnAllScreens && lastOfSpace && <div className="spaces__separator" />}
       <div className={classes}>
         <button className="space__inner" data-workspace={workspace} onClick={onClick}>
           {space.name ?? workspace}

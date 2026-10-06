@@ -19,19 +19,10 @@ export default function Window({ window }) {
   // Create a ref for the button element
   const ref = React.useRef();
   // Destructure settings
-  const {
-    displayOnlyCurrent,
-    hideWindowTitle,
-    displayOnlyIcon,
-    expandAllProcesses,
-  } = settings.process;
+  const { displayOnlyCurrent, hideWindowTitle, displayOnlyIcon, expandAllProcesses } =
+    settings.process;
   // Destructure window properties
-  const {
-    focused,
-    "app-name": appName,
-    "window-title": title,
-    "window-id": id,
-  } = window;
+  const { focused, "app-name": appName, "window-title": title, "window-id": id } = window;
 
   // If displayOnlyCurrent is true and the window is not focused, return null
   if (displayOnlyCurrent && !focused) {
@@ -73,8 +64,7 @@ export default function Window({ window }) {
   });
 
   // Clean up the window title
-  const cleanedUpName =
-    appName !== title && title.length ? `${appName} / ${title}` : appName;
+  const cleanedUpName = appName !== title && title.length ? `${appName} / ${title}` : appName;
   const processName = hideWindowTitle ? appName : cleanedUpName;
 
   // Render the window button

@@ -20,24 +20,17 @@ export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
   const config = settings.timeWidgetOptions;
   const { dayProgress, showIcon } = config;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.timeWidget;
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.timeWidget;
   const { data: state, status, error, refresh: getTime } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   if (!visible) return null;
-  if (!loading && state === undefined) return <WidgetStatus name="time" status={status} error={error} onRetry={getTime} />;
+  if (!loading && state === undefined)
+    return <WidgetStatus name="time" status={status} error={error} onRetry={getTime} />;
 
   if (loading) return <DataWidgetLoader.Widget className="time" />;
   if (!state) return null;
-  const { time } = state;
-
-  // Calculate the progress of the current day
-  const [dayStart, dayEnd] = [new Date(), new Date()];
-  dayStart.setHours(0, 0, 0);
-  dayEnd.setHours(0, 0, 0);
-  dayEnd.setDate(dayEnd.getDate() + 1);
-  const range = dayEnd - dayStart;
-  const diff = Math.max(0, dayEnd - new Date());
-  const fillerWidth = (100 - (100 * diff) / range) / 100;
+  const { time, fillerWidth } = state;
 
   /**
    * Icon component for the time widget.
@@ -57,10 +50,7 @@ export const Widget = React.memo(() => {
     >
       {time}
       {dayProgress && (
-        <div
-          className="time__filler"
-          style={{ transform: `scaleX(${fillerWidth})` }}
-        />
+        <div className="time__filler" style={{ transform: `scaleX(${fillerWidth})` }} />
       )}
     </DataWidget.Widget>
   );
@@ -82,14 +72,8 @@ function Icon({ time }) {
 
   return (
     <div className="time__icon">
-      <div
-        className="time__hours"
-        style={{ transform: `rotate(${hoursInDegree}deg)` }}
-      />
-      <div
-        className="time__minutes"
-        style={{ transform: `rotate(${minutesInDegree}deg)` }}
-      />
+      <div className="time__hours" style={{ transform: `rotate(${hoursInDegree}deg)` }} />
+      <div className="time__minutes" style={{ transform: `rotate(${minutesInDegree}deg)` }} />
     </div>
   );
 }

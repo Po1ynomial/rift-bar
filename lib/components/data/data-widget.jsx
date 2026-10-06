@@ -62,11 +62,7 @@ export function Widget({
    * Handles the mouse enter event to start the sliding effect.
    */
   const onMouseEnter = () => {
-    Utils.startSliding(
-      ref.current,
-      ".data-widget__inner",
-      ".data-widget__slider",
-    );
+    Utils.startSliding(ref.current, ".data-widget__inner", ".data-widget__slider");
   };
 
   /**
@@ -98,7 +94,14 @@ export function Widget({
       role={renderDivButton ? "button" : undefined}
       tabIndex={renderDivButton ? 0 : undefined}
       onKeyDown={renderDivButton ? onKeyDown : undefined}
-      onContextMenu={onRightClick ? (event) => { event.preventDefault(); onRightClick(event); } : undefined}
+      onContextMenu={
+        onRightClick
+          ? (event) => {
+              event.preventDefault();
+              onRightClick(event);
+            }
+          : undefined
+      }
       onMouseEnter={!disableSlider ? onMouseEnter : undefined}
       onMouseLeave={!disableSlider ? onMouseLeave : undefined}
       style={style}

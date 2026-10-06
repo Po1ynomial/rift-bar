@@ -25,15 +25,22 @@ export const Widget = React.memo(() => {
   const { displayIndex, settings } = useSimpleBarContext();
   const config = settings.netstatsWidgetOptions;
   const { displayAsGraph, showIcon, netstatsThreshold } = config;
-  const visible = Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.netstatsWidget;
-  const { data: state, status, error, refresh: getNetstats } = useWidget(definition, visible, config);
+  const visible =
+    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.netstatsWidget;
+  const {
+    data: state,
+    status,
+    error,
+    refresh: getNetstats,
+  } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   const [graph, setGraph] = React.useState([]);
   React.useEffect(() => {
     if (state && displayAsGraph) Utils.addToGraphHistory(state, setGraph, GRAPH_LENGTH);
   }, [state, displayAsGraph]);
   if (!visible) return null;
-  if (!loading && state === undefined) return <WidgetStatus name="netstats" status={status} error={error} onRetry={getNetstats} />;
+  if (!loading && state === undefined)
+    return <WidgetStatus name="netstats" status={status} error={error} onRetry={getNetstats} />;
 
   if (loading)
     return (
@@ -55,9 +62,7 @@ export const Widget = React.memo(() => {
 
   const threshold = (Number(netstatsThreshold) || 0) * 1024;
   const isBelowThreshold =
-    threshold > 0 &&
-    Math.abs(download) < threshold &&
-    Math.abs(upload) < threshold;
+    threshold > 0 && Math.abs(download) < threshold && Math.abs(upload) < threshold;
 
   if (isBelowThreshold) {
     return null;
@@ -68,7 +73,12 @@ export const Widget = React.memo(() => {
 
   if (displayAsGraph) {
     return (
-      <DataWidget.Widget status={status} title={error?.message} classes="netstats netstats--graph" disableSlider>
+      <DataWidget.Widget
+        status={status}
+        title={error?.message}
+        classes="netstats netstats--graph"
+        disableSlider
+      >
         <Graph
           className="netstats__graph"
           caption={{
@@ -112,10 +122,7 @@ export const Widget = React.memo(() => {
               <Icons.Upload className="netstats__icon netstats__icon--upload" />
             </SuspenseIcon>
           )}
-          <span
-            className="netstats__value"
-            dangerouslySetInnerHTML={{ __html: formattedUpload }}
-          />
+          <span className="netstats__value" dangerouslySetInnerHTML={{ __html: formattedUpload }} />
         </div>
       </DataWidget.Widget>
     </React.Fragment>

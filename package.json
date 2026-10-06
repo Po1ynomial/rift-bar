@@ -6,17 +6,23 @@
   "type": "module",
   "description": "A Rift status bar for Übersicht, derived from simple-bar.",
   "scripts": {
-    "test": "node --experimental-vm-modules --test tests/*.test.mjs",
+    "test": "node --experimental-vm-modules --test --test-reporter=./tools/failures-only.mjs tests/*.test.mjs",
+    "test:verbose": "node --experimental-vm-modules --test --test-reporter=spec tests/*.test.mjs",
     "test:latency": "node tests/rift-latency.mjs",
-    "test:host": "node --experimental-vm-modules --test tests/host/*.test.mjs",
-    "lint": "eslint . --ext .js,.jsx,.mjs"
+    "test:host": "node --experimental-vm-modules --test --test-reporter=./tools/failures-only.mjs tests/host/*.test.mjs",
+    "test:host:verbose": "node --experimental-vm-modules --test --test-reporter=spec tests/host/*.test.mjs",
+    "lint": "node tools/quiet-command.mjs oxlint --deny-warnings .",
+    "format": "oxfmt --write .",
+    "format:check": "node tools/quiet-command.mjs oxfmt --check .",
+    "check": "pnpm run --reporter=silent format:check && pnpm run --reporter=silent lint && pnpm run --reporter=silent test"
   },
   "devDependencies": {
-    "@eslint/js": "^9",
-    "eslint": "^9",
-    "eslint-plugin-react": "^7",
-    "eslint-plugin-react-hooks": "^7",
-    "espree": "^10.4.0",
-    "globals": "^16"
+    "espree": "10.4.0",
+    "oxfmt": "0.71.0",
+    "oxlint": "1.86.0"
+  },
+  "packageManager": "pnpm@12.6.0",
+  "engines": {
+    "node": ">=24.21.0"
   }
 }

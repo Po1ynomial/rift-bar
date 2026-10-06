@@ -14,11 +14,7 @@
       "properties": {
         "theme": {
           "type": "string",
-          "enum": [
-            "auto",
-            "dark",
-            "light"
-          ],
+          "enum": ["auto", "dark", "light"],
           "description": "Theme to use"
         },
         "floatingBar": {
@@ -83,10 +79,7 @@
         },
         "terminal": {
           "type": "string",
-          "enum": [
-            "Terminal",
-            "iTerm2"
-          ],
+          "enum": ["Terminal", "iTerm2"],
           "description": "Define the terminal used by simple-bar to run commands"
         },
         "slidingAnimationPace": {
@@ -347,10 +340,7 @@
         },
         "unit": {
           "type": "string",
-          "enum": [
-            "C",
-            "F"
-          ],
+          "enum": ["C", "F"],
           "description": "The temperature unit to use (C or F)"
         },
         "hideLocation": {
@@ -363,37 +353,24 @@
         },
         "locationMode": {
           "type": "string",
-          "enum": [
-            "configured",
-            "auto"
-          ],
+          "enum": ["configured", "auto"],
           "description": "Use a configured location or browser geolocation"
         },
         "weatherLocation": {
           "type": "object",
           "additionalProperties": false,
-          "required": [
-            "label",
-            "latitude",
-            "longitude"
-          ],
+          "required": ["label", "latitude", "longitude"],
           "properties": {
             "label": {
               "type": "string"
             },
             "latitude": {
-              "type": [
-                "number",
-                "null"
-              ],
+              "type": ["number", "null"],
               "minimum": -90,
               "maximum": 90
             },
             "longitude": {
-              "type": [
-                "number",
-                "null"
-              ],
+              "type": ["number", "null"],
               "minimum": -180,
               "maximum": 180
             }
@@ -453,11 +430,7 @@
         },
         "cpuMonitorApp": {
           "type": "string",
-          "enum": [
-            "Activity Monitor",
-            "Top",
-            "None"
-          ],
+          "enum": ["Activity Monitor", "Top", "None"],
           "description": "Define the opened app on widget click: Activity Monitor, Top or None"
         }
       }
@@ -483,11 +456,7 @@
         },
         "memoryMonitorApp": {
           "type": "string",
-          "enum": [
-            "Activity Monitor",
-            "Top",
-            "None"
-          ],
+          "enum": ["Activity Monitor", "Top", "None"],
           "description": "Define the opened app on widget click: Activity Monitor, Top or None"
         }
       }

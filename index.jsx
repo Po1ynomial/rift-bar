@@ -31,18 +31,12 @@ import * as Utils from "./lib/utils";
 import * as Settings from "./lib/settings";
 import * as Rift from "./lib/rift";
 
-// Destructure React from Uebersicht in order to make eslint catch hook rules for example
+// Destructure React from Uebersicht in order to make the linter recognize React hooks
 const { React } = Uebersicht;
 
-const WorkspaceContextProvider = React.lazy(
-  () => import("./lib/components/workspace-context.jsx"),
-);
-const WorkspaceSpaces = React.lazy(
-  () => import("./lib/components/workspaces/spaces.jsx"),
-);
-const WorkspaceProcess = React.lazy(
-  () => import("./lib/components/workspaces/process.jsx"),
-);
+const WorkspaceContextProvider = React.lazy(() => import("./lib/components/workspace-context.jsx"));
+const WorkspaceSpaces = React.lazy(() => import("./lib/components/workspaces/spaces.jsx"));
+const WorkspaceProcess = React.lazy(() => import("./lib/components/workspaces/process.jsx"));
 
 // Window-manager events trigger refreshes. No periodic workspace polling.
 const refreshFrequency = false;
@@ -52,40 +46,42 @@ let initializedSettings;
 
 function initialize() {
   if (!initialization) {
-    initialization = Settings.init().then((settings) => {
-      // No preference reads or style generation during module evaluation.
-      Utils.injectStyles("simple-bar-index-styles", [
-        Variables.buildStyles(settings),
-        Base.styles,
-        Spaces.styles,
-        Process.styles,
-        Settings.styles,
-        DataWidget.styles,
-        DateDisplay.styles,
-        Zoom.styles,
-        Time.styles,
-        GitHub.styles,
-        Weather.styles,
-        Netstats.styles,
-        Cpu.styles,
-        Memory.styles,
-        Battery.styles,
-        Wifi.styles,
-        Keyboard.styles,
-        Mic.styles,
-        Sound.styles,
-        Notifications.styles,
-        Graph.styles,
-        DataWidgetLoader.styles,
-        settings.customStyles.styles,
-        SideIcon.styles,
-        Missives.styles,
-      ]);
-      initializedSettings = settings;
-    }).catch((error) => {
-      initialization = undefined;
-      throw error;
-    });
+    initialization = Settings.init()
+      .then((settings) => {
+        // No preference reads or style generation during module evaluation.
+        Utils.injectStyles("simple-bar-index-styles", [
+          Variables.buildStyles(settings),
+          Base.styles,
+          Spaces.styles,
+          Process.styles,
+          Settings.styles,
+          DataWidget.styles,
+          DateDisplay.styles,
+          Zoom.styles,
+          Time.styles,
+          GitHub.styles,
+          Weather.styles,
+          Netstats.styles,
+          Cpu.styles,
+          Memory.styles,
+          Battery.styles,
+          Wifi.styles,
+          Keyboard.styles,
+          Mic.styles,
+          Sound.styles,
+          Notifications.styles,
+          Graph.styles,
+          DataWidgetLoader.styles,
+          settings.customStyles.styles,
+          SideIcon.styles,
+          Missives.styles,
+        ]);
+        initializedSettings = settings;
+      })
+      .catch((error) => {
+        initialization = undefined;
+        throw error;
+      });
   }
   return initialization;
 }
@@ -114,7 +110,7 @@ function render({ output, error }) {
 
   // Handle errors
   if (error) {
-    // eslint-disable-next-line no-console
+    // oxlint-disable-next-line no-console
     console.error("Error in index.jsx", error);
     return <Error.Component type="error" classes={baseClasses} />;
   }
@@ -147,10 +143,7 @@ function render({ output, error }) {
 
   // Render the bar with appropriate components and data
   return (
-    <SimpleBarContextProvider
-      initialSettings={settings}
-      displays={displays}
-    >
+    <SimpleBarContextProvider initialSettings={settings} displays={displays}>
       <div className={baseClasses}>
         <SideIcon.Component />
         <React.Suspense fallback={<React.Fragment />}>

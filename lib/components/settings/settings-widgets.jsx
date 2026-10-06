@@ -64,16 +64,10 @@ export default function SettingsWidgets({ newSettings, setNewSettings }) {
 
   return (
     <div className="settings__widgets">
-      <Breadcrumb
-        currentSetting={currentSetting}
-        removeCurrentWidget={removeCurrentWidget}
-      />
+      <Breadcrumb currentSetting={currentSetting} removeCurrentWidget={removeCurrentWidget} />
       {!currentWidget ? (
         <div className="settings__widgets-list">
-          <div
-            className="settings__widgets-item"
-            onClick={updateCurrentWidget("userWidgets")}
-          >
+          <div className="settings__widgets-item" onClick={updateCurrentWidget("userWidgets")}>
             Custom widgets
             <Icons.ChevronRight className="settings__widgets-item-icon" />
           </div>
@@ -99,11 +93,7 @@ export default function SettingsWidgets({ newSettings, setNewSettings }) {
             };
 
             return (
-              <div
-                key={subKey}
-                className={classes}
-                onClick={updateCurrentWidget(subKey)}
-              >
+              <div key={subKey} className={classes} onClick={updateCurrentWidget(subKey)}>
                 <input
                   type="checkbox"
                   defaultChecked={defaultValue}
@@ -111,9 +101,7 @@ export default function SettingsWidgets({ newSettings, setNewSettings }) {
                   onClick={handleCheckboxClick}
                 />
                 {label}
-                {!isProcess && (
-                  <Icons.ChevronRight className="settings__widgets-item-icon" />
-                )}
+                {!isProcess && <Icons.ChevronRight className="settings__widgets-item-icon" />}
               </div>
             );
           })}
@@ -149,19 +137,13 @@ function Breadcrumb({ currentSetting, removeCurrentWidget }) {
   const { label } = currentSetting;
   return (
     <div className="settings__widgets-breadcrumb">
-      <button
-        className="settings__widgets-breadcrumb-title"
-        onClick={removeCurrentWidget}
-      >
+      <button className="settings__widgets-breadcrumb-title" onClick={removeCurrentWidget}>
         Widgets
       </button>
       <span className="settings__widgets-breadcrumb-current">
         {">"} {label}
       </span>
-      <button
-        className="settings__widgets-breadcrumb-back"
-        onClick={removeCurrentWidget}
-      >
+      <button className="settings__widgets-breadcrumb-back" onClick={removeCurrentWidget}>
         <Icons.ChevronLeft className="settings__widgets-breadcrumb-back-icon" />
         Back
       </button>

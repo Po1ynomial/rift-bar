@@ -10,10 +10,12 @@ async function loadIndex(run, mocks = {}) {
   const calls = [];
   const loaded = await loadModule("index.jsx", {
     globals: {
-      window: { localStorage: {
-        getItem: (key) => storage.get(key),
-        setItem: (key, value) => storage.set(key, value),
-      } },
+      window: {
+        localStorage: {
+          getItem: (key) => storage.get(key),
+          setItem: (key, value) => storage.set(key, value),
+        },
+      },
       document: {
         getElementById: () => null,
         querySelector: () => null,
@@ -21,22 +23,34 @@ async function loadIndex(run, mocks = {}) {
         head: { appendChild: (sheet) => sheets.push(sheet) },
       },
     },
-    mocks: { uebersicht: { React, run: async (command) => {
-      calls.push(command);
-      return run(command);
-    } }, ...mocks },
+    mocks: {
+      uebersicht: {
+        React,
+        run: async (command) => {
+          calls.push(command);
+          return run(command);
+        },
+      },
+      ...mocks,
+    },
   });
   return { ...loaded, storage, sheets, calls };
 }
 
 test("startup loads preferences before styling and the first Rift query", async () => {
   let release;
-  const reading = new Promise((resolve) => { release = resolve; });
+  const reading = new Promise((resolve) => {
+    release = resolve;
+  });
   const config = {
     global: { fontSize: "24px", riftPath: "/custom/Rift's CLI" },
     customStyles: { styles: ".custom { color: red; }" },
   };
-  const { namespace: index, sheets, calls } = await loadIndex(async (command) => {
+  const {
+    namespace: index,
+    sheets,
+    calls,
+  } = await loadIndex(async (command) => {
     if (command.includes("test -e")) return "present";
     if (command.startsWith("cat ")) return reading;
     if (command.includes("init-rift.sh")) return snapshot;
@@ -65,7 +79,10 @@ test("cached output cannot mount the bar before preference initialization", asyn
   const { namespace: index } = await loadIndex(async () => "", {
     "./lib/rift": {
       getSnapshot: async () => snapshot,
-      parseSnapshot: () => { parsed++; return { displays: [], spaces: [] }; },
+      parseSnapshot: () => {
+        parsed++;
+        return { displays: [], spaces: [] };
+      },
     },
   });
   index.render({ output: snapshot });
@@ -77,7 +94,11 @@ test("cached output cannot mount the bar before preference initialization", asyn
 
 test("a failed initialization blocks snapshots and can be retried", async () => {
   let attempts = 0;
-  const { namespace: index, calls, sheets } = await loadIndex(async (command) => {
+  const {
+    namespace: index,
+    calls,
+    sheets,
+  } = await loadIndex(async (command) => {
     if (command.includes("test -e")) return "present";
     if (command.startsWith("cat ")) {
       if (++attempts === 1) return "not JSON";
@@ -94,7 +115,12 @@ test("a failed initialization blocks snapshots and can be retried", async () => 
 
 test("style insertion failures retry startup and reload current preferences", async () => {
   let reads = 0;
-  const { namespace: index, sheets, calls, context } = await loadIndex(async (command) => {
+  const {
+    namespace: index,
+    sheets,
+    calls,
+    context,
+  } = await loadIndex(async (command) => {
     if (command.includes("test -e")) return "present";
     if (command.startsWith("cat ")) {
       return JSON.stringify({ global: { fontSize: ++reads === 1 ? "17px" : "19px" } });

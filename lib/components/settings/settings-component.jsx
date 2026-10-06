@@ -7,14 +7,7 @@ import * as Settings from "../../settings";
 const { React } = Uebersicht;
 
 const TABS_STORAGE_KEY = "simple-bar-last-current-settings-tab";
-const TABS = [
-  "global",
-  "themes",
-  "process",
-  "spacesDisplay",
-  "widgets",
-  "customStyles",
-];
+const TABS = ["global", "themes", "process", "spacesDisplay", "widgets", "customStyles"];
 
 /**
  * Main settings component.
@@ -114,10 +107,7 @@ export default function Component({ closeSettings }) {
                 style={{ transform: `translateX(-${100 * currentTab}%)` }}
               >
                 {isWidgetsTab ? (
-                  <SettingsWidgets
-                    newSettings={newSettings}
-                    setNewSettings={setNewSettings}
-                  />
+                  <SettingsWidgets newSettings={newSettings} setNewSettings={setNewSettings} />
                 ) : (
                   <React.Fragment>
                     <div className="settings__inner-title">{label}</div>
