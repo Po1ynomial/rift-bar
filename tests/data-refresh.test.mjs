@@ -15,7 +15,6 @@ const widgets = [
   "notifications",
   "sound",
   "time",
-  "user-widgets",
   "weather",
   "wifi",
   "zoom",
@@ -99,9 +98,14 @@ for (const name of [
     const { namespace: settings } = await loadModule("lib/settings.js", {
       mocks: { uebersicht: { React } },
     });
-    const section = name === "wifi" ? "networkWidgetOptions" : `${name}WidgetOptions`;
+    const section =
+      { time: "clock", sound: "volume", mic: "microphone", netstats: "network_stats" }[name] ||
+      name;
     const { createWidgetResource } = await import("../lib/widgets/runtime.js");
-    const resource = createWidgetResource(definitions[name], settings.defaultSettings[section]);
+    const resource = createWidgetResource(
+      definitions[name],
+      settings.defaultSettings.widgets[section],
+    );
     try {
       await resource.refresh();
       assert.equal(resource.state.status, "ready", resource.state.error?.message);
@@ -146,7 +150,7 @@ test("clock sampling includes day progress so rendering stays pure", async () =>
     globals: { Date: SampleDate },
     mocks: { uebersicht: { React } },
   });
-  const data = namespace.time.load({ config: { hour12: false } });
+  const data = namespace.time.load({ config: { format: "24h" } });
   assert.equal(data.fillerWidth, 0.5);
   assert.equal(namespace.time.validate(data), true);
 });

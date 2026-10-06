@@ -70,46 +70,52 @@ test("error recovery schedules one timer and cleans it on state changes and unmo
 });
 
 for (const fails of [false, true]) {
-  test(`theme shortcut ${fails ? "does not refresh after a failed save" : "awaits the save before refreshing"}`, async () => {
-    let handleKeydown;
+  test(`theme shortcut ${fails ? "retains an inline error without refreshing" : "saves one override before refreshing"}`, async () => {
+    let handleKeydown, error, saved;
     const events = [];
+    const state = {
+      settings: { appearance: { theme: "dark" } },
+      overrides: { bar: { floating: true } },
+    };
     const { namespace } = await loadModule("lib/components/settings/settings.jsx", {
       mocks: {
         uebersicht: {
           React: {
             ...React,
-            useCallback: (callback) => {
-              handleKeydown = callback;
-              return callback;
+            useCallback: (fn) => {
+              handleKeydown = fn;
+              return fn;
             },
-            useState: () => [false, () => {}],
+            useState: () => [
+              false,
+              (value) => {
+                error = value;
+              },
+            ],
             useEffect: () => {},
           },
-          run: async () => "",
         },
-        "../simple-bar-context.jsx": { useSimpleBarContext: () => ({ pushMissive: () => {} }) },
-        "../../settings": {
-          get: () => ({ global: { theme: "dark" } }),
-          set: async () => {
+        "../../settings.js": {
+          getState: () => state,
+          set: async (overrides, expected) => {
+            assert.equal(expected, state);
+            saved = overrides;
             events.push("save");
             if (fails) throw new Error("Cannot persist");
             await new Promise((resolve) => setImmediate(resolve));
             events.push("saved");
           },
         },
-        "../../utils": {
-          notification: (message) => events.push(message),
-          hardRefresh: async () => events.push("refresh"),
-        },
+        "../../utils.js": { softRefresh: async () => events.push("refresh") },
       },
     });
     namespace.Wrapper();
     await handleKeydown({ key: "t", metaKey: true, preventDefault() {} });
+    assert.equal(saved.appearance.theme, "light");
+    assert.equal(saved.bar.floating, true);
     if (fails) {
       assert.ok(!events.includes("refresh"));
-      assert.ok(events.some((event) => event.startsWith("Cannot save preferences")));
-    } else {
-      assert.ok(events.indexOf("saved") < events.indexOf("refresh"));
-    }
+      assert.equal(error, "Cannot persist");
+    } else assert.ok(events.indexOf("saved") < events.indexOf("refresh"));
   });
 }

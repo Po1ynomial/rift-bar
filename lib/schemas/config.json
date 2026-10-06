@@ -1,775 +1,1714 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "config.json",
-  "title": "rift-bar config JSON schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "rift-bar TOML configuration",
   "type": "object",
+  "description": "Configuration",
   "additionalProperties": false,
   "properties": {
-    "$schema": {
-      "type": "string"
-    },
-    "global": {
+    "appearance": {
       "type": "object",
+      "description": "Appearance",
       "additionalProperties": false,
       "properties": {
         "theme": {
           "type": "string",
-          "enum": ["auto", "dark", "light"],
-          "description": "Theme to use"
+          "description": "Appearance",
+          "default": "auto",
+          "enum": ["auto", "dark", "light"]
         },
-        "floatingBar": {
-          "type": "boolean",
-          "description": "Make simple-bar floating by adding padding around it"
-        },
-        "noBarBg": {
-          "type": "boolean",
-          "description": "Remove the background of the bar"
-        },
-        "noColorInData": {
-          "type": "boolean",
-          "description": "Remove colors from all data widgets"
-        },
-        "bottomBar": {
-          "type": "boolean",
-          "description": "Place simple-bar at the bottom of the screen"
-        },
-        "sideDecoration": {
-          "type": "boolean",
-          "description": "Add an Apple logo on the left side of simple-bar"
-        },
-        "disableAnimations": {
-          "type": "boolean",
-          "description": "Disable all persistent animations in simple-bar"
-        },
-        "disableNotifications": {
-          "type": "boolean",
-          "description": "Disable notifications"
-        },
-        "enableMissives": {
-          "type": "boolean",
-          "description": "Enable missives (internal notification system)"
-        },
-        "compactMode": {
-          "type": "boolean",
-          "description": "Enable compact mode"
-        },
-        "widgetMaxWidth": {
+        "dark_theme": {
           "type": "string",
-          "description": "Max width for widgets. Overflowing text while be shown with a sliding effect"
+          "description": "Dark theme",
+          "default": "NightShiftDark",
+          "enum": [
+            "NightShiftDark",
+            "MacOSDark",
+            "OneDark",
+            "GruvboxDark",
+            "GruvboxMaterial",
+            "Dracula",
+            "Nord",
+            "Amarena",
+            "SolarizedDark",
+            "Cisco",
+            "Sylens",
+            "SpaceDuck",
+            "MidsummerNightDark",
+            "Catppuccin",
+            "CatppuccinFrappe",
+            "CatppuccinMacchiato",
+            "CatppuccinMocha",
+            "TokyoNight",
+            "MaterialOcean",
+            "NightOwl",
+            "NightfoxDark",
+            "VscodeDarkModern",
+            "RosePine",
+            "RosePineMoon",
+            "CyberdreamDark"
+          ]
         },
-        "spacesBackgroundColorAsForeground": {
-          "type": "boolean",
-          "description": "Use spaces background color as foreground color"
-        },
-        "widgetsBackgroundColorAsForeground": {
-          "type": "boolean",
-          "description": "Use widgets background color as foreground color"
+        "light_theme": {
+          "type": "string",
+          "description": "Light theme",
+          "default": "NightShiftLight",
+          "enum": [
+            "NightShiftLight",
+            "MacOSLight",
+            "OneLight",
+            "GruvboxLight",
+            "SolarizedLight",
+            "CatppuccinLatte",
+            "NightfoxLight",
+            "RosePineDawn",
+            "CyberdreamLight"
+          ]
         },
         "font": {
           "type": "string",
-          "description": "Define the font used by simple-bar"
+          "description": "Font",
+          "default": "JetBrains Mono, Monaco, Menlo, monospace"
         },
-        "fontSize": {
+        "font_size": {
           "type": "string",
-          "description": "Define the font size for all the widgets. You can use any css unit. It can particulary be usefull if you have displays with different pixel density and different scaling factor in which case you can set a value with a relative viewport unit like 1vh. Be careful to not set a value too high as it could break all simple-bar interface as this setting is used for every texts"
+          "description": "Font size",
+          "default": "11px"
         },
-        "riftPath": {
-          "type": "string",
-          "description": "Path to the rift-cli binary"
+        "animations": {
+          "type": "boolean",
+          "description": "Persistent animations",
+          "default": true
         },
-        "terminal": {
-          "type": "string",
-          "enum": ["Terminal", "iTerm2"],
-          "description": "Define the terminal used by simple-bar to run commands"
-        },
-        "slidingAnimationPace": {
+        "text_scroll_speed": {
           "type": "number",
-          "description": "Determine the speed of the sliding animation for widgets with overflowing text. Default is \"4\". The higher slidingAnimationPace value, the faster the texts slides (must be > 0)"
+          "description": "Text scrolling speed",
+          "default": 4,
+          "minimum": 0.1
         }
       }
     },
-    "themes": {
+    "bar": {
       "type": "object",
+      "description": "Bar",
       "additionalProperties": false,
       "properties": {
-        "lightTheme": {
-          "type": "string",
-          "description": "Light theme to use"
+        "floating": {
+          "type": "boolean",
+          "description": "Floating bar",
+          "default": false
         },
-        "darkTheme": {
+        "edge_padding": {
           "type": "string",
-          "description": "Dark theme to use"
+          "description": "Distance from screen edges",
+          "default": "5px"
         },
-        "colorMain": {
-          "type": "string",
-          "description": "Override the main color of the theme. Must be a valid CSS color."
+        "background": {
+          "type": "boolean",
+          "description": "Bar background",
+          "default": true
         },
-        "colorMainAlt": {
+        "foreground_height": {
           "type": "string",
-          "description": "Override the main alternative color of the theme. Must be a valid CSS color."
+          "description": "Foreground group height"
         },
-        "colorMinor": {
+        "padding": {
           "type": "string",
-          "description": "Override the minor color of the theme. Must be a valid CSS color."
+          "description": "Padding around button groups"
         },
-        "colorAccent": {
+        "radius": {
           "type": "string",
-          "description": "Override the accent color of the theme. Must be a valid CSS color."
+          "description": "Corner radius"
         },
-        "colorRed": {
-          "type": "string",
-          "description": "Override the red color of the theme. Must be a valid CSS color."
+        "shadow": {
+          "type": "boolean",
+          "description": "Bar shadow",
+          "default": true
         },
-        "colorGreen": {
-          "type": "string",
-          "description": "Override the green color of the theme. Must be a valid CSS color."
+        "colors": {
+          "type": "object",
+          "description": "Bar colors",
+          "additionalProperties": false,
+          "properties": {
+            "foreground": {
+              "type": "string",
+              "description": "Foreground"
+            },
+            "background": {
+              "type": "string",
+              "description": "Background"
+            }
+          }
+        }
+      }
+    },
+    "workspaces": {
+      "type": "object",
+      "description": "Workspaces",
+      "additionalProperties": false,
+      "properties": {
+        "displays": {
+          "type": "array",
+          "description": "Show on displays, UUIDs; empty means all",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": []
         },
-        "colorYellow": {
-          "type": "string",
-          "description": "Override the yellow color of the theme. Must be a valid CSS color."
+        "all_displays": {
+          "type": "boolean",
+          "description": "Include other displays' workspaces",
+          "default": false
         },
-        "colorOrange": {
-          "type": "string",
-          "description": "Override the orange color of the theme. Must be a valid CSS color."
+        "show_empty": {
+          "type": "boolean",
+          "description": "Show empty workspaces",
+          "default": true
         },
-        "colorBlue": {
-          "type": "string",
-          "description": "Override the blue color of the theme. Must be a valid CSS color."
+        "show_app_icons": {
+          "type": "boolean",
+          "description": "Show application icons",
+          "default": true
         },
-        "colorMagenta": {
-          "type": "string",
-          "description": "Override the magenta color of the theme. Must be a valid CSS color."
+        "deduplicate_apps": {
+          "type": "boolean",
+          "description": "One icon per application",
+          "default": false
         },
-        "colorCyan": {
-          "type": "string",
-          "description": "Override the cya color of the theme. Must be a valid CSS color."
-        },
-        "colorBlack": {
-          "type": "string",
-          "description": "Override the black color of the theme. Must be a valid CSS color."
-        },
-        "colorWhite": {
-          "type": "string",
-          "description": "Override the white color of the theme. Must be a valid CSS color."
-        },
-        "colorForeground": {
-          "type": "string",
-          "description": "Override the foreground color of the theme. Must be a valid CSS color."
-        },
-        "colorBackground": {
-          "type": "string",
-          "description": "Override the background color of the theme. Must be a valid CSS color."
+        "style": {
+          "type": "object",
+          "description": "Colors",
+          "additionalProperties": false,
+          "properties": {
+            "foreground": {
+              "type": "string",
+              "description": "Foreground"
+            },
+            "background": {
+              "type": "string",
+              "description": "Background"
+            },
+            "focused_foreground": {
+              "type": "string",
+              "description": "Focused foreground"
+            },
+            "focused_background": {
+              "type": "string",
+              "description": "Focused background"
+            },
+            "dark": {
+              "type": "object",
+              "description": "Dark appearance colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "focused_foreground": {
+                  "type": "string",
+                  "description": "Focused foreground"
+                },
+                "focused_background": {
+                  "type": "string",
+                  "description": "Focused background"
+                }
+              }
+            },
+            "light": {
+              "type": "object",
+              "description": "Light appearance colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "focused_foreground": {
+                  "type": "string",
+                  "description": "Focused foreground"
+                },
+                "focused_background": {
+                  "type": "string",
+                  "description": "Focused background"
+                }
+              }
+            }
+          }
         }
       }
     },
     "process": {
       "type": "object",
+      "description": "Windows",
       "additionalProperties": false,
       "properties": {
-        "showOnDisplay": {
+        "mode": {
           "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
+          "description": "Windows to show",
+          "default": "all",
+          "enum": ["hidden", "focused", "all"]
         },
-        "displayOnlyCurrent": {
-          "type": "boolean",
-          "description": "Insead of showing all processes of the current space, simple-bar will only show the current one"
+        "displays": {
+          "type": "array",
+          "description": "Show on displays, UUIDs; empty means all",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": []
         },
         "centered": {
           "type": "boolean",
-          "description": "The process widget will be centered. Do not activate it if you run simple-bar on a mac with a notch"
+          "description": "Center window selectors",
+          "default": false
         },
-        "hideWindowTitle": {
+        "show_titles": {
           "type": "boolean",
-          "description": "Hide window titles"
+          "description": "Show window titles",
+          "default": true
         },
-        "displayOnlyIcon": {
+        "icons_only": {
           "type": "boolean",
-          "description": "Show only the process icon"
+          "description": "Icons only",
+          "default": false
         },
-        "expandAllProcesses": {
+        "expand_all": {
           "type": "boolean",
-          "description": "All processes are revealed"
+          "description": "Expand every window label",
+          "default": false
+        },
+        "style": {
+          "type": "object",
+          "description": "Colors",
+          "additionalProperties": false,
+          "properties": {
+            "foreground": {
+              "type": "string",
+              "description": "Foreground"
+            },
+            "background": {
+              "type": "string",
+              "description": "Background"
+            },
+            "focused_foreground": {
+              "type": "string",
+              "description": "Focused foreground"
+            },
+            "focused_background": {
+              "type": "string",
+              "description": "Focused background"
+            },
+            "dark": {
+              "type": "object",
+              "description": "Dark appearance colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "focused_foreground": {
+                  "type": "string",
+                  "description": "Focused foreground"
+                },
+                "focused_background": {
+                  "type": "string",
+                  "description": "Focused background"
+                }
+              }
+            },
+            "light": {
+              "type": "object",
+              "description": "Light appearance colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "focused_foreground": {
+                  "type": "string",
+                  "description": "Focused foreground"
+                },
+                "focused_background": {
+                  "type": "string",
+                  "description": "Focused background"
+                }
+              }
+            }
+          }
         }
       }
     },
-    "spacesDisplay": {
+    "windows": {
       "type": "object",
+      "description": "Window filters",
       "additionalProperties": false,
       "properties": {
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
+        "exclude_apps": {
+          "type": "array",
+          "description": "Excluded application names",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": []
         },
-        "exclusions": {
-          "type": "string",
-          "description": "You can exclude some process with their app name. Simply add the wanted app name and separate multiple app names with a comma"
-        },
-        "titleExclusions": {
-          "type": "string",
-          "description": "Same as previous settings but with the window title name"
-        },
-        "exclusionsAsRegex": {
-          "type": "boolean",
-          "description": "Instead of using comma in the exclusions fields, you can use the regex syntax"
-        },
-        "displayAllSpacesOnAllScreens": {
-          "type": "boolean",
-          "description": "By default, only spaces attached to the current display are displayed on all displays. This can be changed with this setting"
-        },
-        "hideDuplicateAppsInSpaces": {
-          "type": "boolean",
-          "description": "Each instance of an app is displayed separately in their respective space. You can merge all duplicates with this setting"
-        },
-        "hideEmptySpaces": {
-          "type": "boolean",
-          "description": "Hide spaces with no opened apps"
+        "exclude_titles": {
+          "type": "array",
+          "description": "Excluded window titles",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": []
         }
       }
     },
     "widgets": {
       "type": "object",
+      "description": "Widgets",
       "additionalProperties": false,
       "properties": {
-        "processWidget": {
-          "type": "boolean",
-          "description": "Hide or show the process widget"
-        },
-        "githubWidget": {
-          "type": "boolean",
-          "description": "Hide or show the GitHub widget"
-        },
-        "weatherWidget": {
-          "type": "boolean",
-          "description": "Hide or show the weather widget"
-        },
-        "netstatsWidget": {
-          "type": "boolean",
-          "description": "Hide or show the netstats widget"
-        },
-        "cpuWidget": {
-          "type": "boolean",
-          "description": "Hide or show the CPU widget"
-        },
-        "memoryWidget": {
-          "type": "boolean",
-          "description": "Hide or show the memory widget"
-        },
-        "batteryWidget": {
-          "type": "boolean",
-          "description": "Hide or show the battery widget"
-        },
-        "wifiWidget": {
-          "type": "boolean",
-          "description": "Hide or show the wifi widget"
-        },
-        "zoomWidget": {
-          "type": "boolean",
-          "description": "Hide or show the Zoom widget"
-        },
-        "soundWidget": {
-          "type": "boolean",
-          "description": "Hide or show the sound widget"
-        },
-        "micWidget": {
-          "type": "boolean",
-          "description": "Hide or show the microphone widget"
-        },
-        "dateWidget": {
-          "type": "boolean",
-          "description": "Hide or show the date widget"
-        },
-        "timeWidget": {
-          "type": "boolean",
-          "description": "Hide or show the time widget"
-        },
-        "keyboardWidget": {
-          "type": "boolean",
-          "description": "Hide or show the keyboard widget"
-        },
-        "notificationsWidget": {
-          "type": "boolean",
-          "description": "Hide or show the notification badges widget"
-        }
-      }
-    },
-    "githubWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number",
-          "description": "The refresh frequency of this widget in milliseconds"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "showIcon": {
-          "type": "boolean",
-          "description": "Show or hide the widget icon"
-        },
-        "hideWhenNoNotification": {
-          "type": "boolean",
-          "description": "Hide the widget when there is no notification"
-        },
-        "notificationUrl": {
-          "type": "string",
-          "description": "The URL opened on click. Default is \"https://github.com/notifications\""
-        },
-        "ghBinaryPath": {
-          "type": "string",
-          "description": "The binary path required to get GitHub notifications count in the widget"
-        }
-      }
-    },
-    "weatherWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number",
-          "description": "The refresh frequency of this widget in milliseconds"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "showIcon": {
-          "type": "boolean",
-          "description": "Show or hide the widget icon"
-        },
-        "unit": {
-          "type": "string",
-          "enum": ["C", "F"],
-          "description": "The temperature unit to use (C or F)"
-        },
-        "hideLocation": {
-          "type": "boolean",
-          "description": "Hide the location in the widget"
-        },
-        "hideGradient": {
-          "type": "boolean",
-          "description": "Hide the sunset/sunrise gradient in the widget"
-        },
-        "locationMode": {
-          "type": "string",
-          "enum": ["configured", "auto"],
-          "description": "Use a configured location or browser geolocation"
-        },
-        "weatherLocation": {
+        "clock": {
           "type": "object",
+          "description": "Clock",
           "additionalProperties": false,
-          "required": ["label", "latitude", "longitude"],
           "properties": {
-            "label": {
-              "type": "string"
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": true
             },
-            "latitude": {
-              "type": ["number", "null"],
-              "minimum": -90,
-              "maximum": 90
-            },
-            "longitude": {
-              "type": ["number", "null"],
-              "minimum": -180,
-              "maximum": 180
-            }
-          }
-        }
-      }
-    },
-    "netstatsWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number",
-          "description": "The refresh frequency of this widget in milliseconds"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "showIcon": {
-          "type": "boolean",
-          "description": "Show or hide the widget icon"
-        },
-        "displayAsGraph": {
-          "type": "boolean",
-          "description": "Instead of show current network information, the widget will display a graphic showing the latest 60 seconds (it can change depending of the refresh frequency of the widget) of network activity. All drawn points are relative to the highest value"
-        },
-        "netstatsThreshold": {
-          "type": "number",
-          "description": "Hide the widget when download and upload are below this value in kb/s (0 to always show)"
-        }
-      }
-    },
-    "cpuWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number",
-          "description": "The refresh frequency of this widget in milliseconds"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "showIcon": {
-          "type": "boolean",
-          "description": "Show or hide the widget icon"
-        },
-        "displayAsGraph": {
-          "type": "boolean",
-          "description": "Instead of show current CPU information, the widget will display a graphic showing the latest 100 seconds (it can change depending of the refresh frequency of the widget) of CPU activity. All drawn points are relative to the highest value"
-        },
-        "cpuUsageThreshold": {
-          "type": "number",
-          "description": "Hide the widget when CPU usage is below this percentage (0 to always show)"
-        },
-        "cpuMonitorApp": {
-          "type": "string",
-          "enum": ["Activity Monitor", "Top", "None"],
-          "description": "Define the opened app on widget click: Activity Monitor, Top or None"
-        }
-      }
-    },
-    "memoryWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "showIcon": {
-          "type": "boolean",
-          "description": "Show or hide the widget icon"
-        },
-        "memoryUsageThreshold": {
-          "type": "number",
-          "description": "Hide the widget when used memory is below this percentage (0 to always show)"
-        },
-        "memoryMonitorApp": {
-          "type": "string",
-          "enum": ["Activity Monitor", "Top", "None"],
-          "description": "Define the opened app on widget click: Activity Monitor, Top or None"
-        }
-      }
-    },
-    "batteryWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number",
-          "description": "The refresh frequency of this widget in milliseconds"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "showIcon": {
-          "type": "boolean",
-          "description": "Show or hide the widget icon"
-        },
-        "toggleCaffeinateOnClick": {
-          "type": "boolean",
-          "description": "Enable the toggle of caffeinate mode on click"
-        },
-        "caffeinateOption": {
-          "type": "string",
-          "description": "The options to pass to caffeinate when toggling it"
-        },
-        "disableCaffeinateInvertedBackground": {
-          "type": "boolean",
-          "description": "Disable the inverted background while caffeinate is running"
-        }
-      }
-    },
-    "networkWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number",
-          "description": "The refresh frequency of this widget in milliseconds"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "showIcon": {
-          "type": "boolean",
-          "description": "Show or hide the widget icon"
-        },
-        "networkDevice": {
-          "type": "string",
-          "description": "The network device source name"
-        },
-        "hideWifiIfDisabled": {
-          "type": "boolean",
-          "description": "Hide the widget if the network is disabled"
-        },
-        "toggleWifiOnClick": {
-          "type": "boolean",
-          "description": "Toggle wifi on click"
-        },
-        "hideNetworkName": {
-          "type": "boolean",
-          "description": "Hide the network name"
-        }
-      }
-    },
-    "zoomWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number",
-          "description": "The refresh frequency of this widget in milliseconds"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "showVideo": {
-          "type": "boolean",
-          "description": "Displays your current call video status"
-        },
-        "showMic": {
-          "type": "boolean",
-          "description": "Displays your current call microphone status"
-        }
-      }
-    },
-    "soundWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number",
-          "description": "The refresh frequency of this widget in milliseconds"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "showIcon": {
-          "type": "boolean",
-          "description": "Show or hide the widget icon"
-        }
-      }
-    },
-    "micWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number",
-          "description": "The refresh frequency of this widget in milliseconds"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "showIcon": {
-          "type": "boolean",
-          "description": "Show or hide the widget icon"
-        }
-      }
-    },
-    "dateWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number",
-          "description": "The refresh frequency of this widget in milliseconds"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "showIcon": {
-          "type": "boolean",
-          "description": "Show or hide the widget icon"
-        },
-        "shortDateFormat": {
-          "type": "boolean",
-          "description": "If true, the date will be displayed in short format"
-        },
-        "locale": {
-          "type": "string",
-          "description": "The locale to use for the date"
-        },
-        "calendarApp": {
-          "type": "string",
-          "description": "The calendar app to open when clicking on the date"
-        }
-      }
-    },
-    "timeWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number",
-          "description": "The refresh frequency of this widget in milliseconds"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "showIcon": {
-          "type": "boolean",
-          "description": "Show or hide the widget icon"
-        },
-        "hour12": {
-          "type": "boolean",
-          "description": "Display time in 12h format"
-        },
-        "dayProgress": {
-          "type": "boolean",
-          "description": "Display day progress"
-        },
-        "showSeconds": {
-          "type": "boolean",
-          "description": "Display seconds"
-        }
-      }
-    },
-    "keyboardWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number",
-          "description": "The refresh frequency of this widget in milliseconds"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "showIcon": {
-          "type": "boolean",
-          "description": "Show or hide the widget icon"
-        },
-        "keyboardMaxLength": {
-          "type": "number",
-          "description": "Maximum number of characters to display for the keyboard layout (0 to show full name)"
-        }
-      }
-    },
-    "notificationsWidgetOptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "refreshFrequency": {
-          "type": "number",
-          "description": "The refresh frequency of this widget in milliseconds"
-        },
-        "showOnDisplay": {
-          "type": "string",
-          "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-        },
-        "excludedApps": {
-          "type": "string",
-          "description": "Comma-separated list of app names to exclude from the notifications widget (e.g. \"BetterTouchTool, Xcode\")"
-        }
-      }
-    },
-    "userWidgets": {
-      "type": "object",
-      "properties": {
-        "userWidgetsList": {
-          "type": "object",
-          "description": "List of your custom widgets",
-          "additionalProperties": false,
-          "patternProperties": {
-            "^[0-9]+$": {
-              "type": "object",
-              "properties": {
-                "title": {
-                  "type": "string",
-                  "description": "The title of the widget"
-                },
-                "icon": {
-                  "type": "string",
-                  "description": "The icon of the widget"
-                },
-                "backgroundColor": {
-                  "type": "string",
-                  "description": "Any valid CSS color"
-                },
-                "output": {
-                  "type": "string",
-                  "description": "The command to get the output, can be a shell script"
-                },
-                "onClickAction": {
-                  "type": "string",
-                  "description": "The action on click, can be a shell script"
-                },
-                "onRightClickAction": {
-                  "type": "string",
-                  "description": "The action on right click, can be a shell script"
-                },
-                "onMiddleClickAction": {
-                  "type": "string",
-                  "description": "The action on middle click, can be a shell script"
-                },
-                "showOnDisplay": {
-                  "type": "string",
-                  "description": "The displays on which the process will be displayed. Add a list of indexes (for example: \"1,2\"). Leave blank to display the widget on every spaces"
-                },
-                "refreshFrequency": {
-                  "type": "number",
-                  "description": "The refresh frequency of this widget in milliseconds"
-                },
-                "active": {
-                  "type": "boolean",
-                  "description": "Enable or disable this specific user widget"
-                },
-                "noIcon": {
-                  "type": "boolean",
-                  "description": "Hide the icon"
-                },
-                "hideWhenNoOutput": {
-                  "type": "boolean",
-                  "description": "Hide the widget when script returns empty output"
-                }
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
               },
+              "default": []
+            },
+            "show_icon": {
+              "type": "boolean",
+              "description": "Show icon",
+              "default": true
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 1000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "format": {
+              "type": "string",
+              "description": "Clock format",
+              "default": "24h",
+              "enum": ["12h", "24h"]
+            },
+            "show_seconds": {
+              "type": "boolean",
+              "description": "Show seconds",
+              "default": false
+            },
+            "day_progress": {
+              "type": "boolean",
+              "description": "Day progress",
+              "default": true
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
               "additionalProperties": false,
-              "required": [
-                "title",
-                "icon",
-                "backgroundColor",
-                "output",
-                "onClickAction",
-                "onRightClickAction",
-                "onMiddleClickAction",
-                "showOnDisplay",
-                "refreshFrequency",
-                "active",
-                "noIcon",
-                "hideWhenNoOutput"
-              ]
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "date": {
+          "type": "object",
+          "description": "Date",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": true
+            },
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "show_icon": {
+              "type": "boolean",
+              "description": "Show icon",
+              "default": true
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 30000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "format": {
+              "type": "string",
+              "description": "Date format",
+              "default": "short",
+              "enum": ["short", "long"]
+            },
+            "locale": {
+              "type": "string",
+              "description": "Locale",
+              "default": "en-GB"
+            },
+            "calendar_app": {
+              "type": "string",
+              "description": "Calendar application",
+              "default": ""
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "battery": {
+          "type": "object",
+          "description": "Battery",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": true
+            },
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "show_icon": {
+              "type": "boolean",
+              "description": "Show icon",
+              "default": true
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 10000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "toggle_caffeinate": {
+              "type": "boolean",
+              "description": "Toggle caffeinate on click",
+              "default": true
+            },
+            "caffeinate_scope": {
+              "type": "string",
+              "description": "Prevent sleeping",
+              "default": "system",
+              "enum": ["system", "display", "both"]
+            },
+            "caffeinate_timeout_seconds": {
+              "type": "integer",
+              "description": "Caffeinate timeout, seconds; zero means none",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "highlight_caffeinate": {
+              "type": "boolean",
+              "description": "Highlight caffeinate",
+              "default": true
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "wifi": {
+          "type": "object",
+          "description": "Wi-Fi",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": true
+            },
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "show_icon": {
+              "type": "boolean",
+              "description": "Show icon",
+              "default": true
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 20000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "device": {
+              "type": "string",
+              "description": "Network device",
+              "default": "en0"
+            },
+            "hide_when_disabled": {
+              "type": "boolean",
+              "description": "Hide when disconnected",
+              "default": false
+            },
+            "show_name": {
+              "type": "boolean",
+              "description": "Show network name",
+              "default": true
+            },
+            "toggle_on_click": {
+              "type": "boolean",
+              "description": "Toggle Wi-Fi on click",
+              "default": false
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "volume": {
+          "type": "object",
+          "description": "Output volume",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": true
+            },
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "show_icon": {
+              "type": "boolean",
+              "description": "Show icon",
+              "default": true
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 20000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "microphone": {
+          "type": "object",
+          "description": "Microphone",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": false
+            },
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "show_icon": {
+              "type": "boolean",
+              "description": "Show icon",
+              "default": true
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 20000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "keyboard": {
+          "type": "object",
+          "description": "Keyboard",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": false
+            },
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "show_icon": {
+              "type": "boolean",
+              "description": "Show icon",
+              "default": true
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 20000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "max_characters": {
+              "type": "integer",
+              "description": "Maximum characters; zero means unlimited",
+              "default": 0,
+              "minimum": 0
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "cpu": {
+          "type": "object",
+          "description": "CPU",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": false
+            },
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "show_icon": {
+              "type": "boolean",
+              "description": "Show icon",
+              "default": true
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 2000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "display": {
+              "type": "string",
+              "description": "Display",
+              "default": "number",
+              "enum": ["number", "graph"]
+            },
+            "hide_below_percent": {
+              "type": "number",
+              "description": "Hide below percent",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 100
+            },
+            "monitor_app": {
+              "type": "string",
+              "description": "Monitor application",
+              "default": "activity_monitor",
+              "enum": ["activity_monitor", "top", "none"]
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "memory": {
+          "type": "object",
+          "description": "Memory",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": false
+            },
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "show_icon": {
+              "type": "boolean",
+              "description": "Show icon",
+              "default": true
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 4000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "hide_below_percent": {
+              "type": "number",
+              "description": "Hide below percent",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 100
+            },
+            "monitor_app": {
+              "type": "string",
+              "description": "Monitor application",
+              "default": "activity_monitor",
+              "enum": ["activity_monitor", "top", "none"]
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "network_stats": {
+          "type": "object",
+          "description": "Network statistics",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": false
+            },
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "show_icon": {
+              "type": "boolean",
+              "description": "Show icon",
+              "default": true
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 2000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "display": {
+              "type": "string",
+              "description": "Display",
+              "default": "number",
+              "enum": ["number", "graph"]
+            },
+            "hide_below_kib_per_second": {
+              "type": "number",
+              "description": "Hide below KiB/s",
+              "default": 0,
+              "minimum": 0
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "notifications": {
+          "type": "object",
+          "description": "Dock notification badges",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": false
+            },
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 10000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "exclude_apps": {
+              "type": "array",
+              "description": "Excluded application names",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "weather": {
+          "type": "object",
+          "description": "Weather",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": false
+            },
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "show_icon": {
+              "type": "boolean",
+              "description": "Show icon",
+              "default": true
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 1800000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "location_mode": {
+              "type": "string",
+              "description": "Location mode",
+              "default": "auto",
+              "enum": ["auto", "configured"]
+            },
+            "unit": {
+              "type": "string",
+              "description": "Temperature unit",
+              "default": "C",
+              "enum": ["C", "F"]
+            },
+            "show_location": {
+              "type": "boolean",
+              "description": "Show location",
+              "default": true
+            },
+            "show_gradient": {
+              "type": "boolean",
+              "description": "Show sunrise/sunset gradient",
+              "default": true
+            },
+            "location": {
+              "type": "object",
+              "description": "Selected location",
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string",
+                  "description": "Location label",
+                  "default": ""
+                },
+                "latitude": {
+                  "type": "number",
+                  "description": "Latitude",
+                  "minimum": -90,
+                  "maximum": 90
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "Longitude",
+                  "minimum": -180,
+                  "maximum": 180
+                }
+              }
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "github": {
+          "type": "object",
+          "description": "GitHub",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": false
+            },
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "show_icon": {
+              "type": "boolean",
+              "description": "Show icon",
+              "default": true
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 600000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "hide_when_empty": {
+              "type": "boolean",
+              "description": "Hide without notifications",
+              "default": false
+            },
+            "url": {
+              "type": "string",
+              "description": "Notifications URL",
+              "default": "https://github.com/notifications"
+            },
+            "cli_path": {
+              "type": "string",
+              "description": "GitHub CLI path",
+              "default": "/opt/homebrew/bin/gh"
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "zoom": {
+          "type": "object",
+          "description": "Zoom",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled",
+              "default": false
+            },
+            "displays": {
+              "type": "array",
+              "description": "Show on displays, UUIDs; empty means all",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "refresh_ms": {
+              "type": "number",
+              "description": "Refresh interval, milliseconds",
+              "default": 5000,
+              "minimum": 250,
+              "maximum": 2147483647
+            },
+            "show_microphone": {
+              "type": "boolean",
+              "description": "Show microphone",
+              "default": true
+            },
+            "show_video": {
+              "type": "boolean",
+              "description": "Show video",
+              "default": true
+            },
+            "style": {
+              "type": "object",
+              "description": "Colors",
+              "additionalProperties": false,
+              "properties": {
+                "foreground": {
+                  "type": "string",
+                  "description": "Foreground"
+                },
+                "background": {
+                  "type": "string",
+                  "description": "Background"
+                },
+                "dark": {
+                  "type": "object",
+                  "description": "Dark appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                },
+                "light": {
+                  "type": "object",
+                  "description": "Light appearance colors",
+                  "additionalProperties": false,
+                  "properties": {
+                    "foreground": {
+                      "type": "string",
+                      "description": "Foreground"
+                    },
+                    "background": {
+                      "type": "string",
+                      "description": "Background"
+                    }
+                  }
+                }
+              }
             }
           }
         }
       }
     },
-    "customStyles": {
+    "rift": {
       "type": "object",
+      "description": "Rift",
       "additionalProperties": false,
       "properties": {
-        "styles": {
+        "cli_path": {
           "type": "string",
-          "description": "Your custom css styles here"
+          "description": "Rift CLI path",
+          "default": "/opt/homebrew/bin/rift-cli"
+        }
+      }
+    },
+    "interaction": {
+      "type": "object",
+      "description": "Interaction",
+      "additionalProperties": false,
+      "properties": {
+        "terminal": {
+          "type": "string",
+          "description": "Terminal for top",
+          "default": "terminal",
+          "enum": ["terminal", "iterm2"]
+        },
+        "notifications": {
+          "type": "string",
+          "description": "Action feedback",
+          "default": "system",
+          "enum": ["system", "bar", "off"]
+        },
+        "click_effect": {
+          "type": "boolean",
+          "description": "Click effect",
+          "default": true
         }
       }
     }

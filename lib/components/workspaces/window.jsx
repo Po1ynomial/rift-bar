@@ -19,8 +19,13 @@ export default function Window({ window }) {
   // Create a ref for the button element
   const ref = React.useRef();
   // Destructure settings
-  const { displayOnlyCurrent, hideWindowTitle, displayOnlyIcon, expandAllProcesses } =
-    settings.process;
+  const {
+    mode,
+    show_titles,
+    icons_only: displayOnlyIcon,
+    expand_all: expandAllProcesses,
+  } = settings.process;
+  const displayOnlyCurrent = mode === "focused";
   // Destructure window properties
   const { focused, "app-name": appName, "window-title": title, "window-id": id } = window;
 
@@ -58,14 +63,14 @@ export default function Window({ window }) {
   // Generate class names based on settings and window state
   const classes = Utils.classNames("process__window", {
     "process__window--expanded": expandAllProcesses,
-    "process__window--focused": !displayOnlyCurrent && focused,
+    "process__window--focused": focused,
     "process__window--only-current": displayOnlyCurrent,
     "process__window--only-icon": displayOnlyIcon,
   });
 
   // Clean up the window title
   const cleanedUpName = appName !== title && title.length ? `${appName} / ${title}` : appName;
-  const processName = hideWindowTitle ? appName : cleanedUpName;
+  const processName = show_titles ? cleanedUpName : appName;
 
   // Render the window button
   return (

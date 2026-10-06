@@ -37,7 +37,7 @@ test("live planning identifies duplicate-named workspaces by display and index",
 
 test("all-display mode exercises cross-display clicks through the active display's bar", () => {
   const plan = planLatency(displays, workspaces, {
-    spacesDisplay: { displayAllSpacesOnAllScreens: true },
+    workspaces: { all_displays: true },
   });
   assert.deepEqual(
     plan.cases.map((item) => item.screenId),
@@ -47,12 +47,12 @@ test("all-display mode exercises cross-display clicks through the active display
 
 test("insufficient or hidden workspaces are skipped without modifying the desktop", () => {
   assert.equal(
-    planLatency(displays, workspaces, { spacesDisplay: { hideEmptySpaces: true } }).cases.length,
+    planLatency(displays, workspaces, { workspaces: { show_empty: false } }).cases.length,
     0,
   );
   assert.equal(planLatency([], new Map(), {}).cases.length, 0);
   assert.equal(
-    planLatency(displays, workspaces, { spacesDisplay: { showOnDisplay: "99" } }).cases.length,
+    planLatency(displays, workspaces, { workspaces: { displays: ["missing"] } }).cases.length,
     0,
   );
 });
@@ -60,14 +60,14 @@ test("insufficient or hidden workspaces are skipped without modifying the deskto
 test("empty originals are not chosen when they would disappear after switching", () => {
   const list = new Map([["external", [workspace(0, true), workspace(1, false, [{ id: focus }])]]]);
   assert.equal(
-    planLatency([displays[0]], list, { spacesDisplay: { hideEmptySpaces: true } }).cases.length,
+    planLatency([displays[0]], list, { workspaces: { show_empty: false } }).cases.length,
     0,
   );
 });
 
 test("all-display mode can use another visible bar when the active display's bar is hidden", () => {
   const plan = planLatency(displays, workspaces, {
-    spacesDisplay: { displayAllSpacesOnAllScreens: true, showOnDisplay: "1" },
+    workspaces: { all_displays: true, displays: ["external"] },
   });
   assert.deepEqual(
     plan.cases.map((item) => item.screenId),

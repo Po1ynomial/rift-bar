@@ -11,7 +11,7 @@ import { parseSnapshot } from "../lib/snapshot.js";
 async function loadBackend(run) {
   const calls = [];
   const context = createContext();
-  const settings = { global: { riftPath: "/tmp/Rift's CLI" } };
+  const settings = { rift: { cli_path: "/tmp/Rift's CLI" } };
   const dependencies = new Map([
     [
       "uebersicht",

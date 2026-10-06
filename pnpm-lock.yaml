@@ -165,6 +165,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      smol-toml:
+        specifier: 1.9.0
+        version: 1.9.0
     devDependencies:
       espree:
         specifier: 10.4.0
@@ -466,6 +470,10 @@ packages:
       vite-plus:
         optional: true
 
+  smol-toml@1.9.0:
+    resolution: {integrity: sha512-hpd+HLON7HdZXqYchMM/+LaTTbdK0AU3NngIJ4KVyWbY9bfQqdL9cD+4yf6dUoU2Ap4VsU0JkQi6FxAI1B2mXQ==}
+    engines: {node: '>= 18'}
+
   tinypool@2.2.0:
     resolution: {integrity: sha512-jBrmx4lYmaC9k/mgPbylxs7kBUxHtD8256up+HjLaDFfXScKJQyil+SWXSvhAtT7XHo+yTVlpB81PGmHP8oLSQ==}
     engines: {node: ^20.0.0 || >=22.0.0}
@@ -645,5 +653,7 @@ snapshots:
       '@oxlint/binding-win32-arm64-msvc': 1.86.0
       '@oxlint/binding-win32-ia32-msvc': 1.86.0
       '@oxlint/binding-win32-x64-msvc': 1.86.0
+
+  smol-toml@1.9.0: {}
 
   tinypool@2.2.0: {}

@@ -1,13 +1,12 @@
 import * as Uebersicht from "uebersicht";
-import * as Error from "./lib/components/error.jsx";
-import SimpleBarContextProvider from "./lib/components/simple-bar-context.jsx";
-import UserWidgets from "./lib/components/data/user-widgets.jsx";
-// Each simple-bar widgets exports both a "Component" or "Widget" render function
-// and a "styles" string containing its own CSS
-import * as Variables from "./lib/styles/core/variables";
-import * as Base from "./lib/styles/core/base";
-import * as Spaces from "./lib/styles/components/spaces/spaces";
-import * as Process from "./lib/styles/components/process";
+import * as ErrorView from "./lib/components/error.jsx";
+import SimpleBarContextProvider, {
+  useSimpleBarContext,
+} from "./lib/components/simple-bar-context.jsx";
+import * as Variables from "./lib/styles/core/variables.js";
+import * as Base from "./lib/styles/core/base.js";
+import * as Spaces from "./lib/styles/components/spaces/spaces.js";
+import * as Process from "./lib/styles/components/process.js";
 import * as Zoom from "./lib/components/data/zoom.jsx";
 import * as Time from "./lib/components/data/time.jsx";
 import * as DateDisplay from "./lib/components/data/date-display.jsx";
@@ -25,32 +24,22 @@ import * as Notifications from "./lib/components/data/notifications.jsx";
 import * as Graph from "./lib/components/data/graph.jsx";
 import * as DataWidgetLoader from "./lib/components/data/data-widget-loader.jsx";
 import * as DataWidget from "./lib/components/data/data-widget.jsx";
-import * as SideIcon from "./lib/components/side-icon.jsx";
 import * as Missives from "./lib/components/missives/missives.jsx";
-import * as Utils from "./lib/utils";
-import * as Settings from "./lib/settings";
-import * as Rift from "./lib/rift";
-
-// Destructure React from Uebersicht in order to make the linter recognize React hooks
+import * as Utils from "./lib/utils.js";
+import * as Settings from "./lib/settings.js";
+import * as Rift from "./lib/rift.js";
 const { React } = Uebersicht;
-
 const WorkspaceContextProvider = React.lazy(() => import("./lib/components/workspace-context.jsx"));
 const WorkspaceSpaces = React.lazy(() => import("./lib/components/workspaces/spaces.jsx"));
 const WorkspaceProcess = React.lazy(() => import("./lib/components/workspaces/process.jsx"));
-
-// Window-manager events trigger refreshes. No periodic workspace polling.
-const refreshFrequency = false;
-
+export const refreshFrequency = false;
 let initialization;
-let initializedSettings;
-
+let initialized = false;
 function initialize() {
-  if (!initialization) {
+  if (!initialization)
     initialization = Settings.init()
       .then((settings) => {
-        // No preference reads or style generation during module evaluation.
         Utils.injectStyles("simple-bar-index-styles", [
-          Variables.buildStyles(settings),
           Base.styles,
           Spaces.styles,
           Process.styles,
@@ -72,89 +61,58 @@ function initialize() {
           Notifications.styles,
           Graph.styles,
           DataWidgetLoader.styles,
-          settings.customStyles.styles,
-          SideIcon.styles,
           Missives.styles,
         ]);
-        initializedSettings = settings;
+        Utils.injectStyles("rift-bar-config-styles", [Variables.buildStyles(settings)]);
+        initialized = true;
       })
       .catch((error) => {
         initialization = undefined;
         throw error;
       });
-  }
   return initialization;
 }
-
-async function command() {
+export async function command() {
+  const started = initialized;
   await initialize();
+  if (started && Settings.reloadRequested()) {
+    try {
+      await Settings.init();
+    } catch {
+      /* Keep the last valid configuration; the bar displays its error. */
+    }
+  }
   return Rift.getSnapshot();
 }
-
-// Render function to display the bar
-function render({ output, error }) {
-  const settings = initializedSettings ?? Settings.defaultSettings;
-  // Define base classes for the bar based on settings
-  const baseClasses = Utils.classNames("simple-bar", {
-    "simple-bar--floating": settings.global.floatingBar,
-    "simple-bar--no-bar-background": settings.global.noBarBg,
-    "simple-bar--no-color-in-data": settings.global.noColorInData,
-    "simple-bar--on-bottom": settings.global.bottomBar,
-    "simple-bar--animations-disabled": settings.global.disableAnimations,
-    "simple-bar--spaces-background-color-as-foreground":
-      settings.global.spacesBackgroundColorAsForeground,
-    "simple-bar--widgets-background-color-as-foreground":
-      settings.global.widgetsBackgroundColorAsForeground,
-    "simple-bar--process-aligned-to-left": !settings.global.centered,
+export function barClasses(settings) {
+  return Utils.classNames("simple-bar", {
+    "simple-bar--floating": settings.bar.floating,
+    "simple-bar--no-bar-background": !settings.bar.background,
+    "simple-bar--no-bar-shadow": !settings.bar.shadow,
+    "simple-bar--animations-disabled": !settings.appearance.animations,
+    "simple-bar--process-aligned-to-left": !settings.process.centered,
   });
-
-  // Handle errors
-  if (error) {
-    // oxlint-disable-next-line no-console
-    console.error("Error in index.jsx", error);
-    return <Error.Component type="error" classes={baseClasses} />;
-  }
-  // Übersicht may retain output across a source reload. Do not mount providers
-  // with defaults before the new instance has loaded its preferences.
-  if (!initializedSettings || !output) {
-    return <Error.Component type="noOutput" classes={baseClasses} />;
-  }
-
-  // Cleanup the output data
-  const cleanedUpOutput = output.trim();
-
-  // Handle window-manager query failures
-  if (cleanedUpOutput === "riftError") {
-    return <Error.Component type={cleanedUpOutput} classes={baseClasses} />;
-  }
-
-  // Parse the output data
-  let data;
-  try {
-    data = Rift.parseSnapshot(cleanedUpOutput);
-  } catch {
-    return <Error.Component type="noData" classes={baseClasses} />;
-  }
-
-  const { displays, spaces } = data;
-
-  // Handle bar focus ring on click
-  Utils.handleBarFocus();
-
-  // Render the bar with appropriate components and data
+}
+export function Bar({ spaces }) {
+  const { settings, configError } = useSimpleBarContext();
+  const ref = React.useRef();
+  React.useEffect(() => Utils.handleBarFocus(ref.current), []);
   return (
-    <SimpleBarContextProvider initialSettings={settings} displays={displays}>
-      <div className={baseClasses}>
-        <SideIcon.Component />
+    <div ref={ref} className={barClasses(settings)}>
+      <Settings.Wrapper />
+      <div className="simple-bar__foreground">
         <React.Suspense fallback={<React.Fragment />}>
           <WorkspaceContextProvider spaces={spaces}>
             <WorkspaceSpaces />
             <WorkspaceProcess />
           </WorkspaceContextProvider>
         </React.Suspense>
-        <Settings.Wrapper />
+        {configError && (
+          <span className="config-error" role="alert" title={configError.message}>
+            Configuration: {configError.message}
+          </span>
+        )}
         <div className="simple-bar__data">
-          <UserWidgets />
           <Zoom.Widget />
           <GitHub.Widget />
           <Weather.Widget />
@@ -170,10 +128,29 @@ function render({ output, error }) {
           <DateDisplay.Widget />
           <Time.Widget />
         </div>
-        <Missives.Component />
       </div>
+      <Missives.Component />
+    </div>
+  );
+}
+export function render({ output, error }) {
+  const classes = barClasses(Settings.get());
+  if (error)
+    return (
+      <ErrorView.Component type="error" classes={classes} detail={error.message || String(error)} />
+    );
+  if (!initialized || !output) return <ErrorView.Component type="noOutput" classes={classes} />;
+  if (output.trim() === "riftError")
+    return <ErrorView.Component type="riftError" classes={classes} />;
+  let snapshot;
+  try {
+    snapshot = Rift.parseSnapshot(output.trim());
+  } catch {
+    return <ErrorView.Component type="noData" classes={classes} />;
+  }
+  return (
+    <SimpleBarContextProvider initialSettings={Settings.get()} displays={snapshot.displays}>
+      <Bar spaces={snapshot.spaces} />
     </SimpleBarContextProvider>
   );
 }
-
-export { command, refreshFrequency, render };

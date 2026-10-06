@@ -22,11 +22,11 @@ const GRAPH_LENGTH = 30;
  * @returns {JSX.Element|null} The rendered component.
  */
 export const Widget = React.memo(() => {
-  const { displayIndex, settings } = useSimpleBarContext();
-  const config = settings.netstatsWidgetOptions;
-  const { displayAsGraph, showIcon, netstatsThreshold } = config;
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.netstatsWidget;
+  const { displayUuid, settings } = useSimpleBarContext();
+  const config = settings.widgets.network_stats;
+  const { display, show_icon, hide_below_kib_per_second } = config;
+  const displayAsGraph = display === "graph";
+  const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const {
     data: state,
     status,
@@ -60,7 +60,7 @@ export const Widget = React.memo(() => {
     return null;
   }
 
-  const threshold = (Number(netstatsThreshold) || 0) * 1024;
+  const threshold = (Number(hide_below_kib_per_second) || 0) * 1024;
   const isBelowThreshold =
     threshold > 0 && Math.abs(download) < threshold && Math.abs(upload) < threshold;
 
@@ -84,12 +84,12 @@ export const Widget = React.memo(() => {
           caption={{
             download: {
               value: formattedDownload,
-              icon: showIcon ? Icons.Download : null,
+              icon: show_icon ? Icons.Download : null,
               color: "var(--magenta)",
             },
             upload: {
               value: formattedUpload,
-              icon: showIcon ? Icons.Upload : null,
+              icon: show_icon ? Icons.Upload : null,
               color: "var(--blue)",
             },
           }}
@@ -104,7 +104,7 @@ export const Widget = React.memo(() => {
     <React.Fragment>
       <DataWidget.Widget status={status} title={error?.message} classes="netstats" disableSlider>
         <div className="netstats__item">
-          {showIcon && (
+          {show_icon && (
             <SuspenseIcon>
               <Icons.Download className="netstats__icon netstats__icon--download" />
             </SuspenseIcon>
@@ -117,7 +117,7 @@ export const Widget = React.memo(() => {
       </DataWidget.Widget>
       <DataWidget.Widget status={status} title={error?.message} classes="netstats" disableSlider>
         <div className="netstats__item">
-          {showIcon && (
+          {show_icon && (
             <SuspenseIcon>
               <Icons.Upload className="netstats__icon netstats__icon--upload" />
             </SuspenseIcon>

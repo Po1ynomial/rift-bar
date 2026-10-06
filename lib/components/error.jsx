@@ -19,7 +19,7 @@ const message = {
  * @param {string} props.classes - Additional CSS classes.
  * @returns {JSX.Element} The error component.
  */
-export function Component({ type, classes }) {
+export function Component({ type, classes, detail }) {
   // Combine base class with additional classes and conditional loading class
   const errorClasses = Utils.classNames("simple-bar--empty", classes, {
     "simple-bar--loading": type === "noOutput",
@@ -50,8 +50,10 @@ export function Component({ type, classes }) {
 
   return (
     <div className={errorClasses}>
-      <span>simple-bar-index.jsx: {message[type]}</span>
       <Settings.Wrapper />
+      <div className="simple-bar__foreground">
+        <span>simple-bar-index.jsx: {detail || message[type]}</span>
+      </div>
     </div>
   );
 }

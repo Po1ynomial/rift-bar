@@ -17,11 +17,10 @@ const { React } = Uebersicht;
  * @returns {JSX.Element|null} The rendered widget.
  */
 export const Widget = React.memo(() => {
-  const { displayIndex, settings } = useSimpleBarContext();
-  const config = settings.timeWidgetOptions;
-  const { dayProgress, showIcon } = config;
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.timeWidget;
+  const { displayUuid, settings } = useSimpleBarContext();
+  const config = settings.widgets.clock;
+  const { day_progress, show_icon } = config;
+  const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const { data: state, status, error, refresh: getTime } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   if (!visible) return null;
@@ -45,11 +44,11 @@ export const Widget = React.memo(() => {
       status={status}
       title={error?.message}
       classes="time"
-      Icon={showIcon ? TimeIcon : null}
+      Icon={show_icon ? TimeIcon : null}
       disableSlider
     >
       {time}
-      {dayProgress && (
+      {day_progress && (
         <div className="time__filler" style={{ transform: `scaleX(${fillerWidth})` }} />
       )}
     </DataWidget.Widget>

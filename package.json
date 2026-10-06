@@ -14,7 +14,8 @@
     "lint": "node tools/quiet-command.mjs oxlint --deny-warnings .",
     "format": "oxfmt --write .",
     "format:check": "node tools/quiet-command.mjs oxfmt --check .",
-    "check": "pnpm run --reporter=silent format:check && pnpm run --reporter=silent lint && pnpm run --reporter=silent test"
+    "check": "pnpm run --reporter=silent format:check && pnpm run --reporter=silent lint && pnpm run --reporter=silent test",
+    "config:generate": "node tools/config-reference.mjs && oxfmt --write lib/schemas/config.json docs/config-fields.md"
   },
   "devDependencies": {
     "espree": "10.4.0",
@@ -24,5 +25,8 @@
   "packageManager": "pnpm@12.6.0",
   "engines": {
     "node": ">=24.21.0"
+  },
+  "dependencies": {
+    "smol-toml": "1.9.0"
   }
 }

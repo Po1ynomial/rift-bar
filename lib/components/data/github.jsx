@@ -18,11 +18,10 @@ const { React } = Uebersicht;
  * @returns {JSX.Element|null} The GitHub notification widget component
  */
 export const Widget = React.memo(() => {
-  const { displayIndex, settings } = useSimpleBarContext();
-  const config = settings.githubWidgetOptions;
-  const { hideWhenNoNotification, notificationUrl, showIcon } = config;
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.githubWidget;
+  const { displayUuid, settings } = useSimpleBarContext();
+  const config = settings.widgets.github;
+  const { hide_when_empty, url, show_icon } = config;
+  const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const { data: state, status, error, refresh: getGitHub } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   if (!visible) return null;
@@ -34,15 +33,15 @@ export const Widget = React.memo(() => {
 
   const { count } = state;
 
-  if (hideWhenNoNotification && count === 0) return null;
+  if (hide_when_empty && count === 0) return null;
 
   return (
     <DataWidget.Widget
       status={status}
       title={error?.message}
       classes="github"
-      href={notificationUrl}
-      Icon={showIcon ? Icons.GitHub : null}
+      href={url}
+      Icon={show_icon ? Icons.GitHub : null}
       onRightClick={getGitHub}
     >
       <span className="github__count">{count}</span>

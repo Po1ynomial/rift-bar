@@ -1,42 +1,40 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { loadModule, React as baseReact } from "./helpers/modules.mjs";
+import { resolveConfig } from "../lib/config.js";
+import { loadModule, React } from "./helpers/modules.mjs";
 
-// Exercise the real widget's loader without mounting its presentation.
-test("weather never submits a placeholder city to a forecast endpoint", async () => {
+test("incomplete configured coordinates are rejected before any forecast request", () => {
+  assert.throws(
+    () =>
+      resolveConfig({
+        widgets: {
+          weather: { enabled: true, location_mode: "configured", location: { label: "null" } },
+        },
+      }),
+    /requires latitude and longitude/,
+  );
+});
+
+test("automatic weather without geolocation never forecasts a placeholder city", async () => {
   let load;
   const requests = [];
-  const legacy = {
-    widgets: { weatherWidget: true },
-    weatherWidgetOptions: {
-      refreshFrequency: 1800000,
-      customLocation: "null",
-      unit: "C",
-      showOnDisplay: "",
-    },
-  };
-  const preferences = await loadModule("lib/settings.js", {
-    globals: { window: { localStorage: { getItem: () => JSON.stringify(legacy) } } },
-    mocks: { uebersicht: { React: baseReact } },
-  });
-  const settings = preferences.namespace.get();
-  const React = {
-    ...baseReact,
-    useMemo: (fn) => fn(),
-    useCallback: (fn) => fn,
-    useRef: (value) => ({ current: value }),
-    useState: (value) => [value, () => {}],
-  };
+  const settings = resolveConfig({ widgets: { weather: { enabled: true } } });
   const { namespace } = await loadModule("lib/components/data/weather.jsx", {
     globals: {
+      AbortController,
+      DOMException,
+      setTimeout,
+      clearTimeout,
       fetch: async (url) => {
         requests.push(String(url));
-        return { json: async () => ({}) };
+        return {};
       },
     },
     mocks: {
       uebersicht: { React },
-      "../simple-bar-context.jsx": { useSimpleBarContext: () => ({ displayIndex: 1, settings }) },
+      "../simple-bar-context.jsx": {
+        useSimpleBarContext: () => ({ displayUuid: "display", settings }),
+      },
       "../../hooks/use-widget.js": {
         default: (definition, active, config) => {
           if (active)
@@ -48,6 +46,6 @@ test("weather never submits a placeholder city to a forecast endpoint", async ()
   });
   namespace.Widget();
   assert.equal(typeof load, "function");
-  await assert.rejects(load(), /location|coordinates/);
+  await assert.rejects(load(), /Geolocation is unavailable/);
   assert.deepEqual(requests, []);
 });

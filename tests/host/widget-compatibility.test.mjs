@@ -7,6 +7,8 @@ import { createContext, runInContext } from "node:vm";
 import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import * as runtime from "../../lib/widgets/runtime.js";
+import * as TOML from "smol-toml";
+import * as themes from "../../lib/styles/themes.js";
 import { loadModule, React } from "../helpers/modules.mjs";
 
 const require = createRequire("/Applications/Übersicht.app/Contents/Resources/server.js");
@@ -15,6 +17,54 @@ const env = require("@babel/preset-env");
 const react = require("@babel/preset-react");
 const rest = require("@babel/plugin-proposal-object-rest-spread");
 const emotion = require("babel-plugin-emotion");
+const compileOptions = {
+  babelrc: false,
+  configFile: false,
+  presets: [
+    [env, { targets: "last 4 Safari versions", modules: "commonjs" }],
+    [react, { pragma: "html" }],
+  ],
+  plugins: [rest, emotion],
+};
+
+test("Übersicht-compiled configuration parses, validates, resets, and serializes sparse TOML", async () => {
+  const filename = fileURLToPath(new URL("../../lib/config.js", import.meta.url));
+  const { code } = babel.transformSync(await readFile(filename, "utf8"), {
+    ...compileOptions,
+    filename,
+  });
+  const exports = {};
+  const context = createContext({
+    exports,
+    URL,
+    require: (specifier) => {
+      if (specifier === "smol-toml") return TOML;
+      assert.equal(specifier, "./styles/themes.js");
+      return themes;
+    },
+  });
+  runInContext(code, context, { filename });
+  const config = exports.parseConfig(
+    '[appearance]\nfont_size = "13px"\n[widgets.weather]\nlocation_mode = "configured"\n[widgets.weather.location]\nlatitude = 0\nlongitude = 0\n',
+  );
+  assert.equal(exports.resolveConfig(config).appearance.font_size, "13px");
+  const reset = exports.editOverride(config, "appearance.font_size", undefined);
+  assert.equal(exports.resolveConfig(reset).appearance.font_size, "11px");
+  assert.doesNotMatch(exports.serializeConfig(reset), /appearance/);
+  assert.throws(() => exports.parseConfig('[bar]\nposition = "bottom"'), /unknown field/);
+});
+
+test("the complete widget graph bundles with Übersicht's installed Browserify and Babel", async () => {
+  const browserify = require("browserify");
+  const filename = fileURLToPath(new URL("../../index.jsx", import.meta.url));
+  const bundle = browserify(filename, { detectGlobals: false });
+  bundle.external("uebersicht");
+  bundle.transform(require("babelify"), compileOptions);
+  const output = await new Promise((resolve, reject) =>
+    bundle.bundle((error, data) => (error ? reject(error) : resolve(data))),
+  );
+  assert.ok(output.length > 0);
+});
 
 async function compiledWeather() {
   const filename = fileURLToPath(new URL("../../lib/widgets/weather.js", import.meta.url));
@@ -61,7 +111,7 @@ async function compiledWeather() {
 
 test("Übersicht-compiled automatic weather resolves an omitted geolocation argument", async () => {
   const { weather } = await compiledWeather();
-  const data = await weather.loadWeather({ locationMode: "auto", unit: "C" });
+  const data = await weather.loadWeather({ location_mode: "auto", unit: "C" });
   assert.equal(data.latitude, 48.85);
   assert.equal(data.longitude, 2.35);
   assert.equal(data.temperature, 12);
@@ -79,9 +129,9 @@ test("Übersicht-compiled configured weather never reads navigator", async () =>
     get: () => assert.fail("Configured mode must not access geolocation"),
   });
   const data = await weather.loadWeather({
-    locationMode: "configured",
+    location_mode: "configured",
     unit: "C",
-    weatherLocation: { label: "Selected", latitude: 0, longitude: 0 },
+    location: { label: "Selected", latitude: 0, longitude: 0 },
   });
   assert.equal(data.latitude, 0);
   assert.equal(data.location, "Selected");
@@ -108,7 +158,7 @@ test("the real read-only AppleScript collector produces a valid sound snapshot",
       },
     },
   });
-  const data = await namespace.sound.load({ config: { refreshFrequency: 20000 }, force: true });
+  const data = await namespace.sound.load({ config: { refresh_ms: 20000 }, force: true });
   assert.equal(
     namespace.sound.validate(data),
     true,

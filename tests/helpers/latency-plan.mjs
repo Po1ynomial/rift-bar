@@ -1,12 +1,4 @@
-function visible(index, setting) {
-  return (
-    !setting?.trim() ||
-    setting
-      .split(",")
-      .map((value) => parseInt(value, 10))
-      .includes(index)
-  );
-}
+const visible = (uuid, displays = []) => !displays.length || displays.includes(uuid);
 
 export function planLatency(displays, workspaces, settings) {
   const contexts = displays
@@ -19,22 +11,22 @@ export function planLatency(displays, workspaces, settings) {
     });
   const originalDisplay = contexts.find((display) => display.is_active_context) || contexts[0];
   const focus = originalDisplay?.original.windows.find((window) => window.is_focused)?.id;
-  const options = settings.spacesDisplay || {};
+  const options = settings.workspaces || {};
   const sharedView =
-    originalDisplay && visible(originalDisplay.displayIndex, options.showOnDisplay)
+    originalDisplay && visible(originalDisplay.uuid, options.displays)
       ? originalDisplay
-      : contexts.find((context) => visible(context.displayIndex, options.showOnDisplay));
+      : contexts.find((context) => visible(context.uuid, options.displays));
   const cases = [];
   for (const context of contexts) {
-    if (options.hideEmptySpaces && !context.original.windows.length) continue;
+    if (options.show_empty === false && !context.original.windows.length) continue;
     const alternate = context.list.find(
       (workspace) =>
         workspace.index !== context.original.index &&
-        (!options.hideEmptySpaces || workspace.windows.length > 0),
+        (options.show_empty !== false || workspace.windows.length > 0),
     );
     if (!alternate) continue;
-    const view = options.displayAllSpacesOnAllScreens ? sharedView : context;
-    if (!view || !visible(view.displayIndex, options.showOnDisplay)) continue;
+    const view = options.all_displays ? sharedView : context;
+    if (!view || !visible(view.uuid, options.displays)) continue;
     cases.push({
       displayUuid: context.uuid,
       screenId: view.screen_id,

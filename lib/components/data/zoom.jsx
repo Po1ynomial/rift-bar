@@ -19,11 +19,10 @@ const { React } = Uebersicht;
  * @returns {JSX.Element|null} The Zoom widget.
  */
 export const Widget = React.memo(() => {
-  const { displayIndex, settings } = useSimpleBarContext();
-  const config = settings.zoomWidgetOptions;
-  const { showVideo, showMic } = config;
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.zoomWidget;
+  const { displayUuid, settings } = useSimpleBarContext();
+  const config = settings.widgets.zoom;
+  const { show_video, show_microphone } = config;
+  const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const { data: state, status, error, refresh: getZoom } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   if (!visible) return null;
@@ -40,12 +39,12 @@ export const Widget = React.memo(() => {
 
   return (
     <DataWidget.Widget status={status} title={error?.message} classes="zoom">
-      {showVideo && (
+      {show_video && (
         <SuspenseIcon>
           <VideoIcon className={`zoom__icon zoom__icon--${video}`} />
         </SuspenseIcon>
       )}
-      {showMic && (
+      {show_microphone && (
         <SuspenseIcon>
           <MicIcon className={`zoom__icon zoom__icon--${mic}`} />
         </SuspenseIcon>

@@ -5,11 +5,16 @@ import { spawnSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { parseConfig, resolveConfig } from "../lib/config.js";
 import { planLatency, restoreDesktop } from "./helpers/latency-plan.mjs";
 
-const configPath = join(homedir(), ".simplebarrc");
-const settings = existsSync(configPath) ? JSON.parse(readFileSync(configPath, "utf8")) : {};
-const cli = process.env.RIFT_CLI || settings.global?.riftPath || "/opt/homebrew/bin/rift-cli";
+const configHome = process.env.XDG_CONFIG_HOME || join(homedir(), ".config");
+assert.ok(configHome.startsWith("/"), "XDG_CONFIG_HOME must be absolute");
+const configPath = join(configHome, "rift-bar", "config.toml");
+const settings = resolveConfig(
+  existsSync(configPath) ? parseConfig(readFileSync(configPath, "utf8")) : {},
+);
+const cli = process.env.RIFT_CLI || settings.rift.cli_path;
 const session = "rift-latency-test";
 
 function execute(args) {

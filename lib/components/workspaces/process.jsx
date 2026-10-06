@@ -1,69 +1,31 @@
 import * as Uebersicht from "uebersicht";
 import Window from "./window.jsx";
-import * as Utils from "../../utils";
+import * as Utils from "../../utils.js";
 import { useWorkspaceContext } from "../workspace-context.jsx";
 import { useSimpleBarContext } from "../simple-bar-context.jsx";
-
-export { styles } from "../../styles/components/process";
-
+export { styles } from "../../styles/components/process.js";
 const { React } = Uebersicht;
-
-/**
- * Process component to display windows in the current space.
- * @returns {JSX.Element|null} The rendered component or null if not visible.
- */
 const Component = React.memo(() => {
-  // Get workspaces from context
   const { spaces } = useWorkspaceContext();
-  // Get settings and display index from simple bar context
-  const { settings, displayIndex } = useSimpleBarContext();
-  const { spacesDisplay, process, widgets } = settings;
-  const { exclusionsAsRegex } = spacesDisplay;
-  const { processWidget } = widgets;
-  const { centered, showOnDisplay } = process;
-
-  // Determine if the component should be visible
-  const visible =
-    spaces?.length && processWidget && Utils.isVisibleOnDisplay(displayIndex, showOnDisplay);
-
-  if (!visible) return null;
-
-  // Find the focused space on the current display
-  const { windows = [] } =
-    spaces.find((space) => space.focused && space.monitor === displayIndex) || {};
-
-  if (!windows.length) return null;
-
-  // Get exclusions for filtering windows
-  const exclusions = exclusionsAsRegex
-    ? spacesDisplay.exclusions
-    : spacesDisplay.exclusions.split(", ");
-
-  const titleExclusions = exclusionsAsRegex
-    ? spacesDisplay.titleExclusions
-    : spacesDisplay.titleExclusions.split(", ");
-
-  // Generate class names for the component
-  const classes = Utils.classNames("process", {
-    "process--centered": centered,
-  });
-
-  // Filter windows based on exclusions
-  const filteredWindows = windows.filter((window) =>
-    Utils.filterApps(window, exclusions, titleExclusions, exclusionsAsRegex),
+  const { settings, displayUuid } = useSimpleBarContext();
+  const { process, windows: filters } = settings;
+  if (process.mode === "hidden" || !Utils.isVisibleOnDisplay(displayUuid, process.displays))
+    return null;
+  const windows =
+    spaces.find((space) => space.focused && space.displayUuid === displayUuid)?.windows || [];
+  const visible = windows.filter((window) =>
+    Utils.filterApps(window, filters.exclude_apps, filters.exclude_titles),
   );
-
+  if (!visible.length) return null;
   return (
-    <div className={classes}>
+    <div className={Utils.classNames("process", { "process--centered": process.centered })}>
       <div className="process__container">
-        {filteredWindows.map((window, i) => (
-          <Window key={i} window={window} />
+        {visible.map((window) => (
+          <Window key={JSON.stringify(window["window-id"])} window={window} />
         ))}
       </div>
     </div>
   );
 });
-
 Component.displayName = "Process";
-
 export default Component;

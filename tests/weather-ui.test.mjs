@@ -23,13 +23,15 @@ test("the real weather view and hook load, retain stale data, recover, and clean
   const harness = createHookHarness();
   const React = { ...baseReact, ...harness.React, createElement: element };
   const config = {
-    locationMode: "configured",
-    weatherLocation: { label: "Paris", latitude: 48.85, longitude: 2.35 },
+    location_mode: "configured",
+    location: { label: "Paris", latitude: 48.85, longitude: 2.35 },
     unit: "C",
-    showOnDisplay: "",
-    showIcon: true,
+    displays: [],
+    show_icon: true,
   };
-  const settings = { widgets: { weatherWidget: true }, weatherWidgetOptions: config };
+  config.enabled = true;
+  config.show_location = true;
+  const settings = { widgets: { weather: config } };
   const utilities = await loadModule("lib/utils.js", { mocks: { uebersicht: { React } } });
   let fail = false,
     requests = 0;
@@ -122,25 +124,14 @@ test("city search does not save an ambiguous first result; selecting a result sa
   harness.unmount();
 });
 
-test("weather location and theme radios have distinct input IDs", async () => {
+test("theme and location mode controls have distinct IDs and use typed fields", async () => {
   const { namespace } = await loadModule("lib/components/settings/settings-item.jsx", {
     jsx: true,
     mocks: { uebersicht: { React: { ...baseReact, createElement: element } } },
   });
-  const theme = namespace.default({
-    code: "globaltheme",
-    type: "radio",
-    options: ["auto"],
-    defaultValue: "auto",
-  });
-  const location = namespace.default({
-    code: "weatherlocationMode",
-    type: "radio",
-    options: ["auto"],
-    defaultValue: "auto",
-  });
-  const themeId = walk(theme, (node) => node.type === "input").props.id;
-  const locationId = walk(location, (node) => node.type === "input").props.id;
-  assert.notEqual(themeId, locationId);
-  assert.equal(walk(location, (node) => node.type === "label").props.htmlFor, locationId);
+  const props = { field: { type: "string", enum: ["auto"] }, value: "auto", onChange: () => {} };
+  const theme = namespace.default({ ...props, code: "appearance.theme" });
+  const location = namespace.default({ ...props, code: "widgets.weather.location_mode" });
+  assert.equal(theme.type, "select");
+  assert.notEqual(theme.props.id, location.props.id);
 });

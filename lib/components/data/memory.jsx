@@ -17,11 +17,10 @@ const { React } = Uebersicht;
  * @returns {JSX.Element|null} The memory widget component
  */
 export const Widget = () => {
-  const { displayIndex, settings } = useSimpleBarContext();
-  const config = settings.memoryWidgetOptions;
-  const { memoryMonitorApp, showIcon, memoryUsageThreshold } = config;
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.memoryWidget;
+  const { displayUuid, settings } = useSimpleBarContext();
+  const config = settings.widgets.memory;
+  const { monitor_app, show_icon, hide_below_percent } = config;
+  const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const { data: state, status, error, refresh: getMemory } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   if (!visible) return null;
@@ -33,17 +32,17 @@ export const Widget = () => {
 
   const { free } = state;
   const used = 100 - free;
-  const threshold = Number(memoryUsageThreshold) || 0;
+  const threshold = Number(hide_below_percent) || 0;
 
   if (threshold > 0 && used < threshold) return null;
 
   // Handle click event to open memory usage app
   const onClick =
-    memoryMonitorApp === "None"
+    monitor_app === "none"
       ? undefined
       : (e) => {
           Utils.clickEffect(e);
-          openMemoryUsageApp(memoryMonitorApp);
+          openMemoryUsageApp(monitor_app);
         };
 
   /**
@@ -72,7 +71,7 @@ export const Widget = () => {
       status={status}
       title={error?.message}
       classes={classes}
-      Icon={showIcon ? Pie : null}
+      Icon={show_icon ? Pie : null}
       onClick={onClick}
     >
       <div className="memory__content">{used}%</div>
@@ -86,10 +85,10 @@ export const Widget = () => {
  */
 function openMemoryUsageApp(app) {
   switch (app) {
-    case "Activity Monitor":
+    case "activity_monitor":
       Uebersicht.run(`open -a "Activity Monitor"`);
       break;
-    case "Top":
+    case "top":
       Utils.runInUserTerminal("top");
       break;
   }

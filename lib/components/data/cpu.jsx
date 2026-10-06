@@ -21,11 +21,11 @@ const GRAPH_LENGTH = 50;
  * @returns {JSX.Element|null} The CPU widget
  */
 export const Widget = React.memo(() => {
-  const { displayIndex, settings } = useSimpleBarContext();
-  const config = settings.cpuWidgetOptions;
-  const { displayAsGraph, cpuMonitorApp, showIcon, cpuUsageThreshold } = config;
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.cpuWidget;
+  const { displayUuid, settings } = useSimpleBarContext();
+  const config = settings.widgets.cpu;
+  const { display, monitor_app, show_icon, hide_below_percent } = config;
+  const displayAsGraph = display === "graph";
+  const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const { data: state, status, error, refresh: getCpu } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   const [graph, setGraph] = React.useState([]);
@@ -40,18 +40,18 @@ export const Widget = React.memo(() => {
   if (!state) return null;
 
   const { usage } = state;
-  const threshold = Number(cpuUsageThreshold) || 0;
+  const threshold = Number(hide_below_percent) || 0;
   const usageValue = Number(usage) || 0;
 
   if (threshold > 0 && usageValue < threshold) return null;
 
   // Handle click event to open CPU monitor app
   const onClick =
-    cpuMonitorApp === "None"
+    monitor_app === "none"
       ? undefined
       : (e) => {
           Utils.clickEffect(e);
-          openCpuUsageApp(cpuMonitorApp);
+          openCpuUsageApp(monitor_app);
         };
 
   if (displayAsGraph) {
@@ -68,7 +68,7 @@ export const Widget = React.memo(() => {
           caption={{
             usage: {
               value: `${usage}%`,
-              icon: showIcon ? Icons.CPU : null,
+              icon: show_icon ? Icons.CPU : null,
               color: "var(--yellow)",
             },
           }}
@@ -85,7 +85,7 @@ export const Widget = React.memo(() => {
       status={status}
       title={error?.message}
       classes="cpu"
-      Icon={showIcon ? Icons.CPU : null}
+      Icon={show_icon ? Icons.CPU : null}
       onClick={onClick}
     >
       <span className="cpu__usage">{usage}%</span>
@@ -101,10 +101,10 @@ Widget.displayName = "Cpu";
  */
 function openCpuUsageApp(app) {
   switch (app) {
-    case "Activity Monitor":
+    case "activity_monitor":
       Uebersicht.run(`open -a "Activity Monitor"`);
       break;
-    case "Top":
+    case "top":
       Utils.runInUserTerminal("top");
       break;
   }

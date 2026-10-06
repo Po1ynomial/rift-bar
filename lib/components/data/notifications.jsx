@@ -27,10 +27,8 @@ export const definition = defineWidget({
   id: "notifications",
   refreshFrequency: 10000,
   load: async ({ config, force }) => {
-    const excluded = (config.excludedApps || "")
-      .split(",")
-      .map((name) => name.trim().toLowerCase());
-    const output = await Utils.cachedRun(COMMAND, widgetInterval(config.refreshFrequency, 10000), {
+    const excluded = (config.exclude_apps || []).map((name) => name.trim().toLowerCase());
+    const output = await Utils.cachedRun(COMMAND, widgetInterval(config.refresh_ms, 10000), {
       force,
     });
     return parseNotifications(output).filter((item) => !excluded.includes(item.name.toLowerCase()));
@@ -117,11 +115,9 @@ NotificationPill.displayName = "NotificationPill";
  * @returns {JSX.Element|null} The notifications widget component or null if no notifications
  */
 export const Widget = React.memo(() => {
-  const { displayIndex, settings } = useSimpleBarContext();
-  const config = settings.notificationsWidgetOptions;
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) &&
-    settings.widgets.notificationsWidget;
+  const { displayUuid, settings } = useSimpleBarContext();
+  const config = settings.widgets.notifications;
+  const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const { data: state, status, error, refresh } = useWidget(definition, visible, config);
   if (!visible) return null;
   if (status === "error" || status === "unavailable")

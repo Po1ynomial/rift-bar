@@ -1,435 +1,277 @@
 import assert from "node:assert/strict";
+import { test } from "node:test";
 import {
-  readFile,
   mkdtemp,
-  rm,
+  mkdir,
+  readFile,
   writeFile,
   readdir,
-  mkdir,
+  rm,
   symlink,
   readlink,
+  stat,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { spawnSync } from "node:child_process";
-import { test } from "node:test";
-import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
-
-async function loadSettings(config = {}, run) {
-  const storage = new Map([["simple-bar-settings", JSON.stringify(config)]]);
-  const commands = [];
-  const context = createContext({
-    window: {
-      localStorage: {
-        getItem: (key) => storage.get(key),
-        setItem: (key, value) => storage.set(key, value),
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { loadModule, React } from "./helpers/modules.mjs";
+import { parseConfig } from "../lib/config.js";
+const execute = promisify(execFile);
+const flush = () => new Promise((resolve) => setImmediate(resolve));
+function storage() {
+  const entries = new Map();
+  return {
+    getItem: (key) => entries.get(key) ?? null,
+    setItem: (key, value) => entries.set(key, value),
+  };
+}
+async function preferences(run, localStorage = storage()) {
+  const events = new Map();
+  const { namespace } = await loadModule("lib/settings.js", {
+    globals: {
+      window: {
+        localStorage,
+        addEventListener: (name, fn) => events.set(name, fn),
+        removeEventListener: (name) => events.delete(name),
       },
     },
+    mocks: { uebersicht: { React, run } },
   });
-  const settings = new SourceTextModule(
-    await readFile(new URL("../lib/settings.js", import.meta.url), "utf8"),
-    { context },
-  );
-  const utils = new SourceTextModule(
-    await readFile(new URL("../lib/utils.js", import.meta.url), "utf8"),
-    { context },
-  );
-  const mocks = new Map([
-    [
-      "uebersicht",
-      {
-        run: async (command) => {
-          commands.push(command);
-          return run ? run(command) : "";
-        },
-      },
-    ],
-    ["./styles/themes", { collection: {} }],
-    ["./components/settings/user-widgets-creator.jsx", { default: () => {} }],
-    ["./components/settings/weather-location-picker.jsx", { default: () => {} }],
-    ["./components/settings/settings.jsx", { Component: () => {}, Wrapper: () => {}, styles: "" }],
-  ]);
-  const modules = new Map();
-  await settings.link(async (specifier) => {
-    if (specifier === "./utils") return utils;
-    if (specifier === "./settings") return settings;
-    if (!modules.has(specifier)) {
-      const exports = mocks.get(specifier);
-      assert.ok(exports, `Unexpected settings dependency: ${specifier}`);
-      modules.set(
-        specifier,
-        new SyntheticModule(
-          Object.keys(exports),
-          function () {
-            for (const [key, value] of Object.entries(exports)) this.setExport(key, value);
-          },
-          { context },
-        ),
-      );
-    }
-    return modules.get(specifier);
-  });
-  await settings.evaluate();
-  return { settings: settings.namespace, utils: utils.namespace, storage, commands };
+  return { settings: namespace, events, localStorage };
 }
-
-const legacy = {
-  global: {
-    fontSize: "14px",
-    riftPath: "/custom/rift-cli",
-    windowManager: "rift",
-    yabaiPath: "old",
-    aerospacePath: "old",
-    enableServer: true,
-    serverSocketPort: 7777,
-  },
-  process: { centered: true, displayStackIndex: true, displaySkhdMode: true },
-  spacesDisplay: {
-    hideEmptySpaces: true,
-    customAeroSpaceDisplayIndexes: { 1: 2 },
-    hideCreateSpaceButton: true,
-  },
-  userWidgets: {
-    userWidgetsList: { 0: { active: true, output: "printf custom", backgroundColor: "green" } },
-  },
-};
-
-test("legacy settings retain user preferences but drop removed backend and server options", async () => {
-  const { settings } = await loadSettings(legacy);
-  const current = settings.get();
-  assert.equal(current.global.fontSize, "14px");
-  assert.equal(current.global.riftPath, "/custom/rift-cli");
-  assert.equal(current.process.centered, true);
-  assert.equal(current.spacesDisplay.hideEmptySpaces, true);
-  assert.equal(current.userWidgets.userWidgetsList[0].output, "printf custom");
-  for (const key of [
-    "windowManager",
-    "yabaiPath",
-    "aerospacePath",
-    "enableServer",
-    "serverSocketPort",
-  ])
-    assert.ok(!(key in current.global), key);
-  assert.ok(!("displayStackIndex" in current.process));
-  assert.ok(!("displaySkhdMode" in current.process));
-  assert.ok(!("customAeroSpaceDisplayIndexes" in current.spacesDisplay));
-  assert.ok(!("hideCreateSpaceButton" in current.spacesDisplay));
-});
-
-test("loading saved preferences does not mutate defaults", async () => {
-  const { settings } = await loadSettings(legacy);
-  settings.get();
-  assert.equal(settings.defaultSettings.global.fontSize, "11px");
-  assert.equal(settings.defaultSettings.process.centered, false);
-  assert.deepEqual(Object.keys(settings.defaultSettings.userWidgets.userWidgetsList), []);
-});
-
-test("saved settings use the local Rift schema and omit obsolete options", async () => {
-  const { settings, storage, commands } = await loadSettings();
-  await settings.set(legacy);
-  const saved = JSON.parse(storage.get("simple-bar-settings"));
-  assert.equal(saved.$schema, "http://127.0.0.1:41416/simple-bar/lib/schemas/config.json");
-  assert.equal(saved.global.fontSize, "14px");
-  assert.ok(!("enableServer" in saved.global));
-  assert.ok(!("windowManager" in saved.global));
-  assert.ok(!("$schema" in settings.get()));
-  assert.ok(commands.some((command) => command.includes("save-settings.sh")));
-});
-
-test("Rift window filtering preserves app and title exclusions", async () => {
-  const { utils } = await loadSettings();
-  const window = { "app-name": "kitty", "window-title": "Preferences" };
-  assert.equal(utils.filterApps(window, [], [], false), true);
-  assert.equal(utils.filterApps(window, ["kitty"], [], false), false);
-  assert.equal(utils.filterApps(window, [], ["Preferences"], false), false);
-  assert.equal(utils.filterApps(window, "^kit", "", true), false);
-  assert.equal(utils.filterApps(window, "", "^Pref", true), false);
-  assert.equal(
-    utils.filterApps({ ...window, "window-title": "" }, [], ["Preferences"], false),
-    true,
-  );
-});
-
-test("retained workspace and global defaults have settings controls and schema entries", async () => {
-  const { settings } = await loadSettings();
-  const schema = JSON.parse(
-    await readFile(new URL("../lib/schemas/config.json", import.meta.url), "utf8"),
-  );
-  for (const section of ["global", "process", "spacesDisplay"]) {
-    const defaults = settings.defaultSettings[section];
-    const properties = schema.properties[section].properties;
-    assert.deepEqual(Object.keys(defaults).sort(), Object.keys(properties).sort());
-    for (const [key, value] of Object.entries(defaults)) {
-      assert.ok(settings.data[key], `Missing settings control: ${section}.${key}`);
-      assert.equal(properties[key].type, typeof value, `${section}.${key}`);
-      if (properties[key].enum)
-        assert.ok(properties[key].enum.includes(value), `${section}.${key}`);
-    }
-  }
-});
-
-test("failed persistence rejects without changing browser storage", async () => {
-  const { settings, storage } = await loadSettings(legacy, async () => {
-    throw new Error("Disk is full");
-  });
-  const before = storage.get("simple-bar-settings");
-  await assert.rejects(settings.set({ global: { fontSize: "33px" } }), /Disk is full/);
-  assert.equal(storage.get("simple-bar-settings"), before);
-});
-
-test("migration removes only explicitly retired options and preserves retained fields", async () => {
-  const config = {
-    global: { shell: "bash", futureOption: "keep" },
-    process: { futureOption: 42 },
-    spacesDisplay: { futureOption: true },
-    batteryWidgetOptions: { disableCaffeinateInvertedBackground: true, futureOption: "keep" },
-    futureSection: { nested: "keep" },
-    customStyles: { styles: "/* untouched */" },
+async function sandbox(fn, xdg = "") {
+  const home = await mkdtemp(join(tmpdir(), "rift-config-"));
+  const path = join(xdg || join(home, ".config"), "rift-bar", "config.toml");
+  const commands = [];
+  const run = async (command) => {
+    commands.push(command);
+    return (
+      await execute(
+        "/bin/sh",
+        ["-c", command.replaceAll("simple-bar/lib/scripts/", "lib/scripts/")],
+        { env: { ...process.env, HOME: home, XDG_CONFIG_HOME: xdg } },
+      )
+    ).stdout;
   };
-  const { settings } = await loadSettings(config);
-  const current = settings.get();
-  assert.ok(!("shell" in current.global));
-  assert.ok(!settings.data.shell);
-  assert.equal(current.global.futureOption, "keep");
-  assert.equal(current.process.futureOption, 42);
-  assert.equal(current.spacesDisplay.futureOption, true);
-  assert.equal(current.batteryWidgetOptions.futureOption, "keep");
-  assert.equal(current.batteryWidgetOptions.disableCaffeinateInvertedBackground, true);
-  assert.equal(current.futureSection.nested, "keep");
-  assert.equal(current.customStyles.styles, "/* untouched */");
-});
-
-async function withHome(callback) {
-  const home = await mkdtemp(join(tmpdir(), "rift-bar-settings-"));
   try {
-    const run = async (command) => {
-      const result = spawnSync("/bin/sh", ["-c", command], {
-        encoding: "utf8",
-        env: { ...process.env, HOME: home },
-      });
-      if (result.status !== 0) throw new Error(result.stderr || `Command exited ${result.status}`);
-      return result.stdout;
-    };
-    await callback(home, run);
+    await fn({ home, path, run, commands });
   } finally {
     await rm(home, { recursive: true, force: true });
   }
 }
 
-test("atomic saves round-trip JSON and unchanged startup does not rewrite the file", async () => {
-  await withHome(async (home, run) => {
-    // The widget symlink is the only installation dependency in these commands.
-    const originalRun = run;
-    run = (command) => originalRun(command.replace("simple-bar/lib/scripts/", "lib/scripts/"));
-    const { settings } = await loadSettings({}, run);
-    const title = "日本語 'quoted'\nnext line \\n \\\\ trailing\\";
-    await settings.set({ userWidgets: { userWidgetsList: { 0: { output: title } } } });
-    const saved = JSON.parse(await readFile(join(home, ".simplebarrc"), "utf8"));
-    assert.equal(saved.userWidgets.userWidgetsList[0].output, title);
+test("missing XDG config uses defaults without reading legacy preferences or creating files", async () =>
+  sandbox(async ({ home, run, commands }) => {
+    await writeFile(join(home, ".simplebarrc"), "not JSON");
+    const { settings } = await preferences(run);
+    const [first, second] = await Promise.all([settings.init(), settings.init()]);
+    assert.equal(first, second);
+    assert.equal(first.appearance.font_size, "11px");
+    assert.equal(settings.getState().revision, "missing");
+    assert.equal(commands.length, 1);
     assert.deepEqual(await readdir(home), [".simplebarrc"]);
-    await writeFile(
-      join(home, ".simplebarrc"),
-      JSON.stringify(Object.fromEntries(Object.entries(saved).reverse())),
+    assert.equal(JSON.stringify(settings.getState().overrides), "{}");
+  }));
+
+test("XDG_CONFIG_HOME is honored and first explicit save creates only sparse TOML", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "rift-xdg-"));
+  try {
+    await sandbox(async ({ path, run }) => {
+      const { settings } = await preferences(run);
+      await settings.init();
+      await settings.set({ appearance: { theme: "dark" } });
+      assert.deepEqual(parseConfig(await readFile(path, "utf8")), {
+        appearance: { theme: "dark" },
+      });
+      assert.equal(settings.get().appearance.font_size, "11px");
+      assert.ok(settings.getState().path.startsWith(directory));
+      assert.equal((await stat(path)).mode & 0o777, 0o600);
+    }, directory);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("startup does not rewrite an existing file, including comments and explicit defaults", async () =>
+  sandbox(async ({ path, run, commands }) => {
+    await mkdir(join(path, ".."), { recursive: true });
+    const source = '# personal\n[appearance]\nfont_size = "11px"\n';
+    await writeFile(path, source);
+    const { settings } = await preferences(run);
+    await settings.init();
+    assert.equal(await readFile(path, "utf8"), source);
+    assert.equal(commands.length, 1);
+    await settings.set({ ...settings.getState().overrides, bar: { floating: true } });
+    const saved = await readFile(path, "utf8");
+    assert.doesNotMatch(saved, /personal/);
+    assert.deepEqual(parseConfig(saved), {
+      appearance: { font_size: "11px" },
+      bar: { floating: true },
+    });
+  }));
+
+test("stale editing sessions and external file edits cannot silently overwrite configuration", async () =>
+  sandbox(async ({ path, run }) => {
+    const { settings } = await preferences(run);
+    await settings.init();
+    const session = settings.getState();
+    await settings.set({ bar: { floating: true } }, session);
+    await assert.rejects(
+      settings.set({ appearance: { theme: "dark" } }, session),
+      /changed on disk/,
     );
-    const writes = [];
-    const fresh = await loadSettings({}, async (command) => {
-      if (command.includes("save-settings.sh")) writes.push(command);
-      return run(command);
-    });
-    const [first, second] = await Promise.all([fresh.settings.init(), fresh.settings.init()]);
-    assert.equal(first.global.fontSize, "11px");
-    assert.equal(second.global.fontSize, "11px");
-    assert.equal(writes.length, 0);
-    assert.equal(fresh.settings.get().userWidgets.userWidgetsList[0].output, title);
+    const before = settings.getState();
+    await writeFile(path, '[appearance]\ntheme = "light"\n');
+    await assert.rejects(settings.set({ bar: { background: false } }, before), /changed on disk/);
+    assert.equal(settings.getState(), before);
+    assert.deepEqual(parseConfig(await readFile(path, "utf8")), { appearance: { theme: "light" } });
+  }));
+
+test("concurrent GUI saves serialize and only one stale-revision writer succeeds", async () =>
+  sandbox(async ({ path, run }) => {
+    const first = (await preferences(run)).settings;
+    const second = (await preferences(run)).settings;
+    await Promise.all([first.init(), second.init()]);
+    const results = await Promise.allSettled([
+      first.set({ bar: { floating: true } }),
+      second.set({ bar: { background: false } }),
+    ]);
+    assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
+    const value = parseConfig(await readFile(path, "utf8"));
+    assert.equal(Object.keys(value.bar).length, 1);
+    assert.deepEqual(await readdir(join(path, "..")), ["config.toml"]);
+  }));
+
+test("invalid loads retain last valid settings, publish an error, block saves, and recover", async () =>
+  sandbox(async ({ path, run }) => {
+    const { settings } = await preferences(run);
+    await settings.init();
+    await settings.set({ appearance: { font_size: "17px" } });
+    const valid = settings.get();
+    await writeFile(path, '[appearance]\nfont_size = "bad-size"\n');
+    await assert.rejects(settings.reload(), /appearance.font_size.*line 2/);
+    assert.equal(settings.get(), valid);
+    assert.match(settings.getState().error.message, /font_size/);
+    await assert.rejects(settings.set({}), /font_size/);
+    assert.match(await readFile(path, "utf8"), /bad-size/);
+    await writeFile(path, '[appearance]\nfont_size = "19px"\n');
+    await settings.reload();
+    assert.equal(settings.get().appearance.font_size, "19px");
+    assert.equal(settings.getState().error, undefined);
+  }));
+
+test("malformed startup never writes or substitutes defaults as a successful load", async () =>
+  sandbox(async ({ path, run, commands }) => {
+    await mkdir(join(path, ".."), { recursive: true });
+    await writeFile(path, "[broken");
+    const { settings } = await preferences(run);
+    await assert.rejects(settings.init());
+    assert.equal(settings.isInitialized(), false);
+    assert.equal(commands.length, 1);
+    assert.equal(await readFile(path, "utf8"), "[broken");
+  }));
+
+test("symlinks are followed, and dangling links, directories, and relative XDG paths fail safely", async () =>
+  sandbox(async ({ home, path, run }) => {
+    await mkdir(join(path, ".."), { recursive: true });
+    const target = join(home, "preferences.toml");
+    await writeFile(target, "");
+    await symlink(target, path);
+    const { settings } = await preferences(run);
+    await settings.init();
+    await settings.set({ appearance: { theme: "dark" } });
+    assert.equal(await readlink(path), target);
+    assert.match(await readFile(target, "utf8"), /dark/);
+    await rm(target);
+    await assert.rejects(settings.init(), /symlink target/);
+    await rm(path);
+    await mkdir(path);
+    await assert.rejects(settings.init(), /directory/);
+    await assert.rejects(
+      execute("/bin/sh", ["lib/scripts/config-file.sh", "read"], {
+        env: { ...process.env, HOME: home, XDG_CONFIG_HOME: "relative" },
+      }),
+      /must be absolute/,
+    );
+  }));
+
+test("write failures leave memory and browser notification state unchanged", async () => {
+  let writes = false;
+  const { settings, localStorage } = await preferences(async () => {
+    if (writes) throw new Error("Disk full");
+    return JSON.stringify({ path: "/config.toml", revision: "missing", text: "" });
   });
+  await settings.init();
+  const before = settings.getState();
+  writes = true;
+  await assert.rejects(settings.set({ bar: { floating: true } }), /Disk full/);
+  assert.equal(settings.getState(), before);
+  assert.equal(localStorage.getItem("rift-bar-config-reload"), null);
 });
 
-test("missing preferences use defaults without writing a new file", async () => {
-  await withHome(async (home, run) => {
-    const { settings } = await loadSettings({}, run);
-    const current = await settings.init();
-    assert.equal(current.global.fontSize, "11px");
-    assert.deepEqual(await readdir(home), []);
-  });
-});
+test("a save/reload notification makes another display read the file, not browser-cached settings", async () =>
+  sandbox(async ({ run }) => {
+    const shared = storage();
+    const first = await preferences(run, shared);
+    const second = await preferences(run, shared);
+    await Promise.all([first.settings.init(), second.settings.init()]);
+    const updates = [];
+    const stop = second.settings.subscribe((state) => updates.push(state));
+    await first.settings.set({ widgets: { weather: { enabled: true } } });
+    await second.events.get("storage")({ key: "rift-bar-config-reload" });
+    await flush();
+    assert.equal(second.settings.get().widgets.weather.enabled, true);
+    assert.equal(updates.length, 1);
+    stop();
+    assert.equal(second.events.size, 0);
+  }));
 
-test("malformed preferences fail without overwriting disk or browser storage", async () => {
-  for (const text of [
-    "not JSON",
-    "null",
-    "[]",
-    '{"global":null}',
-    '{"global":{"fontSize":24}}',
-    '{"global":{"theme":"invalid"}}',
-  ]) {
-    await withHome(async (home, run) => {
-      const target = join(home, ".simplebarrc");
-      await writeFile(target, text);
-      const { settings, storage } = await loadSettings(legacy, run);
-      const before = storage.get("simple-bar-settings");
-      await assert.rejects(settings.init());
-      assert.equal(await readFile(target, "utf8"), text);
-      assert.equal(storage.get("simple-bar-settings"), before);
-    });
-  }
-});
-
-test("atomic writer preserves symlinks and cleans up after a failed replacement", async () => {
-  await withHome(async (home, run) => {
-    run = (
-      (original) => (command) =>
-        original(command.replace("simple-bar/lib/scripts/", "lib/scripts/"))
-    )(run);
-    await writeFile(join(home, "dotfile"), "{}");
-    await symlink("dotfile", join(home, ".simplebarrc"));
-    const { settings } = await loadSettings({}, run);
-    await settings.set({ global: { fontSize: "19px" } });
-    assert.equal(await readlink(join(home, ".simplebarrc")), "dotfile");
-    assert.equal(JSON.parse(await readFile(join(home, "dotfile"), "utf8")).global.fontSize, "19px");
-    await rm(join(home, ".simplebarrc"));
-    await mkdir(join(home, ".simplebarrc"));
-    await assert.rejects(settings.set({}));
-    assert.deepEqual((await readdir(home)).sort(), [".simplebarrc", "dotfile"]);
-  });
-});
-
-test("a failed atomic replacement leaves the old file and no temporary files", async () => {
-  await withHome(async (home, run) => {
-    const bin = join(home, "bin");
-    await mkdir(bin);
-    await writeFile(join(bin, "mv"), "#!/bin/sh\nexit 1\n", { mode: 0o700 });
-    await writeFile(join(home, ".simplebarrc"), "original");
-    const originalRun = run;
-    run = (command) =>
-      originalRun(
-        `export PATH='${bin}':"$PATH"; ${command.replace("simple-bar/lib/scripts/", "lib/scripts/")}`,
-      );
-    const { settings } = await loadSettings({}, run);
-    await assert.rejects(settings.set({}));
-    assert.equal(await readFile(join(home, ".simplebarrc"), "utf8"), "original");
-    assert.deepEqual((await readdir(home)).sort(), [".simplebarrc", "bin"]);
-  });
-});
-
-test("widget triage removes every retired toggle and section but preserves extensions", async () => {
-  const names = [
-    "gpu",
-    "nextMeeting",
-    "crypto",
-    "stock",
-    "spotify",
-    "youtubeMusic",
-    "music",
-    "mpd",
-    "browserTrack",
-    "vpn",
-  ];
-  const config = {
-    widgets: { githubWidget: true, zoomWidget: true, futureWidget: true },
-    futureSection: { token: "keep" },
-    userWidgets: { userWidgetsList: { 0: { output: "echo retained" } } },
-  };
-  for (const name of names) {
-    config.widgets[name + "Widget"] = true;
-    config[name + "WidgetOptions"] = { secret: "retire" };
-  }
-  const { settings, storage } = await loadSettings(config);
-  const current = settings.get();
-  assert.equal(current.widgets.githubWidget, true);
-  assert.equal(current.widgets.zoomWidget, true);
-  assert.equal(current.widgets.futureWidget, true);
-  assert.equal(current.futureSection.token, "keep");
-  assert.equal(current.userWidgets.userWidgetsList[0].output, "echo retained");
-  for (const name of names) {
-    assert.ok(!(name + "Widget" in current.widgets));
-    assert.ok(!(name + "WidgetOptions" in current));
-    assert.ok(!(name + "Widget" in settings.data));
-    assert.ok(!(name + "WidgetOptions" in settings.data));
-  }
-  await settings.set(current);
-  const saved = JSON.parse(storage.get("simple-bar-settings"));
-  for (const name of names) assert.ok(!(name + "WidgetOptions" in saved));
-});
-
-test("legacy city names require an explicit selection instead of guessing coordinates", async () => {
-  for (const [name, mode, label] of [
-    ["Paris", "configured", "Paris"],
-    ["", "auto", ""],
-    ["null", "configured", ""],
-    ["undefined", "configured", ""],
-  ]) {
-    const { settings } = await loadSettings({ weatherWidgetOptions: { customLocation: name } });
-    const weather = settings.get().weatherWidgetOptions;
-    assert.equal(weather.locationMode, mode);
-    assert.equal(weather.weatherLocation.label, label);
-    assert.equal(weather.weatherLocation.latitude, null);
-    assert.equal(weather.weatherLocation.longitude, null);
-    assert.ok(!("customLocation" in weather));
-    assert.equal(settings.defaultSettings.weatherWidgetOptions.weatherLocation.label, "");
-  }
-});
-
-test("selected weather coordinates survive saves and override retired location strings", async () => {
-  const { settings } = await loadSettings();
-  await settings.set({
-    weatherWidgetOptions: {
-      customLocation: "old",
-      locationMode: "configured",
-      weatherLocation: { label: "Selected", latitude: 0, longitude: 0 },
+test("browser storage is optional; snapshot commands can request file reloads instead", async () => {
+  const { settings } = await preferences(
+    async () => JSON.stringify({ path: "/config.toml", revision: "missing", text: "" }),
+    {
+      getItem: () => {
+        throw new Error("No storage");
+      },
+      setItem: () => {
+        throw new Error("No storage");
+      },
     },
-  });
-  const weather = settings.get().weatherWidgetOptions;
-  assert.equal(weather.weatherLocation.label, "Selected");
-  assert.equal(weather.weatherLocation.latitude, 0);
-  assert.equal(weather.locationMode, "configured");
-  assert.ok(!("customLocation" in weather));
+  );
+  await settings.init();
+  assert.equal(settings.reloadRequested(), true);
+  assert.equal(settings.get().appearance.theme, "auto");
 });
 
-test("every retained default and custom-widget field has a matching schema and control", async () => {
-  const { settings } = await loadSettings();
-  const schema = JSON.parse(
-    await readFile(new URL("../lib/schemas/config.json", import.meta.url), "utf8"),
+test("successful saves require an acknowledgement and never accept a failed command's output", async () => {
+  const { settings } = await preferences(async (command) =>
+    command.includes("config-file.sh read")
+      ? JSON.stringify({ path: "/config.toml", revision: "missing", text: "" })
+      : "",
   );
-  assert.deepEqual(
-    Object.keys(settings.defaultSettings).sort(),
-    Object.keys(schema.properties)
-      .filter((key) => key !== "$schema")
-      .sort(),
-  );
-  function check(value, definition, path) {
-    const type = value === null ? "null" : typeof value;
-    const types = Array.isArray(definition.type) ? definition.type : [definition.type];
-    assert.ok(types.includes(type), path);
-    if (definition.enum) assert.ok(definition.enum.includes(value), path);
-    if (type === "object") {
-      assert.deepEqual(Object.keys(value).sort(), Object.keys(definition.properties).sort(), path);
-      for (const [key, child] of Object.entries(value))
-        check(child, definition.properties[key], path + "." + key);
-    }
-  }
-  for (const [section, values] of Object.entries(settings.defaultSettings)) {
-    const properties = schema.properties[section].properties;
-    assert.deepEqual(Object.keys(values).sort(), Object.keys(properties).sort(), section);
-    for (const [key, value] of Object.entries(values)) {
-      assert.ok(settings.data[key], "Missing control: " + section + "." + key);
-      if (key === "userWidgetsList") continue;
-      check(value, properties[key], section + "." + key);
-    }
-  }
-  const userSchema =
-    schema.properties.userWidgets.properties.userWidgetsList.patternProperties["^[0-9]+$"];
-  check(settings.userWidgetDefault, userSchema, "userWidgetDefault");
+  await settings.init();
+  const before = settings.getState();
+  await assert.rejects(settings.set({ bar: { floating: true } }), /not acknowledged/);
+  assert.equal(settings.getState(), before);
 });
 
-test("invalid retained widget types and weather coordinates cannot be saved", async () => {
-  const { settings } = await loadSettings();
-  for (const config of [
-    { widgets: { githubWidget: "yes" } },
-    { githubWidgetOptions: { refreshFrequency: "fast" } },
-    { weatherWidgetOptions: { locationMode: "unknown" } },
-    { weatherWidgetOptions: { unit: "K" } },
-    { weatherWidgetOptions: { weatherLocation: { latitude: "null" } } },
-    { weatherWidgetOptions: { weatherLocation: { latitude: 91, longitude: 0 } } },
-  ])
-    await assert.rejects(settings.set(config), /Invalid/);
-});
+test("unrelated configuration edits retain collector configuration identities", async () =>
+  sandbox(async ({ run }) => {
+    const { settings } = await preferences(run);
+    await settings.init();
+    await settings.set({ widgets: { clock: { format: "12h" } } });
+    const clock = settings.get().widgets.clock;
+    const changed = { ...settings.getState().overrides, bar: { floating: true } };
+    await settings.set(changed);
+    assert.equal(settings.get().widgets.clock, clock);
+  }));
+
+test("shell persistence preserves Unicode, quotes, backslashes, and newlines in selected labels", async () =>
+  sandbox(async ({ run, path }) => {
+    const { settings } = await preferences(run);
+    await settings.init();
+    const location = { label: "L'Haÿ-les-Roses\\Paris\nFrance", latitude: 0, longitude: 0 };
+    await settings.set({ widgets: { weather: { location_mode: "configured", location } } });
+    assert.deepEqual(parseConfig(await readFile(path, "utf8")).widgets.weather.location, location);
+  }));

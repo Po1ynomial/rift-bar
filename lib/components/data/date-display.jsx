@@ -3,6 +3,7 @@ import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import * as Icons from "../icons/icons.jsx";
 import * as Utils from "../../utils";
+import { shellQuote } from "../../rift.js";
 import useWidget from "../../hooks/use-widget.js";
 import { date as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
@@ -18,11 +19,10 @@ const { React } = Uebersicht;
  * @returns {JSX.Element} The date display widget.
  */
 export const Widget = React.memo(() => {
-  const { displayIndex, settings } = useSimpleBarContext();
-  const config = settings.dateWidgetOptions;
-  const { calendarApp, showIcon } = config;
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.dateWidget;
+  const { displayUuid, settings } = useSimpleBarContext();
+  const config = settings.widgets.date;
+  const { calendar_app, show_icon } = config;
+  const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const { data: state, status, error, refresh: getDate } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   if (!visible) return null;
@@ -39,7 +39,7 @@ export const Widget = React.memo(() => {
    */
   const onClick = (e) => {
     Utils.clickEffect(e);
-    openCalendarApp(calendarApp);
+    openCalendarApp(calendar_app);
   };
 
   return (
@@ -47,7 +47,7 @@ export const Widget = React.memo(() => {
       status={status}
       title={error?.message}
       classes="date-display"
-      Icon={showIcon ? Icons.Date : null}
+      Icon={show_icon ? Icons.Date : null}
       onClick={onClick}
     >
       {now}
@@ -59,9 +59,9 @@ Widget.displayName = "DateDisplay";
 
 /**
  * Open the specified calendar application.
- * @param {string} calendarApp - The name of the calendar application to open.
+ * @param {string} calendar_app - The name of the calendar application to open.
  */
-function openCalendarApp(calendarApp) {
-  const appName = calendarApp || "Calendar";
-  Uebersicht.run(`open -a "${appName}"`);
+function openCalendarApp(calendar_app) {
+  const appName = calendar_app || "Calendar";
+  Uebersicht.run(`open -a ${shellQuote(appName)}`);
 }

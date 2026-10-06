@@ -30,7 +30,7 @@ for (const [name, data] of Object.entries(cases)) {
       mocks: { uebersicht: { React } },
     });
     const settings = structuredClone(preferences.defaultSettings);
-    settings.widgets[`${name}Widget`] = true;
+    settings.widgets[name === "time" ? "clock" : name].enabled = true;
     let snapshot = { status: "loading" };
     let refreshed = 0;
     const { namespace } = await loadModule(`lib/components/data/${name}.jsx`, {
@@ -63,7 +63,7 @@ for (const [name, data] of Object.entries(cases)) {
     assert.equal(failed.props.status, "error");
     failed.props.onRetry();
     assert.equal(refreshed, 1);
-    settings.widgets[`${name}Widget`] = false;
+    settings.widgets[name === "time" ? "clock" : name].enabled = false;
     assert.equal(namespace.Widget(), null);
   });
 }
@@ -73,7 +73,7 @@ test("a successful weather response renders content instead of remaining a loade
     mocks: { uebersicht: { React } },
   });
   const settings = structuredClone(preferences.defaultSettings);
-  settings.widgets.weatherWidget = true;
+  settings.widgets.weather.enabled = true;
   const { namespace } = await loadModule("lib/components/data/weather.jsx", {
     jsx: true,
     mocks: {

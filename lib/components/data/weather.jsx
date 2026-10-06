@@ -13,10 +13,9 @@ export { weatherStyles as styles } from "../../styles/components/data/weather.js
 const { React } = Uebersicht;
 
 export const Widget = React.memo(() => {
-  const { displayIndex, settings } = useSimpleBarContext();
-  const config = settings.weatherWidgetOptions;
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.weatherWidget;
+  const { displayUuid, settings } = useSimpleBarContext();
+  const config = settings.widgets.weather;
+  const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const { data, status, error, refresh } = useWidget(definition, visible, config);
   if (!visible) return null;
   if (status === "idle" || status === "loading")
@@ -27,7 +26,7 @@ export const Widget = React.memo(() => {
     "weather--sunrise": Math.abs(now - data.sunrise) <= 3600000,
     "weather--sunset": Math.abs(now - data.sunset) <= 3600000,
   });
-  const label = `${config.hideLocation ? "" : `${data.location}, `}${Math.round(data.temperature)}°${data.unit}`;
+  const label = `${config.show_location ? `${data.location}, ` : ""}${Math.round(data.temperature)}°${data.unit}`;
   const onRightClick = (event) => {
     event.preventDefault();
     Utils.clickEffect(event);
@@ -42,12 +41,12 @@ export const Widget = React.memo(() => {
           ? `Stale forecast: ${error.message}`
           : "Forecast by Open-Meteo. Right-click to refresh."
       }
-      Icon={config.showIcon ? Icons[weatherIcon(data.code, data.isDay)] : null}
+      Icon={config.show_icon ? Icons[weatherIcon(data.code, data.isDay)] : null}
       href="https://open-meteo.com/"
       onRightClick={onRightClick}
       disableSlider
     >
-      {!config.hideGradient && <div className="weather__gradient" />}
+      {config.show_gradient && <div className="weather__gradient" />}
       {label}
       {error && " (stale)"}
     </DataWidget.Widget>

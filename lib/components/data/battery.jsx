@@ -19,16 +19,10 @@ const { React } = Uebersicht;
  * @returns {JSX.Element|null} The battery widget component
  */
 export const Widget = React.memo(() => {
-  const { displayIndex, settings, pushMissive } = useSimpleBarContext();
-  const config = settings.batteryWidgetOptions;
-  const {
-    toggleCaffeinateOnClick,
-    caffeinateOption,
-    disableCaffeinateInvertedBackground,
-    showIcon,
-  } = config;
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.batteryWidget;
+  const { displayUuid, settings, pushMissive } = useSimpleBarContext();
+  const config = settings.widgets.battery;
+  const { toggle_caffeinate, highlight_caffeinate, show_icon } = config;
+  const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const {
     data: state,
     status,
@@ -49,7 +43,7 @@ export const Widget = React.memo(() => {
   const classes = Utils.classNames("battery", {
     "battery--low": isLowBattery,
     "battery--low-power-mode": lowPowerMode,
-    "battery--caffeinate": !disableCaffeinateInvertedBackground && caffeinate.length > 0,
+    "battery--caffeinate": highlight_caffeinate && caffeinate.length > 0,
   });
 
   const transformValue = getTransform(percentage);
@@ -60,11 +54,11 @@ export const Widget = React.memo(() => {
    */
   const onClick = async (e) => {
     Utils.clickEffect(e);
-    await toggleCaffeinate(system, caffeinate, caffeinateOption, pushMissive);
+    await toggleCaffeinate(system, caffeinate, config, pushMissive);
     getBattery();
   };
 
-  const onClickProp = toggleCaffeinateOnClick ? { onClick } : {};
+  const onClickProp = toggle_caffeinate ? { onClick } : {};
 
   const Icon = () => (
     <div className="battery__icon">
@@ -84,7 +78,7 @@ export const Widget = React.memo(() => {
       status={status}
       title={error?.message}
       classes={classes}
-      Icon={showIcon ? Icon : null}
+      Icon={show_icon ? Icon : null}
       disableSlider
       {...onClickProp}
     >
@@ -119,10 +113,13 @@ function getTransform(value) {
  * @param {string} option - The caffeinate option
  * @param {function} pushMissive - Function to push notifications
  */
-async function toggleCaffeinate(system, caffeinate, option, pushMissive) {
+async function toggleCaffeinate(system, caffeinate, config, pushMissive) {
   const command = system === "x86_64" ? "caffeinate" : "arch -arch arm64 caffeinate";
+  const scope = { system: "-i", display: "-d", both: "-di" }[config.caffeinate_scope];
+  const timeout =
+    config.caffeinate_timeout_seconds > 0 ? `-t ${config.caffeinate_timeout_seconds}` : "";
   if (caffeinate.length === 0) {
-    Uebersicht.run(`${command} ${option} &`);
+    Uebersicht.run(`${command} ${scope} ${timeout} &`);
     Utils.notification("Enabling caffeinate...", pushMissive);
   } else {
     await Uebersicht.run("pkill -f caffeinate");

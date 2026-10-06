@@ -1,45 +1,58 @@
 import * as Uebersicht from "uebersicht";
-
+import * as Settings from "../settings.js";
+import * as Utils from "../utils.js";
+import { buildStyles } from "../styles/core/variables.js";
 const { React } = Uebersicht;
-
 const SimpleBarContext = React.createContext({
-  displayIndex: 1,
+  displayUuid: undefined,
   displays: [],
-  settings: {},
-  setSettings: () => {},
+  settings: Settings.defaultSettings,
+  missives: [],
+  pushMissive: () => {},
 });
-
-export function useSimpleBarContext() {
-  return React.useContext(SimpleBarContext);
-}
+export const useSimpleBarContext = () => React.useContext(SimpleBarContext);
 
 export default function SimpleBarContextProvider({ initialSettings, displays, children }) {
-  const [settings, setSettings] = React.useState(initialSettings);
+  const [config, setConfig] = React.useState(() => ({
+    ...Settings.getState(),
+    settings: initialSettings,
+  }));
   const [missives, setMissives] = React.useState([]);
-  const ubersichtDisplayId = parseInt(window.location.pathname.replace("/", ""), 10);
-
-  // Rift's screen IDs match Übersicht's screen IDs directly.
-  const currentDisplay = displays?.find((display) => display.id === ubersichtDisplayId) || {};
-  const displayIndex = currentDisplay.index ?? 1;
-
-  const pushMissive = (newMissive) => {
-    const now = Date.now();
-    const { content, side = "right", delay = 5000 } = newMissive;
-    const timeout =
-      typeof delay === "number" && delay !== 0
-        ? setTimeout(() => {
-            setMissives((current) => current.filter((m) => m.id !== now));
-          }, delay)
-        : undefined;
-    setMissives((current) => [...current, { id: now, content, side, timeout }]);
+  const timers = React.useRef(new Set());
+  const counter = React.useRef(0);
+  React.useEffect(() => Settings.subscribe(setConfig), []);
+  React.useEffect(() => {
+    Utils.injectStyles("rift-bar-config-styles", [buildStyles(config.settings)]);
+  }, [config.settings]);
+  React.useEffect(() => {
+    const pending = timers.current;
+    return () => {
+      for (const timer of pending) clearTimeout(timer);
+      pending.clear();
+    };
+  }, []);
+  const screenId = parseInt(window.location.pathname.replace("/", ""), 10);
+  const display = displays.find((item) => item.id === screenId);
+  const pushMissive = (missive) => {
+    const id = ++counter.current;
+    const { content, side = "right", delay = 5000 } = missive;
+    let timeout;
+    if (delay > 0) {
+      timeout = setTimeout(() => {
+        timers.current.delete(timeout);
+        setMissives((current) => current.filter((item) => item.id !== id));
+      }, delay);
+      timers.current.add(timeout);
+    }
+    setMissives((current) => [...current, { id, content, side, timeout }]);
   };
-
   return (
     <SimpleBarContext.Provider
       value={{
-        displayIndex,
-        settings,
-        setSettings,
+        settings: config.settings,
+        configError: config.error,
+        displayUuid: display?.uuid,
+        displayIndex: display?.index,
         displays,
         missives,
         setMissives,

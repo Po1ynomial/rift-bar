@@ -1,3 +1,4 @@
+import * as TOML from "smol-toml";
 import { readFile } from "node:fs/promises";
 import { dirname, resolve, extname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -35,7 +36,8 @@ function stripJSX(source) {
 export const React = {
   memo: (component) => component,
   lazy: () => () => {},
-  createContext: () => ({ Provider: () => {} }),
+  createContext: (defaultValue) => ({ defaultValue, Provider: () => {} }),
+  useContext: (context) => context.defaultValue,
 };
 
 // A small JSX transform for element-tree assertions. This does not simulate a DOM.
@@ -95,7 +97,7 @@ export async function loadModule(
   path,
   { globals = {}, mocks = {}, evaluate = true, jsx = false } = {},
 ) {
-  const context = createContext({ console, ...globals });
+  const context = createContext({ console, URL, ...globals });
   const modules = new Map();
   async function load(filename) {
     if (!modules.has(filename)) {
@@ -114,7 +116,8 @@ export async function loadModule(
     const absolute = specifier.startsWith(".")
       ? resolve(dirname(referencingModule.identifier), specifier)
       : specifier;
-    const mock = mocks[absolute] ?? mocks[specifier];
+    const mock =
+      mocks[absolute] ?? mocks[specifier] ?? (specifier === "smol-toml" ? TOML : undefined);
     if (mock) {
       if (!modules.has(absolute)) {
         modules.set(

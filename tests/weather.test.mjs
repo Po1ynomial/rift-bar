@@ -9,8 +9,8 @@ import {
 } from "../lib/widgets/weather.js";
 
 const config = {
-  locationMode: "configured",
-  weatherLocation: { label: "Paris, France", latitude: 48.85, longitude: 2.35 },
+  location_mode: "configured",
+  location: { label: "Paris, France", latitude: 48.85, longitude: 2.35 },
   unit: "C",
 };
 const forecast = {
@@ -32,7 +32,7 @@ for (const location of [
     let requests = 0;
     await assert.rejects(
       loadWeather(
-        { ...config, weatherLocation: location },
+        { ...config, location: location },
         {
           fetcher: async () => {
             requests++;
@@ -50,7 +50,7 @@ test("configured weather works without geolocation and preserves zero coordinate
   const signal = new AbortController().signal;
   let request;
   const data = await loadWeather(
-    { ...config, unit: "F", weatherLocation: { latitude: 0, longitude: 0 } },
+    { ...config, unit: "F", location: { latitude: 0, longitude: 0 } },
     {
       signal,
       geolocation: {
@@ -76,7 +76,7 @@ test("configured weather works without geolocation and preserves zero coordinate
 test("standard geolocation coordinates drive automatic forecasts without an address", async () => {
   let url;
   const data = await loadWeather(
-    { ...config, locationMode: "auto" },
+    { ...config, location_mode: "auto" },
     {
       geolocation: {
         getCurrentPosition: (resolve) => resolve({ coords: { latitude: 52.52, longitude: 13.41 } }),
@@ -96,7 +96,7 @@ for (const code of [1, 2, 3]) {
   test(`geolocation failure ${code} does not fetch or fall back to another city`, async () => {
     await assert.rejects(
       loadWeather(
-        { ...config, locationMode: "auto" },
+        { ...config, location_mode: "auto" },
         {
           geolocation: { getCurrentPosition: (_resolve, reject) => reject({ code }) },
           fetcher: () => assert.fail("No forecast without coordinates"),

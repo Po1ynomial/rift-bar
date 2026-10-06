@@ -19,11 +19,10 @@ export { micStyles as styles } from "../../styles/components/data/mic";
  * @returns {JSX.Element} The rendered mic widget.
  */
 export const Widget = React.memo(() => {
-  const { displayIndex, settings } = useSimpleBarContext();
-  const config = settings.micWidgetOptions;
-  const { showIcon } = config;
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.micWidget;
+  const { displayUuid, settings } = useSimpleBarContext();
+  const config = settings.widgets.microphone;
+  const { show_icon } = config;
+  const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const { data: state, status, error, refresh: getMic } = useWidget(definition, visible, config);
   const loading = status === "idle" || status === "loading";
   const { volume: _volume } = state || {};
@@ -73,7 +72,7 @@ export const Widget = React.memo(() => {
   return (
     <DataWidget.Widget status={status} title={error?.message} classes={classes} disableSlider>
       <div className="mic__display">
-        {showIcon && (
+        {show_icon && (
           <SuspenseIcon>
             <Icon />
           </SuspenseIcon>

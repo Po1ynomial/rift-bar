@@ -1,9 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { loadModule, React } from "./helpers/modules.mjs";
-
 const snapshot = JSON.stringify({ displays: [], spaces: [] });
-
+const envelope = (text) => JSON.stringify({ path: "/config.toml", revision: "revision", text });
 async function loadIndex(run, mocks = {}) {
   const storage = new Map();
   const sheets = [];
@@ -12,7 +11,7 @@ async function loadIndex(run, mocks = {}) {
     globals: {
       window: {
         localStorage: {
-          getItem: (key) => storage.get(key),
+          getItem: (key) => storage.get(key) ?? null,
           setItem: (key, value) => storage.set(key, value),
         },
       },
@@ -37,47 +36,42 @@ async function loadIndex(run, mocks = {}) {
   return { ...loaded, storage, sheets, calls };
 }
 
-test("startup loads preferences before styling and the first Rift query", async () => {
+test("startup loads TOML before styling and the first Rift query, without a startup save", async () => {
   let release;
   const reading = new Promise((resolve) => {
     release = resolve;
   });
-  const config = {
-    global: { fontSize: "24px", riftPath: "/custom/Rift's CLI" },
-    customStyles: { styles: ".custom { color: red; }" },
-  };
   const {
     namespace: index,
     sheets,
     calls,
   } = await loadIndex(async (command) => {
-    if (command.includes("test -e")) return "present";
-    if (command.startsWith("cat ")) return reading;
-    if (command.includes("init-rift.sh")) return snapshot;
-    return "";
+    if (command.includes("config-file.sh read")) return reading;
+    return command.includes("init-rift.sh") ? snapshot : "";
   });
-  assert.equal(sheets.length, 0, "styles must not capture preferences at import time");
-  const first = index.command();
-  const second = index.command();
+  assert.equal(sheets.length, 0);
+  const first = index.command(),
+    second = index.command();
   await new Promise((resolve) => setImmediate(resolve));
   assert.ok(!calls.some((command) => command.includes("subscribe-rift.sh")));
-  release(JSON.stringify(config));
+  release(envelope('[appearance]\nfont_size = "24px"\n[rift]\ncli_path = "/custom/Rift\'s CLI"\n'));
   assert.equal(await first, snapshot);
   assert.equal(await second, snapshot);
-  assert.equal(sheets.length, 1);
-  assert.match(sheets[0].innerHTML, /--font-size: 24px/);
-  assert.match(sheets[0].innerHTML, /\.custom \{ color: red/);
-  assert.equal(calls.filter((command) => command.startsWith("cat ")).length, 1);
+  assert.equal(sheets.length, 2);
+  assert.match(sheets[1].innerHTML, /--font-size: 24px/);
+  assert.equal(calls.filter((command) => command.includes("config-file.sh read")).length, 1);
+  assert.ok(!calls.some((command) => command.includes("config-file.sh save")));
   const subscribe = calls.filter((command) => command.includes("subscribe-rift.sh"));
   assert.equal(subscribe.length, 1);
   assert.ok(subscribe[0].includes(`'/custom/Rift'"'"'s CLI'`));
   assert.equal(index.refreshFrequency, false);
 });
 
-test("cached output cannot mount the bar before preference initialization", async () => {
+test("cached output cannot mount the bar before configuration initialization", async () => {
   let parsed = 0;
-  const { namespace: index } = await loadIndex(async () => "", {
-    "./lib/rift": {
+  const { namespace: index } = await loadIndex(async () => envelope(""), {
+    "./lib/rift.js": {
+      shellQuote: String,
       getSnapshot: async () => snapshot,
       parseSnapshot: () => {
         parsed++;
@@ -92,28 +86,25 @@ test("cached output cannot mount the bar before preference initialization", asyn
   assert.equal(parsed, 1);
 });
 
-test("a failed initialization blocks snapshots and can be retried", async () => {
+test("invalid startup blocks snapshots and can be retried", async () => {
   let attempts = 0;
   const {
     namespace: index,
     calls,
     sheets,
   } = await loadIndex(async (command) => {
-    if (command.includes("test -e")) return "present";
-    if (command.startsWith("cat ")) {
-      if (++attempts === 1) return "not JSON";
-      return JSON.stringify({ global: { fontSize: "17px" } });
-    }
+    if (command.includes("config-file.sh read"))
+      return envelope(++attempts === 1 ? "not TOML" : '[appearance]\nfont_size = "17px"');
     return command.includes("init-rift.sh") ? snapshot : "";
   });
   await assert.rejects(index.command());
   assert.equal(sheets.length, 0);
   assert.ok(!calls.some((command) => command.includes("init-rift.sh")));
   assert.equal(await index.command(), snapshot);
-  assert.match(sheets[0].innerHTML, /--font-size: 17px/);
+  assert.match(sheets[1].innerHTML, /--font-size: 17px/);
 });
 
-test("style insertion failures retry startup and reload current preferences", async () => {
+test("style insertion failures retry initialization and reread current configuration", async () => {
   let reads = 0;
   const {
     namespace: index,
@@ -121,21 +112,61 @@ test("style insertion failures retry startup and reload current preferences", as
     calls,
     context,
   } = await loadIndex(async (command) => {
-    if (command.includes("test -e")) return "present";
-    if (command.startsWith("cat ")) {
-      return JSON.stringify({ global: { fontSize: ++reads === 1 ? "17px" : "19px" } });
-    }
+    if (command.includes("config-file.sh read"))
+      return envelope(`[appearance]\nfont_size = "${++reads === 1 ? 17 : 19}px"`);
     return command.includes("init-rift.sh") ? snapshot : "";
   });
-  let insertions = 0;
   const append = context.document.head.appendChild;
+  let count = 0;
   context.document.head.appendChild = (sheet) => {
-    if (++insertions === 1) throw new Error("Style insertion failed");
+    if (++count === 1) throw new Error("Style insertion failed");
     append(sheet);
   };
   await assert.rejects(index.command(), /Style insertion failed/);
   assert.ok(!calls.some((command) => command.includes("init-rift.sh")));
   assert.equal(await index.command(), snapshot);
   assert.equal(reads, 2);
-  assert.match(sheets[0].innerHTML, /--font-size: 19px/);
+  assert.match(sheets[1].innerHTML, /--font-size: 19px/);
+});
+
+test("centering reads process.centered, and retired bar features have no classes", async () => {
+  const { namespace: index } = await loadIndex(async () => envelope(""));
+  const { defaultSettings } = await import("../lib/config.js");
+  const settings = structuredClone(defaultSettings);
+  settings.process.centered = true;
+  settings.bar.background = false;
+  settings.bar.shadow = false;
+  const classes = index.barClasses(settings);
+  assert.doesNotMatch(classes, /process-aligned-to-left|on-bottom|no-color/);
+  assert.match(classes, /no-bar-background/);
+  assert.match(classes, /no-bar-shadow/);
+});
+
+test("normal and error views keep foreground contents in a separate fixed-height row", async () => {
+  const element = (type, props, ...children) => ({ type, props: { ...props, children } });
+  const mockReact = {
+    ...React,
+    Fragment: "fragment",
+    createElement: element,
+    useRef: () => ({}),
+    useEffect: () => {},
+  };
+  const { namespace: index } = await loadModule("index.jsx", {
+    jsx: true,
+    mocks: { uebersicht: { React: mockReact } },
+  });
+  const tree = index.Bar({ spaces: [] });
+  const row = tree.props.children.find(
+    (child) => child?.props?.className === "simple-bar__foreground",
+  );
+  assert.ok(row);
+  assert.ok(row.props.children.some((child) => child?.props?.className === "simple-bar__data"));
+  const { namespace: error } = await loadModule("lib/components/error.jsx", {
+    jsx: true,
+    mocks: { uebersicht: { React: mockReact } },
+  });
+  const failed = error.Component({ type: "noOutput", classes: "simple-bar" });
+  assert.ok(
+    failed.props.children.some((child) => child?.props?.className === "simple-bar__foreground"),
+  );
 });

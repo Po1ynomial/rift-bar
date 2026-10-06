@@ -6,12 +6,12 @@ export function createHookHarness() {
   const React = {
     useState(initial) {
       const index = cursor++;
-      if (!(index in slots)) slots[index] = initial;
+      if (!(index in slots)) slots[index] = typeof initial === "function" ? initial() : initial;
       return [
         slots[index],
         (value) => {
           writes++;
-          slots[index] = value;
+          slots[index] = typeof value === "function" ? value(slots[index]) : value;
         },
       ];
     },
@@ -29,6 +29,13 @@ export function createHookHarness() {
           slots[index] = { deps, cleanup: fn() };
         });
       }
+    },
+    useMemo(fn, deps) {
+      const index = cursor++;
+      const old = slots[index];
+      if (!old || deps.some((value, key) => !Object.is(value, old.deps[key])))
+        slots[index] = { deps, value: fn() };
+      return slots[index].value;
     },
     useCallback(fn) {
       cursor++;

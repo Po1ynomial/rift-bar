@@ -18,11 +18,10 @@ const { React } = Uebersicht;
  * @returns {JSX.Element|null} The rendered widget or null if not visible.
  */
 export const Widget = React.memo(() => {
-  const { displayIndex, settings } = useSimpleBarContext();
-  const config = settings.keyboardWidgetOptions;
-  const { showIcon, keyboardMaxLength } = config;
-  const visible =
-    Utils.isVisibleOnDisplay(displayIndex, config.showOnDisplay) && settings.widgets.keyboardWidget;
+  const { displayUuid, settings } = useSimpleBarContext();
+  const config = settings.widgets.keyboard;
+  const { show_icon, max_characters } = config;
+  const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const {
     data: state,
     status,
@@ -38,7 +37,7 @@ export const Widget = React.memo(() => {
   if (!state) return null;
   const { keyboard } = state;
 
-  const maxLength = Number(keyboardMaxLength) || 0;
+  const maxLength = Number(max_characters) || 0;
   const displayKeyboard = maxLength > 0 ? keyboard.slice(0, maxLength) : keyboard;
 
   if (!displayKeyboard?.length) return null;
@@ -48,7 +47,7 @@ export const Widget = React.memo(() => {
       status={status}
       title={error?.message}
       classes="keyboard"
-      Icon={showIcon ? Icons.Keyboard : null}
+      Icon={show_icon ? Icons.Keyboard : null}
     >
       {displayKeyboard}
     </DataWidget.Widget>

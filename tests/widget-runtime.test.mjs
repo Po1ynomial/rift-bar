@@ -137,15 +137,27 @@ test("a timeout exits loading, aborts, and does not overlap a stuck collector", 
 });
 
 test("invalid intervals cannot create a tight polling loop", async () => {
-  for (const refreshFrequency of [0, -1, NaN, Infinity]) {
+  for (const refresh_ms of [0, -1, NaN, Infinity]) {
     const clock = timers();
     const resource = createWidgetResource(
       definition(() => null),
-      { refreshFrequency },
+      { refresh_ms },
       { timers: clock },
     );
     await resource.refresh();
     assert.equal([...clock.pending.values()][0].delay, 2000);
     resource.stop();
   }
+});
+
+test("finite refresh interval overflow cannot become a one-millisecond timer", async () => {
+  const clock = timers();
+  const resource = createWidgetResource(
+    definition(() => null),
+    { refresh_ms: 1e100 },
+    { timers: clock },
+  );
+  await resource.refresh();
+  assert.equal([...clock.pending.values()][0].delay, 2147483647);
+  resource.stop();
 });
