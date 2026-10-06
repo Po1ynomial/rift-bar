@@ -241,3 +241,35 @@ test("snapshot preserves per-display workspace identity, names, and titles", asy
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("script launchers resolve their Node target under POSIX sh (dash)", async () => {
+  const dash = spawnSync("sh", ["-c", "command -v dash"], { encoding: "utf8" });
+  if (dash.status !== 0) return; // dash unavailable; bash-as-sh covered by other tests
+  const directory = await mkdtemp(join(tmpdir(), "rift-bar-dash-"));
+  try {
+    const env = {
+      ...process.env,
+      HOME: directory,
+      XDG_CONFIG_HOME: "",
+      RIFT_BAR_NODE: process.execPath,
+    };
+    const scripts = fileURLToPath(new URL("../lib/scripts", import.meta.url));
+    const config = spawnSync("dash", [join(scripts, "config-file.sh"), "read"], {
+      encoding: "utf8",
+      env,
+    });
+    assert.equal(config.status, 0, config.stderr);
+    const envelope = JSON.parse(config.stdout);
+    assert.equal(envelope.revision, "missing");
+    const mock = join(directory, "rift-cli");
+    await writeFile(mock, `#!/bin/sh\nprintf '[]'\n`, { mode: 0o700 });
+    const snapshot = spawnSync("dash", [join(scripts, "init-rift.sh"), mock], {
+      encoding: "utf8",
+      env,
+    });
+    assert.equal(snapshot.status, 0, snapshot.stderr);
+    assert.deepEqual(JSON.parse(snapshot.stdout), { displays: [], spaces: [] });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
