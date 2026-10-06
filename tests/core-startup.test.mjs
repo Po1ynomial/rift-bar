@@ -157,16 +157,16 @@ test("normal and error views keep foreground contents in a separate fixed-height
   });
   const tree = index.Bar({ spaces: [] });
   const row = tree.props.children.find(
-    (child) => child?.props?.className === "simple-bar__foreground",
+    (child) => child?.props?.className === "rift-bar__foreground",
   );
   assert.ok(row);
-  assert.ok(row.props.children.some((child) => child?.props?.className === "simple-bar__data"));
+  assert.ok(row.props.children.some((child) => child?.props?.className === "rift-bar__data"));
   const { namespace: error } = await loadModule("lib/components/error.jsx", {
     jsx: true,
     mocks: { uebersicht: { React: mockReact } },
   });
-  const failed = error.Component({ type: "noOutput", classes: "simple-bar" });
+  const failed = error.Component({ type: "noOutput", classes: "rift-bar" });
   assert.ok(
-    failed.props.children.some((child) => child?.props?.className === "simple-bar__foreground"),
+    failed.props.children.some((child) => child?.props?.className === "rift-bar__foreground"),
   );
 });

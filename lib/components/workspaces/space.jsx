@@ -1,11 +1,11 @@
 import * as Uebersicht from "uebersicht";
 import OpenedApps from "./opened-apps.jsx";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils.js";
 import * as Rift from "../../rift.js";
 const { React } = Uebersicht;
 export default function Space({ space, lastOfSpace }) {
-  const { settings, displayUuid } = useSimpleBarContext();
+  const { settings, displayUuid } = useRiftBarContext();
   const { workspaces, windows: filters } = settings;
   if (!space.focused && !space.windows.length && !workspaces.show_empty) return null;
   const filtered = space.windows.filter((window) =>

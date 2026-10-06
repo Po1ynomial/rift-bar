@@ -28,8 +28,6 @@ export default function Icon({ width = 24, height = 24, children, ...props }) {
  */
 export function SuspenseIcon({ children }) {
   return (
-    <React.Suspense fallback={<svg className="simple-bar-icon-loader" />}>
-      {children}
-    </React.Suspense>
+    <React.Suspense fallback={<svg className="rift-bar-icon-loader" />}>{children}</React.Suspense>
   );
 }

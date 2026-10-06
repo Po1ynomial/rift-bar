@@ -3,16 +3,16 @@ import * as Settings from "../settings.js";
 import * as Utils from "../utils.js";
 import { buildStyles } from "../styles/core/variables.js";
 const { React } = Uebersicht;
-const SimpleBarContext = React.createContext({
+const RiftBarContext = React.createContext({
   displayUuid: undefined,
   displays: [],
   settings: Settings.defaultSettings,
   missives: [],
   pushMissive: () => {},
 });
-export const useSimpleBarContext = () => React.useContext(SimpleBarContext);
+export const useRiftBarContext = () => React.useContext(RiftBarContext);
 
-export default function SimpleBarContextProvider({ initialSettings, displays, children }) {
+export default function RiftBarContextProvider({ initialSettings, displays, children }) {
   const [config, setConfig] = React.useState(() => ({
     ...Settings.getState(),
     settings: initialSettings,
@@ -47,7 +47,7 @@ export default function SimpleBarContextProvider({ initialSettings, displays, ch
     setMissives((current) => [...current, { id, content, side, timeout }]);
   };
   return (
-    <SimpleBarContext.Provider
+    <RiftBarContext.Provider
       value={{
         settings: config.settings,
         configError: config.error,
@@ -60,6 +60,6 @@ export default function SimpleBarContextProvider({ initialSettings, displays, ch
       }}
     >
       {children}
-    </SimpleBarContext.Provider>
+    </RiftBarContext.Provider>
   );
 }

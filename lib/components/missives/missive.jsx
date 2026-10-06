@@ -1,7 +1,7 @@
 import * as Uebersicht from "uebersicht";
 import { SuspenseIcon } from "../icons/icon.jsx";
 import * as Icons from "../icons/icons.jsx";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils.js";
 
 const { React } = Uebersicht;
@@ -17,7 +17,7 @@ const { React } = Uebersicht;
  */
 export default function Missive({ id, side, content, timeout }) {
   // Get the setMissives function from the context
-  const { setMissives } = useSimpleBarContext();
+  const { setMissives } = useRiftBarContext();
 
   // Generate class names based on the side prop
   const classes = Utils.classNames("missive", {

@@ -1,13 +1,13 @@
 import * as Uebersicht from "uebersicht";
 import Space from "./space.jsx";
 import { useWorkspaceContext } from "../workspace-context.jsx";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils.js";
 export { styles } from "../../styles/components/spaces/spaces.js";
 const { React } = Uebersicht;
 const Component = React.memo(() => {
   const { spaces } = useWorkspaceContext();
-  const { displays, displayUuid, settings } = useSimpleBarContext();
+  const { displays, displayUuid, settings } = useRiftBarContext();
   const options = settings.workspaces;
   if (!Utils.isVisibleOnDisplay(displayUuid, options.displays)) return null;
   const display = displays.find((item) => item.uuid === displayUuid);

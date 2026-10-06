@@ -2,12 +2,12 @@ import * as Uebersicht from "uebersicht";
 import Window from "./window.jsx";
 import * as Utils from "../../utils.js";
 import { useWorkspaceContext } from "../workspace-context.jsx";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 export { styles } from "../../styles/components/process.js";
 const { React } = Uebersicht;
 const Component = React.memo(() => {
   const { spaces } = useWorkspaceContext();
-  const { settings, displayUuid } = useSimpleBarContext();
+  const { settings, displayUuid } = useRiftBarContext();
   const { process, windows: filters } = settings;
   if (process.mode === "hidden" || !Utils.isVisibleOnDisplay(displayUuid, process.displays))
     return null;

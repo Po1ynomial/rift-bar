@@ -6,7 +6,7 @@ import * as Icons from "../icons/icons.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { cpu as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils";
 
 export { definition };
@@ -21,7 +21,7 @@ const GRAPH_LENGTH = 50;
  * @returns {JSX.Element|null} The CPU widget
  */
 export const Widget = React.memo(() => {
-  const { displayUuid, settings } = useSimpleBarContext();
+  const { displayUuid, settings } = useRiftBarContext();
   const config = settings.widgets.cpu;
   const { display, monitor_app, show_icon, hide_below_percent } = config;
   const displayAsGraph = display === "graph";

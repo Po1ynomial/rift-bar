@@ -62,7 +62,7 @@ test("the real weather view and hook load, retain stale data, recover, and clean
     },
     mocks: {
       uebersicht: { React },
-      "../rift-bar-context.jsx": { useSimpleBarContext: () => ({ displayIndex: 1, settings }) },
+      "../rift-bar-context.jsx": { useRiftBarContext: () => ({ displayIndex: 1, settings }) },
       "../../utils.js": { ...utilities.namespace, clickEffect: () => {} },
     },
   });

@@ -6,7 +6,7 @@ import { SuspenseIcon } from "../icons/icon.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { sound as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils";
 
 export { definition };
@@ -19,7 +19,7 @@ const { React } = Uebersicht;
  * @returns {JSX.Element|null} The sound widget.
  */
 export const Widget = React.memo(() => {
-  const { displayUuid, settings } = useSimpleBarContext();
+  const { displayUuid, settings } = useRiftBarContext();
   const config = settings.widgets.volume;
   const { show_icon } = config;
   const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;

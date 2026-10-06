@@ -5,7 +5,7 @@ import * as Icons from "../icons/icons.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { wifi as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils";
 import { shellQuote } from "../../rift.js";
 
@@ -19,7 +19,7 @@ const { React } = Uebersicht;
  * @returns {JSX.Element|null} The Wifi widget.
  */
 export const Widget = React.memo(() => {
-  const { displayUuid, settings, pushMissive } = useSimpleBarContext();
+  const { displayUuid, settings, pushMissive } = useRiftBarContext();
   const config = settings.widgets.wifi;
   const { hide_when_disabled, toggle_on_click, device, show_name, show_icon } = config;
   const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;

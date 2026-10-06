@@ -16,7 +16,7 @@ import { SuspenseIcon } from "../icons/icon.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { defineWidget, widgetInterval } from "../../widgets/runtime.js";
 import WidgetStatus from "./widget-status.jsx";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils";
 
 export { notificationsStyles as styles } from "../../styles/components/data/notifications";
@@ -115,7 +115,7 @@ NotificationPill.displayName = "NotificationPill";
  * @returns {JSX.Element|null} The notifications widget component or null if no notifications
  */
 export const Widget = React.memo(() => {
-  const { displayUuid, settings } = useSimpleBarContext();
+  const { displayUuid, settings } = useRiftBarContext();
   const config = settings.widgets.notifications;
   const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const { data: state, status, error, refresh } = useWidget(definition, visible, config);

@@ -1,8 +1,6 @@
 import * as Uebersicht from "uebersicht";
 import * as ErrorView from "./lib/components/error.jsx";
-import SimpleBarContextProvider, {
-  useSimpleBarContext,
-} from "./lib/components/rift-bar-context.jsx";
+import RiftBarContextProvider, { useRiftBarContext } from "./lib/components/rift-bar-context.jsx";
 import * as Variables from "./lib/styles/core/variables.js";
 import * as Base from "./lib/styles/core/base.js";
 import * as Spaces from "./lib/styles/components/spaces/spaces.js";
@@ -39,7 +37,7 @@ function initialize() {
   if (!initialization)
     initialization = Settings.init()
       .then((settings) => {
-        Utils.injectStyles("simple-bar-index-styles", [
+        Utils.injectStyles("rift-bar-index-styles", [
           Base.styles,
           Spaces.styles,
           Process.styles,
@@ -85,22 +83,22 @@ export async function command() {
   return Rift.getSnapshot();
 }
 export function barClasses(settings) {
-  return Utils.classNames("simple-bar", {
-    "simple-bar--floating": settings.bar.floating,
-    "simple-bar--no-bar-background": !settings.bar.background,
-    "simple-bar--no-bar-shadow": !settings.bar.shadow,
-    "simple-bar--animations-disabled": !settings.appearance.animations,
-    "simple-bar--process-aligned-to-left": !settings.process.centered,
+  return Utils.classNames("rift-bar", {
+    "rift-bar--floating": settings.bar.floating,
+    "rift-bar--no-bar-background": !settings.bar.background,
+    "rift-bar--no-bar-shadow": !settings.bar.shadow,
+    "rift-bar--animations-disabled": !settings.appearance.animations,
+    "rift-bar--process-aligned-to-left": !settings.process.centered,
   });
 }
 export function Bar({ spaces }) {
-  const { settings, configError } = useSimpleBarContext();
+  const { settings, configError } = useRiftBarContext();
   const ref = React.useRef();
   React.useEffect(() => Utils.handleBarFocus(ref.current), []);
   return (
     <div ref={ref} className={barClasses(settings)}>
       <Settings.Wrapper />
-      <div className="simple-bar__foreground">
+      <div className="rift-bar__foreground">
         <React.Suspense fallback={<React.Fragment />}>
           <WorkspaceContextProvider spaces={spaces}>
             <WorkspaceSpaces />
@@ -112,7 +110,7 @@ export function Bar({ spaces }) {
             Configuration: {configError.message}
           </span>
         )}
-        <div className="simple-bar__data">
+        <div className="rift-bar__data">
           <Zoom.Widget />
           <GitHub.Widget />
           <Weather.Widget />
@@ -149,8 +147,8 @@ export function render({ output, error }) {
     return <ErrorView.Component type="noData" classes={classes} />;
   }
   return (
-    <SimpleBarContextProvider initialSettings={Settings.get()} displays={snapshot.displays}>
+    <RiftBarContextProvider initialSettings={Settings.get()} displays={snapshot.displays}>
       <Bar spaces={snapshot.spaces} />
-    </SimpleBarContextProvider>
+    </RiftBarContextProvider>
   );
 }

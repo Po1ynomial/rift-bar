@@ -49,7 +49,7 @@ for (const [id, [filename, data]] of Object.entries(cases))
       mocks: {
         uebersicht: { React },
         "../rift-bar-context.jsx": {
-          useSimpleBarContext: () => ({ settings, displayUuid: uuid }),
+          useRiftBarContext: () => ({ settings, displayUuid: uuid }),
         },
         "../../hooks/use-widget.js": { default: () => ({ ...snapshot, refresh: () => {} }) },
       },
@@ -132,7 +132,7 @@ test("workspace display inclusion is distinct from section visibility and retain
     jsx: true,
     mocks: {
       uebersicht: { React },
-      "../rift-bar-context.jsx": { useSimpleBarContext: () => context(settings) },
+      "../rift-bar-context.jsx": { useRiftBarContext: () => context(settings) },
       "../workspace-context.jsx": { useWorkspaceContext: () => ({ spaces }) },
     },
   });
@@ -157,7 +157,7 @@ test("workspace empty/icon preferences and exact filters affect presentation onl
     jsx: true,
     mocks: {
       uebersicht: { React },
-      "../rift-bar-context.jsx": { useSimpleBarContext: () => context(settings) },
+      "../rift-bar-context.jsx": { useRiftBarContext: () => context(settings) },
     },
   });
   assert.equal(namespace.default({ space: spaces[1] }), null);
@@ -174,7 +174,7 @@ test("window selectors read the new process settings and do not include inactive
   });
   const mocks = {
     uebersicht: { React },
-    "../rift-bar-context.jsx": { useSimpleBarContext: () => context(settings) },
+    "../rift-bar-context.jsx": { useRiftBarContext: () => context(settings) },
     "../workspace-context.jsx": { useWorkspaceContext: () => ({ spaces }) },
   };
   const { namespace: process } = await loadModule("lib/components/workspaces/process.jsx", {

@@ -4,7 +4,7 @@ import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { memory as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils";
 
 export { definition };
@@ -17,7 +17,7 @@ const { React } = Uebersicht;
  * @returns {JSX.Element|null} The memory widget component
  */
 export const Widget = () => {
-  const { displayUuid, settings } = useSimpleBarContext();
+  const { displayUuid, settings } = useRiftBarContext();
   const config = settings.widgets.memory;
   const { monitor_app, show_icon, hide_below_percent } = config;
   const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;

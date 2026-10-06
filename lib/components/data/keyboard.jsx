@@ -5,7 +5,7 @@ import * as Icons from "../icons/icons.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { keyboard as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils";
 
 export { definition };
@@ -18,7 +18,7 @@ const { React } = Uebersicht;
  * @returns {JSX.Element|null} The rendered widget or null if not visible.
  */
 export const Widget = React.memo(() => {
-  const { displayUuid, settings } = useSimpleBarContext();
+  const { displayUuid, settings } = useRiftBarContext();
   const config = settings.widgets.keyboard;
   const { show_icon, max_characters } = config;
   const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;

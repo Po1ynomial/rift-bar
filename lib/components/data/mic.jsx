@@ -7,7 +7,7 @@ import useWidget from "../../hooks/use-widget.js";
 import { mic as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
 import * as Utils from "../../utils";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 
 const { React } = Uebersicht;
 
@@ -19,7 +19,7 @@ export { micStyles as styles } from "../../styles/components/data/mic";
  * @returns {JSX.Element} The rendered mic widget.
  */
 export const Widget = React.memo(() => {
-  const { displayUuid, settings } = useSimpleBarContext();
+  const { displayUuid, settings } = useRiftBarContext();
   const config = settings.widgets.microphone;
   const { show_icon } = config;
   const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;

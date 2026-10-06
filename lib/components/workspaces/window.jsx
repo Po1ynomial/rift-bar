@@ -1,7 +1,7 @@
 import * as Uebersicht from "uebersicht";
 import * as AppIcons from "../../app-icons";
 import { SuspenseIcon } from "../icons/icon.jsx";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils";
 import * as Rift from "../../rift";
 
@@ -15,7 +15,7 @@ const { React } = Uebersicht;
  */
 export default function Window({ window }) {
   // Get settings from context
-  const { settings } = useSimpleBarContext();
+  const { settings } = useRiftBarContext();
   // Create a ref for the button element
   const ref = React.useRef();
   // Destructure settings

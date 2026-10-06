@@ -1,5 +1,5 @@
 import * as Uebersicht from "uebersicht";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 import Missive from "./missive.jsx";
 
 export { missivesStyles as styles } from "../../styles/components/missives";
@@ -8,12 +8,12 @@ const { React } = Uebersicht;
 
 /**
  * Component to display a list of missives.
- * It uses the simple-bar context to get settings and missives data.
+ * It uses the rift-bar context to get settings and missives data.
  *
  * @returns {JSX.Element} The rendered component.
  */
 export function Component() {
-  const { missives } = useSimpleBarContext();
+  const { missives } = useRiftBarContext();
 
   return (
     <div className="missives">

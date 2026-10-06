@@ -107,7 +107,7 @@ test("a rejected snapshot also invalidates subscription setup", async () => {
 });
 
 test("subscription script registers only relevant events and preserves other integrations", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "simple-bar-rift-subscribe-"));
+  const directory = await mkdtemp(join(tmpdir(), "rift-bar-rift-subscribe-"));
   try {
     const log = join(directory, "args.log");
     const mock = join(directory, "mock rift-cli");
@@ -183,7 +183,7 @@ test("restart hook rebuilds subscriptions before requesting a refresh", async ()
 });
 
 test("snapshot preserves per-display workspace identity, names, and titles", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "simple-bar-rift-test-"));
+  const directory = await mkdtemp(join(tmpdir(), "rift-bar-rift-test-"));
   try {
     const mock = join(directory, "mock rift-cli");
     const displays = [

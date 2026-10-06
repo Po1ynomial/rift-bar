@@ -6,14 +6,14 @@ import * as Icons from "../icons/icons.jsx";
 import * as Utils from "../../utils.js";
 import useWidget from "../../hooks/use-widget.js";
 import { weather as definition, weatherIcon } from "../../widgets/weather.js";
-import { useSimpleBarContext } from "../rift-bar-context.jsx";
+import { useRiftBarContext } from "../rift-bar-context.jsx";
 
 export { definition };
 export { weatherStyles as styles } from "../../styles/components/data/weather.js";
 const { React } = Uebersicht;
 
 export const Widget = React.memo(() => {
-  const { displayUuid, settings } = useSimpleBarContext();
+  const { displayUuid, settings } = useRiftBarContext();
   const config = settings.widgets.weather;
   const visible = Utils.isVisibleOnDisplay(displayUuid, config.displays) && config.enabled;
   const { data, status, error, refresh } = useWidget(definition, visible, config);

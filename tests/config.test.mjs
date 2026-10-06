@@ -173,7 +173,7 @@ test("bar padding remains independent of background, and only local colors overr
   assert.match(css, /--bar-foreground-height: 40px/);
   assert.match(css, /--bar-outer-margin: 9px/);
   assert.match(css, /--bar-background: navy/);
-  assert.match(css, /\.simple-bar \.data-widget.time \{color: white;background-color: blue;/);
+  assert.match(css, /\.rift-bar \.data-widget.time \{color: white;background-color: blue;/);
   assert.match(css, /\.process__window--focused \{background-color: green;/);
   assert.match(css, /prefers-color-scheme: light/);
   const reset = variables.buildStyles(resolveConfig({}));

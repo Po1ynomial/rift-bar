@@ -59,8 +59,8 @@ test("foreground height stays fixed while outer padding, border, floating, and b
               bar: { background, floating, padding, foreground_height },
               process: { centered },
             });
-            const classes = `simple-bar${floating ? " simple-bar--floating" : ""}${background ? "" : " simple-bar--no-bar-background"}`;
-            const html = `<div class="${classes}"><div class="settings"><div class="settings__outer">Settings</div></div><div class="simple-bar__foreground"><div class="spaces"><div class="space"><button class="space__inner">1</button></div></div><div class="process${centered ? " process--centered" : ""}"><div class="process__container"><button class="process__window">Editor</button></div></div><div class="simple-bar__data"><div class="data-widget">12:34</div></div></div></div>`;
+            const classes = `rift-bar${floating ? " rift-bar--floating" : ""}${background ? "" : " rift-bar--no-bar-background"}`;
+            const html = `<div class="${classes}"><div class="settings"><div class="settings__outer">Settings</div></div><div class="rift-bar__foreground"><div class="spaces"><div class="space"><button class="space__inner">1</button></div></div><div class="process${centered ? " process--centered" : ""}"><div class="process__container"><button class="process__window">Editor</button></div></div><div class="rift-bar__data"><div class="data-widget">12:34</div></div></div></div>`;
             cases.push({
               background,
               floating,
@@ -77,7 +77,7 @@ test("foreground height stays fixed while outer padding, border, floating, and b
                 dataWidgetStyles,
                 settingsStyles,
                 variables.buildStyles(settings),
-                ".simple-bar {border:2px solid black}",
+                ".rift-bar {border:2px solid black}",
               ].join("\n"),
               html,
             });
@@ -98,7 +98,7 @@ test("foreground height stays fixed while outer padding, border, floating, and b
           await new Promise(resolve => frame.onload = resolve);
           const doc = frame.contentDocument;
           const box = selector => { const r=doc.querySelector(selector).getBoundingClientRect(); return {height:r.height,width:r.width,y:r.y,bottom:r.bottom}; };
-          rows.push({background:item.background,floating:item.floating,centered:item.centered,padding:item.padding,vertical:item.vertical,horizontal:item.horizontal,expectedForeground:item.foreground,outer:box('.simple-bar'),foreground:box('.simple-bar__foreground'),workspace:box('.space__inner'),process:box('.process__window'),widget:box('.data-widget'),panel:box('.settings__outer')});
+          rows.push({background:item.background,floating:item.floating,centered:item.centered,padding:item.padding,vertical:item.vertical,horizontal:item.horizontal,expectedForeground:item.foreground,outer:box('.rift-bar'),foreground:box('.rift-bar__foreground'),workspace:box('.space__inner'),process:box('.process__window'),widget:box('.data-widget'),panel:box('.settings__outer')});
         } finally { frame.remove(); }
       }
       return rows;
