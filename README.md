@@ -67,6 +67,8 @@ npm run lint
 
 Unit tests mock Rift responses, system commands, geolocation, and weather HTTP responses. Shell tests use temporary preferences and mock CLI executables; they do not change the running window manager or real preferences. Module-wiring tests replace JSX with `null` for linking. Widget-view tests separately compile JSX into element trees and exercise loading, success, stale, failure, and disabled states. These tests do not simulate browser layout or the React DOM renderer.
 
+`npm run test:host` is an opt-in macOS compatibility check. It compiles weather with Übersicht's installed Babel and the same transform options as its widget bundler, then tests automatic and configured modes with mocked geolocation and HTTP. It also runs the real read-only sound collector and validates its AppleScript output. It requires Übersicht at `/Applications/Übersicht.app`; it does not change sound volume, preferences, or workspace focus.
+
 The optional live latency regression clicks workspace buttons, checks updates below 250ms and no idle snapshot polling, then restores the original workspaces and focused window from the host even if browser evaluation fails. It uses the configured CLI path, with an optional `RIFT_CLI` environment override, and identifies buttons by display UUID and workspace index rather than names. It skips when there are no visible displays with two usable workspaces. With all-display workspace rendering enabled, it also exercises cross-display clicks. It requires `agent-browser` and should run while the desktop is otherwise idle:
 
 ```sh

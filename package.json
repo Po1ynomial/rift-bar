@@ -8,6 +8,7 @@
   "scripts": {
     "test": "node --experimental-vm-modules --test tests/*.test.mjs",
     "test:latency": "node tests/rift-latency.mjs",
+    "test:host": "node --experimental-vm-modules --test tests/host/*.test.mjs",
     "lint": "eslint . --ext .js,.jsx,.mjs"
   },
   "devDependencies": {

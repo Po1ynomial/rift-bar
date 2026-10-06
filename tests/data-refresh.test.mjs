@@ -64,3 +64,25 @@ for (const name of ["time", "date", "cpu", "memory", "netstats", "battery", "wif
     } finally { resource.stop(); }
   });
 }
+
+
+for (const raw of ["19, false\n", " 19 , true \n", "0,false\n", "100,true\n"]) {
+  test("sound trims serialized fields: " + JSON.stringify(raw), async () => {
+    const { namespace } = await loadModule("lib/widgets/system.js", {
+      mocks: { uebersicht: { React, run: async () => raw } },
+    });
+    const data = await namespace.sound.load({ config: {}, force: true });
+    assert.equal(namespace.sound.validate(data), true);
+    const [volume, muted] = raw.trim().split(",").map((field) => field.trim());
+    assert.equal(data.volume, volume);
+    assert.equal(data.muted, muted);
+  });
+}
+
+test("sound still rejects list serialization rather than weakening the validator", async () => {
+  const { namespace } = await loadModule("lib/widgets/system.js", {
+    mocks: { uebersicht: { React, run: async () => "19, ,, false\n" } },
+  });
+  const data = await namespace.sound.load({ config: {}, force: true });
+  assert.equal(namespace.sound.validate(data), false);
+});
