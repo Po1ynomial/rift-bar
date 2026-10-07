@@ -24,6 +24,7 @@ async function loadBackend(run) {
     ],
     ["./settings", { get: () => settings }],
     ["./snapshot.js", { parseSnapshot }],
+    ["./utils.js", { shellQuote: (value) => `'${String(value).replace(/'/g, `'"'"'`)}'` }],
   ]);
   const module = new SourceTextModule(
     await readFile(new URL("../lib/rift.js", import.meta.url), "utf8"),
