@@ -1,8 +1,7 @@
 import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
-import * as Icons from "../icons/icons.jsx";
-import { SuspenseIcon } from "../icons/icon.jsx";
+import Icon from "../icons/icon.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { mic as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
@@ -38,7 +37,7 @@ export const Widget = React.memo(() => {
   if (loading) return <DataWidgetLoader.Widget className="mic" />;
   if (!state || volume === undefined || _volume === "missing value") return null;
 
-  const Icon = !volume ? Icons.MicOff : Icons.MicOn;
+  const iconName = !volume ? "mic-off" : "mic-on";
 
   /**
    * Handle volume change event.
@@ -72,11 +71,7 @@ export const Widget = React.memo(() => {
   return (
     <DataWidget.Widget status={status} title={error?.message} classes={classes} disableSlider>
       <div className="mic__display">
-        {show_icon && (
-          <SuspenseIcon>
-            <Icon />
-          </SuspenseIcon>
-        )}
+        {show_icon && <Icon name={iconName} />}
         <span className="mic__value">{formattedVolume}</span>
       </div>
       <div className="mic__slider-container">

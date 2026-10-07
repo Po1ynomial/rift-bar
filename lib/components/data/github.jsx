@@ -1,7 +1,7 @@
 import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
-import * as Icons from "../icons/icons.jsx";
+import Icon from "../icons/icon.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { github as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
@@ -41,7 +41,7 @@ export const Widget = React.memo(() => {
       title={error?.message}
       classes="github"
       href={url}
-      Icon={show_icon ? Icons.GitHub : null}
+      icon={show_icon ? <Icon name="github" /> : null}
       onRightClick={getGitHub}
     >
       <span className="github__count">{count}</span>

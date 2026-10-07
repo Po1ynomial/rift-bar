@@ -1,6 +1,5 @@
 import * as Uebersicht from "uebersicht";
-import { SuspenseIcon } from "../icons/icon.jsx";
-import * as Icons from "../icons/icons.jsx";
+import Icon from "../icons/icon.jsx";
 import { useRiftBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils.js";
 
@@ -39,9 +38,7 @@ export default function Missive({ id, side, content, timeout }) {
     <div key={id} className={classes}>
       <div className="missive__text">{content}</div>
       <button className="missive__close" onClick={closeMissive}>
-        <SuspenseIcon>
-          <Icons.Close className="missive__close-icon" />
-        </SuspenseIcon>
+        <Icon name="close" className="missive__close-icon" />
       </button>
     </div>
   );

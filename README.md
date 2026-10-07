@@ -53,6 +53,7 @@ Native macOS Space creation/deletion is not implemented. Only each display's cur
 - `lib/settings.js` owns loaded configuration state and cross-display reload notifications.
 - `lib/scripts/config-file.mjs` resolves the XDG path and performs read-only loads and conflict-checked atomic saves, launched through `config-file.sh`.
 - `lib/components/rift-bar-context.jsx` and `lib/components/workspaces/` render snapshots without backend selection or background workspace queries.
+- `lib/components/icons/` is a consumer-independent icon catalog: stable identifiers, lazy SVG assets, and one `Icon` component that resolves names with a default fallback. `lib/app-icons.js` maps application names to catalog identifiers.
 - `lib/widgets/` defines widget resources and data collectors. `lib/hooks/use-widget.js` connects their snapshots to React.
 - `lib/components/data/` renders the retained widgets and handles user actions. Collectors do not own loading flags or polling timers.
 - `tools/config-reference.mjs` generates `lib/schemas/config.json` and the configuration field reference from the same field definitions used by the GUI.

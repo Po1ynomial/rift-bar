@@ -2,7 +2,7 @@ import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import WidgetStatus from "./widget-status.jsx";
-import * as Icons from "../icons/icons.jsx";
+import Icon from "../icons/icon.jsx";
 import * as Utils from "../../utils.js";
 import useWidget from "../../hooks/use-widget.js";
 import { weather as definition, weatherIcon } from "../../widgets/weather.js";
@@ -41,7 +41,7 @@ export const Widget = React.memo(() => {
           ? `Stale forecast: ${error.message}`
           : "Forecast by Open-Meteo. Right-click to refresh."
       }
-      Icon={config.show_icon ? Icons[weatherIcon(data.code, data.isDay)] : null}
+      icon={config.show_icon ? <Icon name={weatherIcon(data.code, data.isDay)} /> : null}
       href="https://open-meteo.com/"
       onRightClick={onRightClick}
       disableSlider

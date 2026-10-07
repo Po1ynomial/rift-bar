@@ -11,8 +11,8 @@
  * @module notifications
  */
 import * as Uebersicht from "uebersicht";
-import * as AppIcons from "../../app-icons.js";
-import { SuspenseIcon } from "../icons/icon.jsx";
+import { iconForApp } from "../../app-icons.js";
+import Icon from "../icons/icon.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { defineWidget, widgetInterval } from "../../widgets/runtime.js";
 import WidgetStatus from "./widget-status.jsx";
@@ -88,8 +88,7 @@ const NotificationPill = React.memo(({ app }) => {
     await Uebersicht.run(`open "${safePath}"`);
   };
 
-  // Get the SVG icon for this app, or use Default
-  const Icon = AppIcons.apps[app.name] || AppIcons.apps.Default;
+  const iconName = iconForApp(app.name);
 
   return (
     <button
@@ -98,9 +97,7 @@ const NotificationPill = React.memo(({ app }) => {
       title={`${app.name}: ${app.badge} notification${app.badge !== "1" ? "s" : ""}`}
       aria-label={`Open ${app.name} - ${app.badge} notification${app.badge !== "1" ? "s" : ""}`}
     >
-      <SuspenseIcon>
-        <Icon className="notification-pill__icon" />
-      </SuspenseIcon>
+      <Icon name={iconName} className="notification-pill__icon" />
       <span className="notification-pill__badge">{app.badge}</span>
     </button>
   );

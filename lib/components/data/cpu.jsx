@@ -2,7 +2,7 @@ import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
 import Graph from "./graph.jsx";
-import * as Icons from "../icons/icons.jsx";
+import Icon from "../icons/icon.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { cpu as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
@@ -68,7 +68,7 @@ export const Widget = React.memo(() => {
           caption={{
             usage: {
               value: `${usage}%`,
-              icon: show_icon ? Icons.CPU : null,
+              icon: show_icon ? <Icon name="cpu" /> : null,
               color: "var(--yellow)",
             },
           }}
@@ -85,7 +85,7 @@ export const Widget = React.memo(() => {
       status={status}
       title={error?.message}
       classes="cpu"
-      Icon={show_icon ? Icons.CPU : null}
+      icon={show_icon ? <Icon name="cpu" /> : null}
       onClick={onClick}
     >
       <span className="cpu__usage">{usage}%</span>

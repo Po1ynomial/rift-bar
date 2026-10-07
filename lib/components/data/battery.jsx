@@ -1,8 +1,7 @@
 import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
-import * as Icons from "../icons/icons.jsx";
-import { SuspenseIcon } from "../icons/icon.jsx";
+import Icon from "../icons/icon.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { battery as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
@@ -60,15 +59,11 @@ export const Widget = React.memo(() => {
 
   const onClickProp = toggle_caffeinate ? { onClick } : {};
 
-  const Icon = () => (
+  const icon = (
     <div className="battery__icon">
       <div className="battery__icon-inner">
         <div className="battery__icon-filler" style={{ transform: transformValue }} />
-        {charging && (
-          <SuspenseIcon>
-            <Icons.Charging className="battery__charging-icon" />
-          </SuspenseIcon>
-        )}
+        {charging && <Icon name="charging" className="battery__charging-icon" />}
       </div>
     </div>
   );
@@ -78,15 +73,11 @@ export const Widget = React.memo(() => {
       status={status}
       title={error?.message}
       classes={classes}
-      Icon={show_icon ? Icon : null}
+      icon={show_icon ? icon : null}
       disableSlider
       {...onClickProp}
     >
-      {caffeinate.length > 0 && (
-        <SuspenseIcon>
-          <Icons.Coffee className="battery__caffeinate-icon" />
-        </SuspenseIcon>
-      )}
+      {caffeinate.length > 0 && <Icon name="coffee" className="battery__caffeinate-icon" />}
       {percentage}%
     </DataWidget.Widget>
   );

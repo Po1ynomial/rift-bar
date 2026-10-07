@@ -1,7 +1,7 @@
 import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
-import * as Icons from "../icons/icons.jsx";
+import Icon from "../icons/icon.jsx";
 import * as Utils from "../../utils";
 import { shellQuote } from "../../rift.js";
 import useWidget from "../../hooks/use-widget.js";
@@ -47,7 +47,7 @@ export const Widget = React.memo(() => {
       status={status}
       title={error?.message}
       classes="date-display"
-      Icon={show_icon ? Icons.Date : null}
+      icon={show_icon ? <Icon name="date" /> : null}
       onClick={onClick}
     >
       {now}

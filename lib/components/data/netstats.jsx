@@ -1,8 +1,7 @@
 import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
-import * as Icons from "../icons/icons.jsx";
-import { SuspenseIcon } from "../icons/icon.jsx";
+import Icon from "../icons/icon.jsx";
 import Graph from "./graph.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { netstats as definition } from "../../widgets/system.js";
@@ -84,12 +83,12 @@ export const Widget = React.memo(() => {
           caption={{
             download: {
               value: formattedDownload,
-              icon: show_icon ? Icons.Download : null,
+              icon: show_icon ? <Icon name="download" /> : null,
               color: "var(--magenta)",
             },
             upload: {
               value: formattedUpload,
-              icon: show_icon ? Icons.Upload : null,
+              icon: show_icon ? <Icon name="upload" /> : null,
               color: "var(--blue)",
             },
           }}
@@ -105,9 +104,7 @@ export const Widget = React.memo(() => {
       <DataWidget.Widget status={status} title={error?.message} classes="netstats" disableSlider>
         <div className="netstats__item">
           {show_icon && (
-            <SuspenseIcon>
-              <Icons.Download className="netstats__icon netstats__icon--download" />
-            </SuspenseIcon>
+            <Icon name="download" className="netstats__icon netstats__icon--download" />
           )}
           <span
             className="netstats__value"
@@ -117,11 +114,7 @@ export const Widget = React.memo(() => {
       </DataWidget.Widget>
       <DataWidget.Widget status={status} title={error?.message} classes="netstats" disableSlider>
         <div className="netstats__item">
-          {show_icon && (
-            <SuspenseIcon>
-              <Icons.Upload className="netstats__icon netstats__icon--upload" />
-            </SuspenseIcon>
-          )}
+          {show_icon && <Icon name="upload" className="netstats__icon netstats__icon--upload" />}
           <span className="netstats__value" dangerouslySetInnerHTML={{ __html: formattedUpload }} />
         </div>
       </DataWidget.Widget>

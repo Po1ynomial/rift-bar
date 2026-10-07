@@ -1,8 +1,7 @@
 import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
-import * as Icons from "../icons/icons.jsx";
-import { SuspenseIcon } from "../icons/icon.jsx";
+import Icon from "../icons/icon.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { sound as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
@@ -41,10 +40,10 @@ export const Widget = React.memo(() => {
   const { muted } = state;
   if (_volume === "missing value" || muted === "missing value") return null;
 
-  let Icon = Icons.VolumeHigh;
-  if (volume < 50) Icon = Icons.VolumeLow;
-  if (volume < 20) Icon = Icons.NoVolume;
-  if (muted === "true" || !volume) Icon = Icons.VolumeMuted;
+  let iconName = "volume-high";
+  if (volume < 50) iconName = "volume-low";
+  if (volume < 20) iconName = "no-volume";
+  if (muted === "true" || !volume) iconName = "volume-muted";
 
   /**
    * Handle volume change event.
@@ -71,11 +70,7 @@ export const Widget = React.memo(() => {
   return (
     <DataWidget.Widget status={status} title={error?.message} classes={classes} disableSlider>
       <div className="sound__display">
-        {show_icon && (
-          <SuspenseIcon>
-            <Icon />
-          </SuspenseIcon>
-        )}
+        {show_icon && <Icon name={iconName} />}
         <span className="sound__value">{formattedVolume}</span>
       </div>
       <div className="sound__slider-container">

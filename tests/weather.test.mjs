@@ -219,12 +219,12 @@ test("polar forecasts may omit sunrise and sunset", async () => {
 });
 
 test("weather codes select icons without English description matching", () => {
-  assert.equal(weatherIcon(95, true), "Storm");
-  assert.equal(weatherIcon(75, true), "Snow");
-  assert.equal(weatherIcon(61, true), "Rain");
-  assert.equal(weatherIcon(45, true), "Fog");
-  assert.equal(weatherIcon(3, true), "Cloud");
-  assert.equal(weatherIcon(0, false), "Moon");
-  assert.equal(weatherIcon(0, true), "Sun");
+  assert.equal(weatherIcon(95, true), "storm");
+  assert.equal(weatherIcon(75, true), "snow");
+  assert.equal(weatherIcon(61, true), "rain");
+  assert.equal(weatherIcon(45, true), "fog");
+  assert.equal(weatherIcon(3, true), "cloud");
+  assert.equal(weatherIcon(0, false), "moon");
+  assert.equal(weatherIcon(0, true), "sun");
   assert.equal(validCoordinates({ latitude: 0, longitude: 0 }), true);
 });

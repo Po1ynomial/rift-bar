@@ -1,8 +1,7 @@
 import * as Uebersicht from "uebersicht";
 import * as DataWidget from "./data-widget.jsx";
 import * as DataWidgetLoader from "./data-widget-loader.jsx";
-import * as Icons from "../icons/icons.jsx";
-import { SuspenseIcon } from "../icons/icon.jsx";
+import Icon from "../icons/icon.jsx";
 import useWidget from "../../hooks/use-widget.js";
 import { zoom as definition } from "../../widgets/system.js";
 import WidgetStatus from "./widget-status.jsx";
@@ -34,21 +33,13 @@ export const Widget = React.memo(() => {
 
   const { mic, video } = state;
 
-  const VideoIcon = video === "off" ? Icons.CameraOff : Icons.Camera;
-  const MicIcon = mic === "off" ? Icons.MicOff : Icons.MicOn;
+  const videoIconName = video === "off" ? "camera-off" : "camera";
+  const micIconName = mic === "off" ? "mic-off" : "mic-on";
 
   return (
     <DataWidget.Widget status={status} title={error?.message} classes="zoom">
-      {show_video && (
-        <SuspenseIcon>
-          <VideoIcon className={`zoom__icon zoom__icon--${video}`} />
-        </SuspenseIcon>
-      )}
-      {show_microphone && (
-        <SuspenseIcon>
-          <MicIcon className={`zoom__icon zoom__icon--${mic}`} />
-        </SuspenseIcon>
-      )}
+      {show_video && <Icon name={videoIconName} className={`zoom__icon zoom__icon--${video}`} />}
+      {show_microphone && <Icon name={micIconName} className={`zoom__icon zoom__icon--${mic}`} />}
     </DataWidget.Widget>
   );
 });

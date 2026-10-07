@@ -1,6 +1,5 @@
 import * as Uebersicht from "uebersicht";
 import * as Utils from "../../utils";
-import { SuspenseIcon } from "../icons/icon.jsx";
 export { dataWidgetStyles as styles } from "../../styles/components/data/data-widget";
 
 const { React } = Uebersicht;
@@ -8,7 +7,7 @@ const { React } = Uebersicht;
 /**
  * Widget component that renders a clickable data widget with an optional icon.
  * @param {Object} props - The properties object.
- * @param {React.Component} props.Icon - The icon component to display.
+ * @param {React.ReactNode} props.icon - A rendered icon element, chosen by the caller.
  * @param {string} props.classes - Additional classes for the widget.
  * @param {string} props.href - The URL to link to.
  * @param {function} props.onClick - The click event handler.
@@ -23,7 +22,7 @@ const { React } = Uebersicht;
  * @returns {React.ReactElement} The rendered widget component.
  */
 export function Widget({
-  Icon,
+  icon,
   classes,
   href,
   onClick,
@@ -106,11 +105,7 @@ export function Widget({
       onMouseLeave={!disableSlider ? onMouseLeave : undefined}
       style={style}
     >
-      {Icon && (
-        <SuspenseIcon>
-          <Icon />
-        </SuspenseIcon>
-      )}
+      {icon}
       <Inner disableSlider={disableSlider}>{children}</Inner>
     </Tag>
   );

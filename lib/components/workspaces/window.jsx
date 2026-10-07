@@ -1,6 +1,6 @@
 import * as Uebersicht from "uebersicht";
-import * as AppIcons from "../../app-icons";
-import { SuspenseIcon } from "../icons/icon.jsx";
+import { iconForApp } from "../../app-icons.js";
+import Icon from "../icons/icon.jsx";
 import { useRiftBarContext } from "../rift-bar-context.jsx";
 import * as Utils from "../../utils";
 import * as Rift from "../../rift";
@@ -34,8 +34,7 @@ export default function Window({ window }) {
     return null;
   }
 
-  // Get the icon for the app or use the default icon
-  const Icon = AppIcons.apps[appName] || AppIcons.apps.Default;
+  const iconName = iconForApp(appName);
 
   /**
    * Handle click event on the window button.
@@ -82,9 +81,7 @@ export default function Window({ window }) {
       onMouseEnter={displayOnlyIcon ? undefined : onMouseEnter}
       onMouseLeave={displayOnlyIcon ? undefined : onMouseLeave}
     >
-      <SuspenseIcon>
-        <Icon className="process__icon" />
-      </SuspenseIcon>
+      <Icon name={iconName} className="process__icon" />
       {!displayOnlyIcon && (
         <span className="process__inner">
           <span className="process__name">{processName}</span>

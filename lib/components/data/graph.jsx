@@ -1,6 +1,5 @@
 import * as Uebersicht from "uebersicht";
 import * as Utils from "../../utils.js";
-import { SuspenseIcon } from "../icons/icon.jsx";
 
 const { React } = Uebersicht;
 
@@ -57,14 +56,14 @@ export default function Graph({ className, caption, values = [], maxLength, maxV
       </div>
       <div className="graph__data">
         {captionKeys.map((key) => {
-          const { value, icon: Icon, color } = caption[key];
+          const { value, icon, color } = caption[key];
           return (
             <div key={key} className="graph__data-item">
-              {Icon && (
-                <SuspenseIcon>
-                  <Icon className="graph__data-item-icon" style={{ fill: color }} />
-                </SuspenseIcon>
-              )}
+              {icon &&
+                React.cloneElement(icon, {
+                  className: "graph__data-item-icon",
+                  style: { fill: color },
+                })}
               <span
                 className="graph__data-item-value"
                 dangerouslySetInnerHTML={{ __html: value }}

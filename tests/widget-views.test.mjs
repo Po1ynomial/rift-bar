@@ -133,8 +133,8 @@ test("window pills carry the app name or full title as their tooltip", async () 
     mocks: {
       uebersicht: { React },
       "../rift-bar-context.jsx": { useRiftBarContext: () => ({ settings }) },
-      "../../app-icons": { apps: { Default: () => null } },
-      "../icons/icon.jsx": { SuspenseIcon: ({ children }) => children },
+      "../../app-icons.js": { iconForApp: () => "default" },
+      "../icons/icon.jsx": { default: ({ name }) => name },
       "../../utils": { clickEffect: () => {}, classNames: (...names) => names.join(" ") },
       "../../rift": { focusWindow: () => {} },
     },

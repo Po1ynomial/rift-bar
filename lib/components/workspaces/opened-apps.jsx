@@ -1,6 +1,6 @@
 import * as Uebersicht from "uebersicht";
-import * as AppIcons from "../../app-icons.js";
-import { SuspenseIcon } from "../icons/icon.jsx";
+import { iconForApp } from "../../app-icons.js";
+import Icon from "../icons/icon.jsx";
 import * as Utils from "../../utils.js";
 
 const { React } = Uebersicht;
@@ -16,18 +16,13 @@ export default function OpenedApps({ apps }) {
 
   return apps.map((app, i) => {
     const { focused } = app;
-    const appName = Utils.normalizeAppName(app["app-name"]);
-    const Icon = AppIcons.apps[appName] || AppIcons.apps.Default;
+    const iconName = iconForApp(app["app-name"]);
 
     // Generate class names for the app icon
     const classes = Utils.classNames("space__icon", {
       "space__icon--focused": focused,
     });
 
-    return (
-      <SuspenseIcon key={i}>
-        <Icon className={classes} />
-      </SuspenseIcon>
-    );
+    return <Icon key={i} name={iconName} className={classes} />;
   });
 }
