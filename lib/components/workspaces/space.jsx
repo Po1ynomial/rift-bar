@@ -22,6 +22,10 @@ export default function Space({ space, lastOfSpace }) {
     Rift.goToSpace(space);
     Utils.clickEffect(event);
   };
+  // Unnamed workspaces show their one-based index; the tooltip keeps the
+  // full display-qualified identity.
+  const label = space.name ?? `${space.index + 1}`;
+  const tooltip = `Workspace ${label} · display ${space.monitor}`;
   return (
     <React.Fragment>
       {workspaces.all_displays && lastOfSpace && <div className="spaces__separator" />}
@@ -31,8 +35,13 @@ export default function Space({ space, lastOfSpace }) {
           "space--empty": !space.windows.length,
         })}
       >
-        <button className="space__inner" data-workspace={space.workspace} onClick={onClick}>
-          {space.name ?? space.workspace}
+        <button
+          className="space__inner"
+          data-workspace={space.workspace}
+          title={tooltip}
+          onClick={onClick}
+        >
+          {label}
           {workspaces.show_app_icons && <OpenedApps apps={apps} />}
         </button>
       </div>

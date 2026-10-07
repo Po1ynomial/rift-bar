@@ -86,3 +86,71 @@ test("a successful weather response renders content instead of remaining a loade
   });
   assert.ok(namespace.Widget().props.children.includes("Paris, 12°C"));
 });
+
+test("unnamed workspaces show their index with the identity in the tooltip", async () => {
+  const { namespace: preferences } = await loadModule("lib/settings.js", {
+    mocks: { uebersicht: { React } },
+  });
+  const settings = structuredClone(preferences.defaultSettings);
+  const mocks = {
+    uebersicht: { React },
+    "../rift-bar-context.jsx": { useRiftBarContext: () => ({ settings, displayUuid: "d1" }) },
+    "../../rift.js": { goToSpace: () => {} },
+    "./opened-apps.jsx": { default: () => null },
+  };
+  const { namespace } = await loadModule("lib/components/workspaces/space.jsx", {
+    jsx: true,
+    mocks,
+  });
+  const render = (space) => {
+    const fragment = namespace.default({ space, lastOfSpace: false });
+    const spaceDiv = fragment.props.children[1];
+    return spaceDiv.props.children[0];
+  };
+  const unnamed = render({ workspace: "d1:0", index: 0, focused: true, windows: [], monitor: 1 });
+  assert.equal(unnamed.props.children[0], "1");
+  assert.equal(unnamed.props["data-workspace"], "d1:0");
+  assert.match(unnamed.props.title, /Workspace 1/);
+  const named = render({
+    workspace: "d1:1",
+    index: 1,
+    name: "Code",
+    focused: false,
+    windows: [],
+    monitor: 1,
+  });
+  assert.equal(named.props.children[0], "Code");
+  assert.match(named.props.title, /Code/);
+});
+
+test("window pills carry the app name or full title as their tooltip", async () => {
+  const { namespace: preferences } = await loadModule("lib/settings.js", {
+    mocks: { uebersicht: { React } },
+  });
+  const settings = structuredClone(preferences.defaultSettings);
+  const { namespace } = await loadModule("lib/components/workspaces/window.jsx", {
+    jsx: true,
+    mocks: {
+      uebersicht: { React },
+      "../rift-bar-context.jsx": { useRiftBarContext: () => ({ settings }) },
+      "../../app-icons": { apps: { Default: () => null } },
+      "../icons/icon.jsx": { SuspenseIcon: ({ children }) => children },
+      "../../utils": { clickEffect: () => {}, classNames: (...names) => names.join(" ") },
+      "../../rift": { focusWindow: () => {} },
+    },
+  });
+  const window = {
+    focused: false,
+    "app-name": "kitty",
+    "window-title": "config.js",
+    "window-id": { pid: 1, idx: 2 },
+  };
+  const pill = () => {
+    const element = namespace.default({ window });
+    return element;
+  };
+  settings.process.show_titles = false;
+  assert.equal(pill().props.title, "kitty / config.js");
+  settings.process.show_titles = true;
+  assert.equal(pill().props.title, "kitty / config.js");
+});

@@ -77,6 +77,7 @@ export default function Window({ window }) {
     <button
       ref={ref}
       className={classes}
+      title={cleanedUpName}
       onClick={onClick}
       onMouseEnter={displayOnlyIcon ? undefined : onMouseEnter}
       onMouseLeave={displayOnlyIcon ? undefined : onMouseLeave}
