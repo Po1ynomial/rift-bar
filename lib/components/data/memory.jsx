@@ -45,20 +45,15 @@ export const Widget = () => {
           openMemoryUsageApp(monitor_app);
         };
 
-  /**
-   * Pie chart component for memory usage
-   * @returns {JSX.Element} The pie chart component
-   */
-  const Pie = () => {
-    return (
-      <div
-        className="memory__pie"
-        style={{
-          backgroundImage: `conic-gradient(var(--pie-color) ${used}%, var(--main-alt) ${used}% 100%)`,
-        }}
-      />
-    );
-  };
+  // A pie chart icon for memory usage, rendered from the current reading.
+  const pie = (
+    <div
+      className="memory__pie"
+      style={{
+        backgroundImage: `conic-gradient(var(--pie-color) ${used}%, var(--main-alt) ${used}% 100%)`,
+      }}
+    />
+  );
 
   const classes = Utils.classNames("memory", {
     "memory--low": used <= 30,
@@ -71,7 +66,7 @@ export const Widget = () => {
       status={status}
       title={error?.message}
       classes={classes}
-      Icon={show_icon ? Pie : null}
+      icon={show_icon ? pie : null}
       onClick={onClick}
     >
       <div className="memory__content">{used}%</div>

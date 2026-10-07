@@ -78,6 +78,15 @@ test("iconForApp maps known apps, defaults unknown ones, and normalizes names", 
   assert.equal(leftMark, undefined, "map keys should not need inline normalizing");
 });
 
+test("non-ASCII locale application names map to their icons", () => {
+  // macOS reports localized application names; these must survive any
+  // regeneration of the map.
+  assert.equal(iconForApp("微信"), "wechat");
+  assert.equal(iconForApp("访达"), "finder");
+  assert.equal(iconForApp("邮件"), "mail");
+  assert.equal(iconForApp("网易云音乐"), "netease-music");
+});
+
 test("library files referenced by the catalog exist", () => {
   for (const file of ["ableton.jsx", "default.jsx", "git-hub.jsx", "cp-u.jsx", "ca-r-r-o-t.jsx"]) {
     assert.ok(existsSync(fileURLToPath(new URL(file, library))), file);

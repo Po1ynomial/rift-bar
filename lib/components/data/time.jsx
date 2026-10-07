@@ -31,20 +31,12 @@ export const Widget = React.memo(() => {
   if (!state) return null;
   const { time, fillerWidth } = state;
 
-  /**
-   * Icon component for the time widget.
-   * @returns {JSX.Element} The rendered icon.
-   */
-  const TimeIcon = () => {
-    return <Icon time={time} />;
-  };
-
   return (
     <DataWidget.Widget
       status={status}
       title={error?.message}
       classes="time"
-      Icon={show_icon ? TimeIcon : null}
+      icon={show_icon ? <Icon time={time} /> : null}
       disableSlider
     >
       {time}

@@ -10,6 +10,7 @@ const React = {
 };
 const cases = {
   time: { time: "12:34", fillerWidth: 0.5 },
+  memory: { free: 42 },
   weather: {
     latitude: 48,
     longitude: 2,
@@ -53,6 +54,12 @@ for (const [name, data] of Object.entries(cases)) {
     const ready = namespace.Widget();
     assert.equal(ready.props.status, "ready");
     if (name === "github") assert.equal(ready.props.href, "https://github.com/notifications");
+    // Widgets render their own icons; the container receives a rendered element,
+    // never a component constructor.
+    if (name === "time")
+      assert.ok(ready.props.icon && typeof ready.props.icon === "object", "clock icon missing");
+    if (name === "memory")
+      assert.ok(ready.props.icon && typeof ready.props.icon === "object", "pie icon missing");
     snapshot = { status: "stale", data, error: new Error("Offline") };
     const stale = namespace.Widget();
     assert.equal(stale.props.status, "stale");
